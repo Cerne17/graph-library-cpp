@@ -97,21 +97,30 @@ def run_all(graph_path: Path, representation: str) -> tuple[float, str]:
 
 
 def _parse_csv_rows(text: str, name: str, rep: str, rows: list) -> None:
-    """Append graph,rep,metric,value rows from benchmark CSV output.
+    """Append graph,rep,metric,value_average,value_median rows from benchmark
+    CSV output.
 
-    Timing rows look like  <name>,<rep>,bfs,<v>  -> metric bfs_micros
-    Report rows look like  <name>,<rep>,<metric>,<v>
+    Timing rows look like  <name>,<rep>,bfs,<avg>,<median>  -> metric bfs_micros
+    Report rows look like  <name>,<rep>,<metric>,<v>         -> avg == median == v
     """
     for line in text.strip().splitlines():
         if not line:
             continue
         parts = line.split(",")
         metric = parts[2]
-        value = float(parts[3])
         if metric in ("bfs", "dfs"):
             metric = f"{metric}_micros"
+            average, median = float(parts[3]), float(parts[4])
+        else:
+            average = median = float(parts[3])
         rows.append(
-            {"graph": name, "representation": rep, "metric": metric, "value": value}
+            {
+                "graph": name,
+                "representation": rep,
+                "metric": metric,
+                "value_average": average,
+                "value_median": median,
+            }
         )
 
 
@@ -124,7 +133,13 @@ def collect_one(name: str, rep_spec: str, baselines: dict[str, float]) -> pd.Dat
     # Record skipped representations so the gap is explicit in the data.
     for skipped in sorted({"list", "matrix"} - set(reps)):
         rows.append(
-            {"graph": name, "representation": skipped, "metric": "skipped", "value": 1}
+            {
+                "graph": name,
+                "representation": skipped,
+                "metric": "skipped",
+                "value_average": 1,
+                "value_median": 1,
+            }
         )
 
     for rep in reps:
@@ -138,7 +153,13 @@ def collect_one(name: str, rep_spec: str, baselines: dict[str, float]) -> pd.Dat
             ("memory_mb_graph", rss_mb - mem_base),
         ]:
             rows.append(
-                {"graph": name, "representation": rep, "metric": metric, "value": value}
+                {
+                    "graph": name,
+                    "representation": rep,
+                    "metric": metric,
+                    "value_average": value,
+                    "value_median": value,
+                }
             )
 
         # timing + report, parsed from the same process's output
