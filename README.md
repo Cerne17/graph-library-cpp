@@ -6,7 +6,7 @@ representações intercambiáveis — lista de adjacência e matriz de adjacênc
 modo que o custo da escolha de representação seja algo que se **mede**, e não que
 se assume.
 
-Escrita para COS232 (Teoria dos Grafos, UFRJ).
+Escrita para COS242 (Teoria dos Grafos, UFRJ).
 
 ---
 
