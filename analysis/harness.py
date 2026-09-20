@@ -1,4 +1,5 @@
 import subprocess
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -146,7 +147,43 @@ def collect_one(name: str, rep_spec: str, baselines: dict[str, float]) -> pd.Dat
     return pd.DataFrame(rows)
 
 
+# --- Retime: refresh only bfs_micros/dfs_micros in an existing results.csv,
+#     leaving memory/report rows untouched. Uses the granular "time" mode so
+#     nothing but the two traversals is recomputed. ---
+
+
+def retime_all() -> None:
+    config = pd.read_csv(ROOT / "config.csv")
+    out = DATA / "results.csv"
+    existing = pd.read_csv(out)
+
+    new_rows: list[dict] = []
+    for _, cfg_row in config.iterrows():
+        name = cfg_row["graph"]
+        graph_path = DATA / f"{name}.txt"
+        for rep in representations_for(cfg_row["representation"]):
+            print(f"retiming {name} ({rep}) ...", flush=True)
+            csv_out = run_timing(graph_path, rep)
+            _parse_csv_rows(csv_out, name, rep, new_rows)
+
+    new_df = pd.DataFrame(new_rows)
+    stale_keys = set(zip(new_df["graph"], new_df["representation"]))
+    is_stale_timing = existing.apply(
+        lambda r: (r["graph"], r["representation"]) in stale_keys
+        and r["metric"] in ("bfs_micros", "dfs_micros"),
+        axis=1,
+    )
+    merged = pd.concat([existing[~is_stale_timing], new_df], ignore_index=True)
+    merged.to_csv(out, index=False)
+    print(f"replaced {is_stale_timing.sum()} stale rows with {len(new_df)} new rows",
+          flush=True)
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "retime":
+        retime_all()
+        sys.exit(0)
+
     config = pd.read_csv(ROOT / "config.csv")
     out = DATA / "results.csv"
 
