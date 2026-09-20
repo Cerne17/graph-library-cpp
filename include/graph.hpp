@@ -29,6 +29,11 @@
 //      matrix.
 // ---------------------------------------------------------------------------
 
+struct Edge {
+  int target;
+  double weight;
+};
+
 // Abstract interface both representations implement. Algorithms take a
 // `const Graph &` and pay whichever cost the concrete type imposes.
 class Graph {
