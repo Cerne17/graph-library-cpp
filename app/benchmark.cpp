@@ -1,9 +1,12 @@
 #include "graph.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <random>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -19,15 +22,26 @@ static std::string cleanGraphName(const std::string &path) {
   return name;
 }
 
-// --- Timing: 100 BFS + 100 DFS, self-timed, algorithm-only. ---
+// --- Timing: 100 BFS + 100 DFS, self-timed, algorithm-only. Both traversals
+//     start from the same random sample of distinct vertices so their
+//     averages are comparable. ---
 static void runTiming(const Graph &g, const std::string &graphName,
                       const std::string &repArg) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<int> dist(1, g.n);
+
+  size_t numSearches = static_cast<size_t>(std::min(100, g.n));
+  std::unordered_set<int> chosenSet;
+  while (chosenSet.size() < numSearches) {
+    chosenSet.insert(dist(gen));
+  }
+  std::vector<int> starts(chosenSet.begin(), chosenSet.end());
+
   long long totalMicros = 0;
   long long sink = 0;
 
-  for (int i = 0; i < 100; i++) {
-    int start = (i % g.n) + 1;
-
+  for (int start : starts) {
     auto t0 = std::chrono::steady_clock::now();
     SearchTree tree = bfs(g, start);
     auto t1 = std::chrono::steady_clock::now();
@@ -36,16 +50,14 @@ static void runTiming(const Graph &g, const std::string &graphName,
         std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
     sink += tree.level[g.n];
   }
-  double avgBfs = static_cast<double>(totalMicros) / 100.0;
+  double avgBfs = static_cast<double>(totalMicros) / static_cast<double>(numSearches);
   std::cout << graphName << "," << repArg << ",bfs," << avgBfs << "\n";
   std::cerr << "sink=" << sink << "\n";
 
   totalMicros = 0;
   sink = 0;
 
-  for (int i = 0; i < 100; i++) {
-    int start = (i % g.n) + 1;
-
+  for (int start : starts) {
     auto t0 = std::chrono::steady_clock::now();
     SearchTree tree = dfs(g, start);
     auto t1 = std::chrono::steady_clock::now();
@@ -54,7 +66,7 @@ static void runTiming(const Graph &g, const std::string &graphName,
         std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
     sink += tree.level[g.n];
   }
-  double avgDfs = static_cast<double>(totalMicros) / 100.0;
+  double avgDfs = static_cast<double>(totalMicros) / static_cast<double>(numSearches);
   std::cout << graphName << "," << repArg << ",dfs," << avgDfs << "\n";
   std::cerr << "sink=" << sink << "\n";
 }
