@@ -1,0 +1,456 @@
+\documentclass[a4paper,11pt]{article}
+
+% ---------------------------------------------------------------------------
+% Pacotes
+% ---------------------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\geometry{margin=2.5cm}
+
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{codekeyword}{RGB}{0,90,150}
+\definecolor{codecomment}{RGB}{120,120,120}
+\definecolor{codestring}{RGB}{150,60,20}
+
+\lstdefinestyle{cpp}{
+    language=C++,
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{codekeyword}\bfseries,
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestring},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=6pt,
+    breaklines=true,
+    frame=single,
+    tabsize=2,
+    showstringspaces=false,
+}
+\lstset{style=cpp}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue,
+}
+
+\title{Implementação de uma Biblioteca de Grafos em C++\\
+\large Teoria dos Grafos (COS232) --- UFRJ}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Este documento descreve a implementação de uma biblioteca de grafos
+não-direcionados em C++17, construída em torno de uma única interface
+abstrata (\texttt{Graph}) com duas representações intercambiáveis ---
+lista de adjacência e matriz de adjacência. O objetivo do projeto é
+permitir comparar, de forma mensurável, o custo de cada representação
+sobre as mesmas operações: construção, busca em largura e profundidade,
+componentes conexas, distâncias e diâmetro (exato e aproximado).
+\end{abstract}
+
+\tableofcontents
+
+% ===========================================================================
+\section{Introdução}
+% ===========================================================================
+
+A biblioteca foi escrita para o trabalho de Teoria dos Grafos (COS232) e
+não possui dependências externas. Todo o código público vive em um único
+cabeçalho, \texttt{include/graph.hpp}, e cada função exportada documenta
+argumentos, valor de retorno e custo assintótico \emph{para as duas
+representações}, já que o mesmo algoritmo pode ter complexidades muito
+diferentes dependendo de como o grafo está armazenado.
+
+A organização dos arquivos é:
+
+\begin{lstlisting}[language=bash,numbers=none]
+include/graph.hpp     interface publica, com os docstrings
+src/graph.cpp         AdjacencyList e AdjacencyMatrix
+src/io.cpp            parser de entrada e escritores de CSV
+src/search.cpp        bfs, dfs e os dois diametros
+src/components.cpp    componentes conexas (largura e profundidade)
+src/distance.cpp      getDistance
+src/stats.cpp         computeStats
+app/main.cpp          CLI que produz os CSVs de saida
+app/benchmark.cpp      modos de tempo, memoria e relatorio
+analysis/harness.py   roda o benchmark sobre config.csv
+\end{lstlisting}
+
+% ===========================================================================
+\section{Arquitetura geral}
+% ===========================================================================
+
+O núcleo do design é a classe abstrata \texttt{Graph}, que define o
+contrato que qualquer representação deve cumprir:
+
+\begin{lstlisting}
+class Graph {
+public:
+  int n; // numero de vertices
+  int m; // numero de arestas
+
+  explicit Graph(int vertexCount) : n(vertexCount), m(0) {}
+  virtual ~Graph() = default;
+
+  virtual void addEdge(int u, int v) = 0;
+  virtual int degree(int u) const = 0;
+  virtual std::vector<int> neighbors(int u) const = 0;
+  virtual void finalize() = 0;
+};
+\end{lstlisting}
+
+Os algoritmos (BFS, DFS, componentes, distâncias, diâmetro, estatísticas)
+são todos funções livres que recebem \texttt{const Graph\&}, nunca o tipo
+concreto. Isso significa que o mesmo código de \texttt{bfs} roda sobre
+lista ou matriz sem alteração --- o que muda é apenas o custo de cada
+chamada virtual, e é exatamente esse custo que o trabalho se propõe a
+medir.
+
+Vértices são indexados a partir de 1. Todo vetor interno é dimensionado
+com tamanho $n+1$, deixando a posição 0 como preenchimento não utilizado;
+um laço que começa em 0 lê lixo por engano, então essa convenção é
+respeitada em toda a base de código.
+
+% ===========================================================================
+\section{Representações do grafo}
+% ===========================================================================
+
+\subsection{Lista de adjacência (\texttt{AdjacencyList})}
+
+Guarda um \texttt{std::vector<std::vector<int>>}, um vetor de vizinhos por
+vértice. Uma aresta repetida é armazenada novamente --- a estrutura se
+comporta como um multigrafo --- e um laço adiciona 2 ao grau de \(u\),
+preservando o lema do aperto de mãos ($\sum \deg(u) = 2m$) em relação ao
+$m$ lido do arquivo. \texttt{finalize()} ordena cada linha para que os
+vizinhos voltem em ordem ascendente, o que torna a saída das travessias
+reprodutível.
+
+\subsection{Matriz de adjacência (\texttt{AdjacencyMatrix})}
+
+Guarda um \texttt{std::vector<std::vector<char>>}, um byte por par
+ordenado de vértices. A escrita é idempotente: uma aresta repetida não
+muda o grau, e um laço adiciona apenas 1 ao grau de \(u\). Por isso os
+graus aqui descrevem o grafo simples subjacente, enquanto $m$ continua
+contando o arquivo --- as duas representações discordam sempre que a
+entrada repete uma aresta ou contém laços.
+
+\subsection{Assimetria de custo entre representações}
+
+Três detalhes de custo, fáceis de perder ao ler os pontos de chamada,
+explicam por que a matriz é sistematicamente mais cara:
+
+\begin{enumerate}
+    \item \texttt{neighbors()} sempre retorna um \texttt{std::vector} novo
+    por valor, alocando e copiando mesmo na lista, onde a linha já existe.
+    \item \texttt{neighbors()} na matriz varre a linha inteira, $O(n)$,
+    independentemente de quantos vizinhos $u$ realmente tem. Qualquer
+    travessia que é $O(n+m)$ sobre lista vira $O(n^2)$ sobre matriz.
+    \item \texttt{degree()} é $O(1)$ na lista mas $O(n)$ na matriz, então
+    um laço sobre o grau de todos os vértices custa $O(n)$ contra a lista
+    e $O(n^2)$ contra a matriz.
+\end{enumerate}
+
+\begin{table}[h]
+\centering
+\caption{Complexidade por operação, $n$ vértices, $m$ arestas, $k$ componentes.}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Operação} & \textbf{Lista de adjacência} & \textbf{Matriz de adjacência} \\
+\midrule
+Construção            & $O(n)$              & $O(n^2)$ \\
+\texttt{addEdge}       & $O(1)$ amortizado   & $O(1)$ \\
+\texttt{degree(u)}     & $O(1)$              & $O(n)$ \\
+\texttt{neighbors(u)}  & $O(\deg u)$         & $O(n)$ \\
+\texttt{finalize}      & $O(m \log n)$       & $O(1)$ \\
+\texttt{readGraph}     & $O(n + m \log n)$   & $O(n^2 + m)$ \\
+\texttt{bfs} / \texttt{dfs} & $O(n + m)$    & $O(n^2)$ \\
+\texttt{getDistance}   & $O(n + m)$          & $O(n^2)$ \\
+Componentes conexas    & $O(n + m + k\log k)$ & $O(n^2)$ \\
+\texttt{getApproximateDiameter} & $O(n+m)$  & $O(n^2)$ \\
+\texttt{getExactDiameter} & $O(n \cdot (n+m))$ & $O(n^3)$ \\
+Memória                & $O(n+m)$ inteiros   & $O(n^2)$ bytes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Medido em um grafo de 10.000 vértices, um único BFS leva 584~\textmu s na
+lista contra 41.327~\textmu s na matriz.
+
+% ===========================================================================
+\section{Estruturas de dados auxiliares}
+% ===========================================================================
+
+\begin{description}[style=nextline]
+\item[\texttt{Edge}] par (\texttt{target}, \texttt{weight}), reservado
+para suporte futuro a grafos com peso; não é usado pelo restante da
+biblioteca hoje.
+\item[\texttt{Representation}] \texttt{enum class} com os valores
+\texttt{List} e \texttt{Matrix}, usado por \texttt{readGraph} para
+decidir qual representação concreta instanciar.
+\item[\texttt{SearchTree}] resultado de uma travessia: \texttt{parent} (0
+para a raiz \emph{e} para vértices não alcançados) e \texttt{level}
+($-1$ para vértices não alcançados). É \texttt{level}, não
+\texttt{parent}, que distingue a raiz de um vértice fora do componente.
+\item[\texttt{GraphStats}] agrega todas as estatísticas pedidas pelo
+trabalho: contagens, grau mínimo/máximo/médio/mediano, número e tamanhos
+extremos dos componentes, e os dois diâmetros.
+\end{description}
+
+% ===========================================================================
+\section{Leitura e escrita}
+% ===========================================================================
+
+\subsection{Formato de entrada}
+
+A primeira linha do arquivo é o número de vértices; cada linha seguinte é
+uma aresta como um par de identificadores de vértice:
+
+\begin{lstlisting}[language=bash,numbers=none]
+5
+1 2
+2 5
+5 3
+4 5
+1 5
+\end{lstlisting}
+
+Um inteiro solto ao final do arquivo é silenciosamente descartado.
+\texttt{readGraph} lança \texttt{std::runtime\_error} se o arquivo não
+abrir, se $n$ não puder ser lido, ou se $n < 0$.
+
+\subsection{Saída}
+
+Cada execução do CLI (\texttt{app/main.cpp}) escreve quatro CSVs em
+\texttt{data/}, nomeados a partir do grafo de entrada:
+
+\begin{table}[h]
+\centering
+\caption{Arquivos de saída gerados por execução.}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Arquivo} & \textbf{Uma linha por} & \textbf{Colunas} \\
+\midrule
+\texttt{stats\_<nome>.csv} & representação & contagens, graus, componentes, diâmetros \\
+\texttt{bfs\_tree\_<nome>.csv} & vértice & \texttt{node, parent, level} \\
+\texttt{dfs\_tree\_<nome>.csv} & vértice & \texttt{node, parent, level} \\
+\texttt{components\_<nome>.csv} & vértice & \texttt{node, componentId} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===========================================================================
+\section{Algoritmos de busca}
+% ===========================================================================
+
+\subsection{Busca em largura (\texttt{bfs})}
+
+Percorre o grafo a partir de \texttt{source} e devolve uma
+\texttt{SearchTree} em que \texttt{level[v]} é a distância real no grafo
+entre a origem e $v$. Custo $O(n+m)$ na lista, $O(n^2)$ na matriz.
+
+\subsection{Busca em profundidade (\texttt{dfs})}
+
+Implementada de forma iterativa: a pilha guarda pares (vértice, pai), e um
+vértice é assentado na árvore quando é desempilhado --- o que reproduz
+exatamente a árvore de uma DFS recursiva. Aqui \texttt{level[v]} é a
+\emph{profundidade de $v$ na árvore de DFS}, não a distância no grafo; para
+distâncias deve-se usar \texttt{bfs} ou \texttt{getDistance}. O espaço
+usado é $O(n+m)$, pois a pilha pode acumular até uma entrada por
+extremidade de aresta, diferente do $O(n)$ que uma DFS recursiva usaria.
+
+Existem ainda as variantes \texttt{bfsExploration} e
+\texttt{dfsExploration}, que visitam todo vértice alcançável sem manter
+estado --- não usadas atualmente pelo restante da biblioteca, mas
+mantidas na interface. Vale notar que \texttt{dfsExploration} empilha
+vizinhos em ordem ascendente enquanto \texttt{dfs} os empilha em ordem
+descendente, de forma que as duas visitam um mesmo componente em ordens
+diferentes.
+
+% ===========================================================================
+\section{Componentes conexas}
+% ===========================================================================
+
+\texttt{getComponentsByBreadth} e \texttt{getComponentsByDepth} particionam
+o grafo rodando uma BFS (ou DFS) a partir de cada vértice ainda não
+visitado. O resultado é um vetor de componentes, cada um em ordem de
+descoberta, com os próprios componentes ordenados por tamanho
+decrescente. Essa ordenação usa \texttt{std::sort} não estável, então
+componentes de mesmo tamanho podem trocar de posição entre execuções ---
+os identificadores de componente \textbf{não são estáveis} entre rodadas.
+
+% ===========================================================================
+\section{Distâncias e diâmetro}
+% ===========================================================================
+
+\subsection{Distância entre dois vértices}
+
+\texttt{getDistance(g, u, v)} roda uma BFS completa a partir de \(u\) e
+retorna o número de arestas no menor caminho até \(v\), ou $-1$ se $v$
+não for alcançável.
+
+\subsection{Diâmetro exato}
+
+\texttt{getExactDiameter} roda uma BFS a partir de cada vértice e mantém o
+maior nível finito encontrado --- a chamada mais cara da biblioteca:
+$O(n \cdot (n+m))$ na lista, $O(n^3)$ na matriz. Em um grafo desconexo, o
+valor textbook seria infinito; como pares inalcançáveis são ignorados,
+o que se obtém é o maior diâmetro entre os componentes.
+
+\subsection{Diâmetro aproximado}
+
+\texttt{getApproximateDiameter} usa a técnica de \emph{double sweep}: uma
+BFS a partir de um vértice qualquer, depois uma segunda BFS a partir do
+vértice mais distante encontrado, reportando a excentricidade desse
+segundo vértice. É um limite inferior do diâmetro --- exato em árvores,
+subestimado em grafos gerais --- e varre apenas o maior componente, então
+em um grafo desconexo pode ficar abaixo do diâmetro exato por um segundo
+motivo: um componente menor pode conter o diâmetro real.
+
+\subsection{Orçamento de trabalho}
+
+Como \texttt{getExactDiameter} custa cerca de $n \cdot (n+m)$ inspeções de
+aresta, \texttt{computeStats} recebe um orçamento nessas unidades
+(\texttt{kExactDiameterBudget}, cerca de seis segundos em build \texttt{-O2}).
+Acima do orçamento, \texttt{exactDiameter} volta como $-1$ e o grafo é
+descrito apenas pela aproximação. Orçar o produto $n\cdot(n+m)$, em vez de
+apenas $n$, é o que detecta grafos densos: dois grafos podem compartilhar
+$n$ e ainda assim diferir em uma ordem de grandeza de custo.
+
+% ===========================================================================
+\section{Estatísticas (\texttt{computeStats})}
+% ===========================================================================
+
+Calcula todas as estatísticas pedidas pelo trabalho em uma única
+passagem: contagens de vértices e arestas, grau mínimo, máximo, médio
+($2m/n$, derivado de $m$ e não do vetor de graus) e mediano, número de
+componentes com seus tamanhos extremos, e os dois diâmetros. O custo é
+dominado pelo diâmetro exato quando ele roda; quando é pulado, o laço de
+graus e a ordenação dominam ($O(n\log n + m)$ na lista, $O(n^2)$ na
+matriz).
+
+% ===========================================================================
+\section{Aplicações: CLI e benchmark}
+% ===========================================================================
+
+\subsection{\texttt{app/main.cpp}}
+
+Ponto de entrada que produz os quatro CSVs de saída. Sem argumentos, lê
+\texttt{config.csv} linha a linha (\texttt{grafo,representação}),
+resolvendo \texttt{<nome>} para \texttt{data/<nome>.txt}; com argumentos,
+processa apenas o grafo indicado. Um grafo que falha é reportado e
+pulado, sem abortar o restante da execução.
+
+\subsection{\texttt{app/benchmark.cpp}}
+
+Produz as medições de desempenho em quatro modos:
+
+\begin{itemize}
+    \item \texttt{time} --- média e mediana de 100 execuções de BFS e de
+    DFS, a partir da mesma amostra aleatória de vértices, medindo só o
+    algoritmo.
+    \item \texttt{mem} --- mantém o grafo carregado e sinaliza
+    \texttt{READY} para que um processo externo capture o RSS.
+    \item \texttt{report} --- respostas específicas do estudo de caso:
+    pais em árvores de BFS/DFS, distâncias entre pares, contagem e
+    tamanhos de componentes, e os dois diâmetros.
+    \item \texttt{all} --- os três anteriores em um único processo, com
+    a medição de memória primeiro, antes que tempo e relatório aloquem
+    suas próprias estruturas.
+\end{itemize}
+
+\texttt{analysis/harness.py} conduz o \texttt{benchmark} sobre todo o
+\texttt{config.csv} e agrega os resultados com \texttt{pandas}.
+
+% ===========================================================================
+\section{Convenções de projeto}
+% ===========================================================================
+
+\begin{itemize}
+    \item \textbf{$-1$ sempre significa ``indefinido''}: o \texttt{level}
+    de um vértice não alcançado, uma \texttt{getDistance} entre
+    componentes diferentes, um \texttt{exactDiameter} pulado por
+    orçamento.
+    \item \textbf{O \texttt{level} de uma DFS é profundidade na árvore},
+    não distância no grafo.
+    \item \textbf{\texttt{parent} vale 0 tanto para a raiz quanto para
+    vértices inalcançáveis} --- só \texttt{level} distingue os dois
+    casos.
+    \item \textbf{Nenhuma das duas representações deduplica arestas.} A
+    lista guarda multiplicidade; a escrita da matriz é idempotente. As
+    duas discordam em grau sempre que a entrada repete uma aresta ou
+    contém laços.
+    \item \textbf{\texttt{getApproximateDiameter} é um limite inferior},
+    exato em árvores, subestimado em grafos gerais.
+    \item \textbf{Identificadores de componente não são estáveis entre
+    execuções}, pois a ordenação por tamanho usa \texttt{std::sort}, que
+    não é estável.
+\end{itemize}
+
+% ===========================================================================
+\section{Diagrama de classes}
+% ===========================================================================
+
+A Figura~\ref{fig:classes} (fora deste documento, em
+\texttt{docs/diagrama\_classes.mmd}) descreve a estrutura estática do
+código em notação Mermaid. Resumidamente:
+
+\begin{itemize}
+    \item \texttt{Graph} é a interface abstrata; \texttt{AdjacencyList} e
+    \texttt{AdjacencyMatrix} a implementam.
+    \item \texttt{Edge}, \texttt{SearchTree} e \texttt{GraphStats} são
+    estruturas de dados simples (\emph{value types}), sem comportamento.
+    \item Os algoritmos (\texttt{bfs}, \texttt{dfs}, componentes,
+    distâncias, diâmetros, \texttt{computeStats}, leitura/escrita de
+    CSV) são funções livres que operam sobre \texttt{const Graph\&} ---
+    não pertencem a nenhuma classe, por isso aparecem agrupadas no
+    diagrama como um módulo \texttt{GraphAlgorithms} apenas para fins de
+    visualização, não como uma classe real do código.
+\end{itemize}
+
+O arquivo-fonte do diagrama pode ser renderizado em
+\url{https://mermaid.live} ou por qualquer visualizador Mermaid
+compatível (GitHub, VS Code, etc.):
+
+\begin{lstlisting}[language=bash,numbers=none,caption={Trecho do diagrama de classes (ver docs/diagrama\_classes.mmd para o arquivo completo)}]
+classDiagram
+    class Graph {
+        <<abstract>>
+        +int n
+        +int m
+        +addEdge(int u, int v) void
+        +degree(int u) int
+        +neighbors(int u) vector~int~
+        +finalize() void
+    }
+    Graph <|-- AdjacencyList
+    Graph <|-- AdjacencyMatrix
+\end{lstlisting}
+
+% ===========================================================================
+\section{Conclusão}
+% ===========================================================================
+
+A biblioteca separa deliberadamente \emph{interface} (o contrato
+\texttt{Graph}) de \emph{implementação} (lista vs. matriz), e separa
+\emph{estrutura de dados} de \emph{algoritmo}, mantendo BFS, DFS,
+componentes, distâncias e diâmetro como funções livres independentes da
+representação concreta. Essa escolha de design é o que torna possível
+medir, com o mesmo código de algoritmo, o custo real de cada
+representação --- o objetivo central do trabalho.
+
+\end{document}

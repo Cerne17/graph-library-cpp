@@ -1,0 +1,87 @@
+%% Diagrama de classes da biblioteca graph-library-cpp
+%% Renderizar em https://mermaid.live ou com qualquer visualizador Mermaid.
+classDiagram
+    direction TB
+
+    class Representation {
+        <<enumeration>>
+        List
+        Matrix
+    }
+
+    class Edge {
+        +int target
+        +double weight
+    }
+
+    class Graph {
+        <<abstract>>
+        +int n
+        +int m
+        +Graph(int vertexCount)
+        +addEdge(int u, int v) void
+        +degree(int u) int
+        +neighbors(int u) vector~int~
+        +finalize() void
+    }
+
+    class AdjacencyList {
+        +vector~vector~int~~ adj
+        +AdjacencyList(int vertexCount)
+        +addEdge(int u, int v) void
+        +degree(int u) int
+        +neighbors(int u) vector~int~
+        +finalize() void
+    }
+
+    class AdjacencyMatrix {
+        +vector~vector~char~~ matrix
+        +AdjacencyMatrix(int vertexCount)
+        +addEdge(int u, int v) void
+        +degree(int u) int
+        +neighbors(int u) vector~int~
+        +finalize() void
+    }
+
+    class SearchTree {
+        +vector~int~ parent
+        +vector~int~ level
+    }
+
+    class GraphStats {
+        +int n
+        +int m
+        +int minDegree
+        +int maxDegree
+        +double avgDegree
+        +double medianDegree
+        +int componentsAmount
+        +int largestComponentSize
+        +int smallestComponentSize
+        +int exactDiameter
+        +int approximateDiameter
+    }
+
+    class GraphAlgorithms {
+        <<free functions>>
+        +readGraph(path, rep) unique_ptr~Graph~
+        +bfs(g, source) SearchTree
+        +dfs(g, source) SearchTree
+        +getComponentsByBreadth(g) vector~vector~int~~
+        +getComponentsByDepth(g) vector~vector~int~~
+        +getDistance(g, u, v) int
+        +getExactDiameter(g) int
+        +getApproximateDiameter(g) int
+        +computeStats(g, budget) GraphStats
+        +writeStats(path, name, stats) void
+        +writeSearchTree(path, name, tree) void
+        +writeComponents(path, name, components) void
+    }
+
+    Graph <|-- AdjacencyList : implementa
+    Graph <|-- AdjacencyMatrix : implementa
+    GraphAlgorithms ..> Graph : opera sobre (const Graph&)
+    GraphAlgorithms ..> SearchTree : produz
+    GraphAlgorithms ..> GraphStats : produz
+    GraphAlgorithms ..> Representation : consome
+    Graph ..> Edge : reservado, ainda não usado
