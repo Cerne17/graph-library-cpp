@@ -22,6 +22,24 @@ static std::string cleanGraphName(const std::string &path) {
   return name;
 }
 
+// Average and median of a sample, sorted in place.
+// Args:    samples  microsecond timings, one per run
+// Returns: {average, median}
+static std::pair<double, double> summarize(std::vector<long long> &samples) {
+  long long sum = 0;
+  for (long long v : samples)
+    sum += v;
+  double average = static_cast<double>(sum) / static_cast<double>(samples.size());
+
+  std::sort(samples.begin(), samples.end());
+  size_t mid = samples.size() / 2;
+  double median = (samples.size() % 2 == 0)
+                       ? (samples[mid - 1] + samples[mid]) / 2.0
+                       : static_cast<double>(samples[mid]);
+
+  return {average, median};
+}
+
 // --- Timing: 100 BFS + 100 DFS, self-timed, algorithm-only. Both traversals
 //     start from the same random sample of distinct vertices so their
 //     averages are comparable. ---
@@ -38,7 +56,10 @@ static void runTiming(const Graph &g, const std::string &graphName,
   }
   std::vector<int> starts(chosenSet.begin(), chosenSet.end());
 
-  long long totalMicros = 0;
+  std::vector<long long> bfsMicros;
+  std::vector<long long> dfsMicros;
+  bfsMicros.reserve(numSearches);
+  dfsMicros.reserve(numSearches);
   long long sink = 0;
 
   for (int start : starts) {
@@ -46,15 +67,15 @@ static void runTiming(const Graph &g, const std::string &graphName,
     SearchTree tree = bfs(g, start);
     auto t1 = std::chrono::steady_clock::now();
 
-    totalMicros +=
-        std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+    bfsMicros.push_back(
+        std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count());
     sink += tree.level[g.n];
   }
-  double avgBfs = static_cast<double>(totalMicros) / static_cast<double>(numSearches);
-  std::cout << graphName << "," << repArg << ",bfs," << avgBfs << "\n";
+  auto [avgBfs, medianBfs] = summarize(bfsMicros);
+  std::cout << graphName << "," << repArg << ",bfs," << avgBfs << ","
+            << medianBfs << "\n";
   std::cerr << "sink=" << sink << "\n";
 
-  totalMicros = 0;
   sink = 0;
 
   for (int start : starts) {
@@ -62,12 +83,13 @@ static void runTiming(const Graph &g, const std::string &graphName,
     SearchTree tree = dfs(g, start);
     auto t1 = std::chrono::steady_clock::now();
 
-    totalMicros +=
-        std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+    dfsMicros.push_back(
+        std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count());
     sink += tree.level[g.n];
   }
-  double avgDfs = static_cast<double>(totalMicros) / static_cast<double>(numSearches);
-  std::cout << graphName << "," << repArg << ",dfs," << avgDfs << "\n";
+  auto [avgDfs, medianDfs] = summarize(dfsMicros);
+  std::cout << graphName << "," << repArg << ",dfs," << avgDfs << ","
+            << medianDfs << "\n";
   std::cerr << "sink=" << sink << "\n";
 }
 
