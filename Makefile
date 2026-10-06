@@ -1,6 +1,6 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -Iinclude -Wall -Wextra -g
-RELFLAGS := -std=c++17 -Iinclude -Wall -Wextra -O2
+CXXFLAGS := -std=c++20 -Iinclude -Wall -Wextra -g
+RELFLAGS := -std=c++20 -Iinclude -Wall -Wextra -O2
 
 OBJS := src/graph.o src/io.o src/search.o src/stats.o src/components.o src/distance.o app/main.o
 LIB_SRCS := src/graph.cpp src/io.cpp src/search.cpp src/stats.cpp src/components.cpp src/distance.cpp
