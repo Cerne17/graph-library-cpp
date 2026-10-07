@@ -23,3 +23,6 @@ data/stats*.csv
 
 # Assignment graph inputs (14 MB to 689 MB, distributed separately)
 data/grafo_*.txt
+
+tests/*.o
+tests/run_tests
