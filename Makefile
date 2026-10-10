@@ -32,6 +32,9 @@ app/benchmark: app/benchmark.cpp $(LIB_SRCS) include/graph.hpp
 
 HEADERS := $(wildcard include/graph/*.hpp)
 
+tests/test_main.o: tests/test_main.cpp # prevents doctests recompiling
+	$(CXX) $(TESTFLAGS) -c $< -o $@
+
 tests/%.o: tests/%.cpp $(HEADERS)
 	$(CXX) $(TESTFLAGS) -c $< -o $@
 

@@ -42,7 +42,7 @@ struct weighted
 };
 
 template<typename T>
-concept has_weight_flag = requires {
+concept has_weighting_flag = requires {
   { T::is_weighted } -> std::convertible_to<bool>;
 
   // std::bool_constant<X>, from <type_traits>
@@ -56,5 +56,5 @@ concept has_weight_type = requires { typename T::weight_type; };
 
 template<typename T>
 concept weight_policy =
-  has_weight_flag<T> && (!T::is_weighted || has_weight_type<T>);
-}
+  has_weighting_flag<T> && (!T::is_weighted || has_weight_type<T>);
+} // namespace gl
