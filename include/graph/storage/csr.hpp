@@ -53,22 +53,21 @@ csr_storage<D, W> csr_storage<D, W>::from_edges(vertex_id n,
   s.n_ = n;
 
   // 1. count degrees
-  std::vector<edge_index> deg(n + 1, 0);
+  s.offsets_.assign(n + 2, 0);
   for (const edge& e : edges) {
     assert(e.u >= 1 && e.u <= n && "from_edges: u out of range");
     assert(e.v >= 1 && e.v <= n && "from_edges: v out of range");
     assert(e.u != e.v && "from_edges: self-loops not supported");
 
-    ++deg[e.u];
+    ++s.offsets_[e.u + 1];
     if constexpr (!D::is_directed) {
-      ++deg[e.v];
+      ++s.offsets_[e.v + 1];
     }
   }
 
   // 2. prefix sum
-  s.offsets_.resize(n + 2, 0);
   for (vertex_id u = 1; u <= n; ++u) {
-    s.offsets_[u + 1] = s.offsets_[u] + deg[u];
+    s.offsets_[u + 1] = s.offsets_[u] + s.offsets_[u + 1];
   }
 
   // 3. fill: cursor[u] = next free slot in u's block
