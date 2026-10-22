@@ -41,8 +41,8 @@ public:
   std::span<const edge_index> offsets() const
   {
     return offsets_;
-  }; // non-owning read only contiguous space of memory
-  std::span<const vertex_id> targets() const { return targets_; };
+  } // non-owning read only contiguous space of memory
+  std::span<const vertex_id> targets() const { return targets_; }
 };
 
 template<direction_policy D, weight_policy W>
@@ -52,7 +52,7 @@ csr_storage<D, W> csr_storage<D, W>::from_edges(vertex_id n,
   csr_storage s;
   s.n_ = n;
 
-  // 1. count edges
+  // 1. count degrees
   std::vector<edge_index> deg(n + 1, 0);
   for (const edge& e : edges) {
     assert(e.u >= 1 && e.u <= n && "from_edges: u out of range");
