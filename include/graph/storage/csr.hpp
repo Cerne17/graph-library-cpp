@@ -2,6 +2,8 @@
 
 #include "graph/policies.hpp"
 #include "graph/types.hpp"
+
+#include <algorithm>
 #include <cassert>
 #include <span>
 #include <vector>
