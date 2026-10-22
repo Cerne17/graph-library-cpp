@@ -21,7 +21,8 @@ struct edge_probe
 template<typename G>
 concept graph_like =
   direction_policy<typename G::direction_type> &&
-  weight_policy<typename G::weighting_type> && requires(const G& g, vertex_id u) {
+  weight_policy<typename G::weighting_type> &&
+  requires(const G& g, vertex_id u) {
     { g.vertex_count() } -> std::convertible_to<vertex_id>;
     g.for_each_neighbor(u, neighbor_probe{}); // this must compile
   };
