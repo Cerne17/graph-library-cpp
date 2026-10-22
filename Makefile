@@ -30,7 +30,8 @@ benchmark: app/benchmark
 app/benchmark: app/benchmark.cpp $(LIB_SRCS) include/graph.hpp
 	$(CXX) $(RELFLAGS) app/benchmark.cpp $(LIB_SRCS) -o $@
 
-HEADERS := $(wildcard include/graph/*.hpp)
+HEADERS := $(wildcard include/graph/*.hpp) $(wildcard include/graph/*/*.hpp)
+
 
 tests/test_main.o: tests/test_main.cpp # prevents doctests recompiling
 	$(CXX) $(TESTFLAGS) -c $< -o $@
