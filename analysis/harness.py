@@ -6,7 +6,7 @@ import pandas as pd
 import psutil
 
 ROOT = Path(__file__).resolve().parent.parent
-BINARY = ROOT / "app" / "benchmark"
+BINARY = ROOT / "build" / "benchmark"
 DATA = ROOT / "data"
 BASELINE = DATA / "baseline.txt"
 

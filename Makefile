@@ -3,52 +3,60 @@ CXXFLAGS := -std=c++20 -Iinclude -Wall -Wextra -g
 RELFLAGS := -std=c++20 -Iinclude -Wall -Wextra -O2
 TESTFLAGS := -std=c++20 -Iinclude -Ithird_party -Wall -Wextra -g -fsanitize=undefined -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
 
-OBJS := src/graph.o src/io.o src/search.o src/stats.o src/components.o src/distance.o app/main.o
+# Every generated file lives under build/, mirroring the source tree:
+# src/graph.cpp -> build/src/graph.o, tests/test_csr.cpp -> build/tests/test_csr.o
+BUILD := build
+
 LIB_SRCS := src/graph.cpp src/io.cpp src/search.cpp src/stats.cpp src/components.cpp src/distance.cpp
+OBJS := $(patsubst %.cpp,$(BUILD)/%.o,$(LIB_SRCS) app/main.cpp)
 
 TEST_SRCS := $(wildcard tests/test_*.cpp)
-TEST_OBJS := $(TEST_SRCS:.cpp=.o)
+TEST_OBJS := $(patsubst %.cpp,$(BUILD)/%.o,$(TEST_SRCS))
 
 .PHONY: all release benchmark clean test
 
-all: app/graphs
+all: $(BUILD)/graphs
 
 # Debug build: -g, no optimisation. The default while developing.
-app/graphs: $(OBJS)
+$(BUILD)/graphs: $(OBJS)
+	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 # Optimised build of the same program, for when the code is already debugged
 # and you just want the results. Compiled straight from the sources so it can
 # never pick up a stale debug object.
-release: app/graphs_release
+release: $(BUILD)/graphs_release
 
-app/graphs_release: app/main.cpp $(LIB_SRCS) include/graph.hpp
+$(BUILD)/graphs_release: app/main.cpp $(LIB_SRCS) include/graph.hpp
+	@mkdir -p $(@D)
 	$(CXX) $(RELFLAGS) app/main.cpp $(LIB_SRCS) -o $@
 
-benchmark: app/benchmark
+benchmark: $(BUILD)/benchmark
 
-app/benchmark: app/benchmark.cpp $(LIB_SRCS) include/graph.hpp
+$(BUILD)/benchmark: app/benchmark.cpp $(LIB_SRCS) include/graph.hpp
+	@mkdir -p $(@D)
 	$(CXX) $(RELFLAGS) app/benchmark.cpp $(LIB_SRCS) -o $@
 
 HEADERS := $(wildcard include/graph/*.hpp) $(wildcard include/graph/*/*.hpp)
 
-
-tests/test_main.o: tests/test_main.cpp # prevents doctests recompiling
+$(BUILD)/tests/test_main.o: tests/test_main.cpp # prevents doctests recompiling
+	@mkdir -p $(@D)
 	$(CXX) $(TESTFLAGS) -c $< -o $@
 
-tests/%.o: tests/%.cpp $(HEADERS)
+$(BUILD)/tests/%.o: tests/%.cpp $(HEADERS)
+	@mkdir -p $(@D)
 	$(CXX) $(TESTFLAGS) -c $< -o $@
 
-%.o: %.cpp include/graph.hpp
+$(BUILD)/%.o: %.cpp include/graph.hpp
+	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(TEST_OBJS) app/graphs app/graphs_release app/benchmark tests/run_tests
-	rm -rf tests/run_tests.dSYM
+	rm -rf $(BUILD)
 
-tests/run_tests: $(TEST_OBJS)
+$(BUILD)/run_tests: $(TEST_OBJS)
+	@mkdir -p $(@D)
 	$(CXX) $(TESTFLAGS) $^ -o $@
 
-test: tests/run_tests
-	./tests/run_tests
-
+test: $(BUILD)/run_tests
+	./$(BUILD)/run_tests
