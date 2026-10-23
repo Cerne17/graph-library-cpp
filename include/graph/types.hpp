@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <cstdint>
 
 namespace gl {
@@ -10,5 +11,13 @@ struct edge
 {
   vertex_id u;
   vertex_id v;
+};
+
+template<std::floating_point W>
+struct weighted_edge
+{
+  vertex_id u;
+  vertex_id v;
+  W weight;
 };
 } // namespace gl
