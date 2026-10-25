@@ -51,7 +51,7 @@ public:
   bool has_negative_weight() const
     requires W::is_weighted
   {
-    return this->wegihts_->has_negative;
+    return weights_.has_negative;
   }
 
   auto weights() const
@@ -126,7 +126,7 @@ csr_storage<D, W> csr_storage<D, W>::from_edges(
       auto t = std::span(s.targets_).subspan(begin, len);
       auto w = std::span(s.weights_.values).subspan(begin, len);
 
-      std::ranges::sort(std::views::zip(t, w), {}, [&](const auto& p) {
+      std::ranges::sort(std::views::zip(t, w), {}, [](const auto& p) {
         return std::get<0>(p);
       });
     } else {
@@ -164,7 +164,7 @@ void csr_storage<D, W>::for_each_edge(vertex_id u, F&& f) const
 {
   assert(u >= 1 && u <= n_ && "for_each_edge: u out of range");
   for (edge_index i = offsets_[u]; i < offsets_[u + 1]; ++i) {
-    f(targets_[i], weights_[i]);
+    f(targets_[i], weights_.values[i]);
   }
 }
 } // namespace gl
