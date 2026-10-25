@@ -49,6 +49,10 @@ asking for a weight on an unweighted graph fails to compile.
 - A member alias must not share a concept's name, or it hides the concept
   inside the class. Hence `direction_type`, not `direction_policy`.
 
+## C++ Version
+
+- C++23 is required. That's the case since we implement CSR using `std::views::zip`.
+
 ## Headers and namespaces
 
 - Everything lives in `namespace gl`. Close it with `} // namespace gl`.

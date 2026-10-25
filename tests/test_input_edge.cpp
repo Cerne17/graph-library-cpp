@@ -4,7 +4,6 @@
 #include "graph/types.hpp"
 
 #include <concepts>
-#include <type_traits>
 
 static_assert(std::same_as<gl::input_edge_t<gl::unweighted>, gl::edge>);
 static_assert(
