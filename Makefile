@@ -1,7 +1,7 @@
 CXX := g++
-CXXFLAGS := -std=c++20 -Iinclude -Wall -Wextra -g
-RELFLAGS := -std=c++20 -Iinclude -Wall -Wextra -O2
-TESTFLAGS := -std=c++20 -Iinclude -Ithird_party -Wall -Wextra -g -fsanitize=undefined -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
+CXXFLAGS := -std=c++23 -Iinclude -Wall -Wextra -g
+RELFLAGS := -std=c++23 -Iinclude -Wall -Wextra -O2
+TESTFLAGS := -std=c++23 -Iinclude -Ithird_party -Wall -Wextra -g -fsanitize=undefined -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
 
 # Every generated file lives under build/, mirroring the source tree:
 # src/graph.cpp -> build/src/graph.o, tests/test_csr.cpp -> build/tests/test_csr.o

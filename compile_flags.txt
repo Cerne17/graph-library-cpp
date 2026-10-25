@@ -1,4 +1,4 @@
 -Iinclude
 -Ithird_party
--std=c++20
+-std=c++23
 -xc++
