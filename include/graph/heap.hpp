@@ -5,21 +5,27 @@
 #include <cassert>
 #include <concepts>
 #include <cstddef>
+#include <functional>
 #include <limits>
 #include <utility>
 #include <vector>
 
 namespace gl {
 
-// Binary min-heap over vertices 1..n, with keys stored per vertex and a
-// position map so a vertex's key can be lowered in O(log n).
+// Binary heap over vertices 1..n, with keys stored per vertex and a position
+// map, so a vertex's key can be changed in O(log n).
+//
+// Ordering rule: comp_(a, b) is true when key a belongs closer to the root than
+// key b. std::less<K> (the default) gives a min-heap, std::greater<K> a
+// max-heap. Note: std::priority_queue uses the opposite convention.
 //
 // Invariants (checked by validate()):
-//   (I1) heap property: key of parent(i) <= key of i, for every position i > 0
+//   (I1) heap property: no position i > 0 goes before its parent
 //   (I2) positions match: pos_[heap_[i]] == i, for every position i
 //   (I3) absent vertices: pos_[v] == not_in_heap for every v not in heap_
-template<std::floating_point K>
-class indexed_min_heap
+template<std::copyable K, typename Compare = std::less<K>>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+class indexed_heap
 {
 private:
   static constexpr std::size_t not_in_heap =
@@ -28,26 +34,34 @@ private:
   std::vector<vertex_id> heap_;  // heap_[i]: vertex at position i (0-based)
   std::vector<K> key_;           // key_[v]: current key of vertex v (1-based)
   std::vector<std::size_t> pos_; // pos_[v]: position of v, or not_in_heap
+  [[no_unique_address]] Compare comp_; // zero bytes for empty comparators
 
   static std::size_t parent(std::size_t i) { return (i - 1) / 2; }
 
   // key of the vertex sitting at position i
-  K key_at(std::size_t i) const { return key_[heap_[i]]; }
+  const K& key_at(std::size_t i) const { return key_[heap_[i]]; }
+
+  // true if the vertex at position i belongs closer to the root than the one
+  // at position j
+  bool before(std::size_t i, std::size_t j) const
+  {
+    return comp_(key_at(i), key_at(j));
+  }
 
   // Swaps the vertices at positions i and j, and keeps pos_ in sync.
   // Every move inside the heap goes through here.
   void swap_nodes(std::size_t i, std::size_t j);
 
-  // Moves the vertex at position i up while its key is smaller than its
-  // parent's.
+  // Moves the vertex at position i up while it goes before its parent.
   void sift_up(std::size_t i);
 
-  // Moves the vertex at position i down while a child has a smaller key,
-  // always swapping with the smaller child.
+  // Moves the vertex at position i down while a child goes before it,
+  // always swapping with the child that goes first.
   void sift_down(std::size_t i);
 
 public:
-  explicit indexed_min_heap(vertex_id n)
+  explicit indexed_heap(vertex_id n, Compare comp = Compare{})
+    : comp_(std::move(comp))
   {
     key_.assign(n + 1, K{});
     pos_.assign(n + 1, not_in_heap);
@@ -57,50 +71,59 @@ public:
   bool empty() const { return heap_.empty(); }
   std::size_t size() const { return heap_.size(); }
   bool contains(vertex_id v) const;
-  K key(vertex_id v) const; // pre: contains(v)
+  const K& key(vertex_id v) const; // pre: contains(v)
 
-  void push(vertex_id v, K key);             // pre: !contains(v)
-  vertex_id top() const;                     // pre: !empty()
-  vertex_id pop();                           // pre: !empty()
-  void decrease_key(vertex_id v, K new_key); // pre: contains(v), new_key <= key(v)
+  void push(vertex_id v, K key);           // pre: !contains(v)
+  vertex_id top() const;                   // pre: !empty()
+  vertex_id pop();                         // pre: !empty()
+  void update_key(vertex_id v, K new_key); // pre: contains(v); either direction
 
   bool validate() const; // checks (I1)-(I3); meant for tests
 };
 
+// The min-heap Dijkstra uses: smallest key at the root.
 template<std::floating_point K>
-bool indexed_min_heap<K>::contains(vertex_id v) const
+using indexed_min_heap = indexed_heap<K, std::less<K>>;
+
+template<std::copyable K, typename Compare>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+bool indexed_heap<K, Compare>::contains(vertex_id v) const
 {
   assert(v >= 1 && v < pos_.size() && "contains: vertex out of range");
   return pos_[v] != not_in_heap;
 }
 
-template<std::floating_point K>
-K indexed_min_heap<K>::key(vertex_id v) const
+template<std::copyable K, typename Compare>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+const K& indexed_heap<K, Compare>::key(vertex_id v) const
 {
   assert(contains(v) && "key: vertex not in heap");
   return key_[v];
 }
 
-template<std::floating_point K>
-void indexed_min_heap<K>::push(vertex_id v, K key)
+template<std::copyable K, typename Compare>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+void indexed_heap<K, Compare>::push(vertex_id v, K key)
 {
   assert(!contains(v) && "push: vertex already in heap");
 
-  key_[v] = key;
+  key_[v] = std::move(key);
   heap_.push_back(v);
   pos_[v] = heap_.size() - 1;
   sift_up(pos_[v]);
 }
 
-template<std::floating_point K>
-vertex_id indexed_min_heap<K>::top() const
+template<std::copyable K, typename Compare>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+vertex_id indexed_heap<K, Compare>::top() const
 {
   assert(!empty() && "top: heap is empty");
   return heap_[0];
 }
 
-template<std::floating_point K>
-vertex_id indexed_min_heap<K>::pop()
+template<std::copyable K, typename Compare>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+vertex_id indexed_heap<K, Compare>::pop()
 {
   assert(!empty() && "pop: heap is empty");
 
@@ -115,22 +138,29 @@ vertex_id indexed_min_heap<K>::pop()
   return root;
 }
 
-template<std::floating_point K>
-void indexed_min_heap<K>::decrease_key(vertex_id v, K new_key)
+template<std::copyable K, typename Compare>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+void indexed_heap<K, Compare>::update_key(vertex_id v, K new_key)
 {
-  assert(contains(v) && "decrease_key: vertex not in heap");
-  assert(new_key <= key_[v] && "decrease_key: new key is larger");
+  assert(contains(v) && "update_key: vertex not in heap");
 
-  key_[v] = new_key;
-  sift_up(pos_[v]);
+  const bool moves_up = comp_(new_key, key_[v]);
+  key_[v] = std::move(new_key);
+
+  if (moves_up) {
+    sift_up(pos_[v]);
+  } else {
+    sift_down(pos_[v]);
+  }
 }
 
-template<std::floating_point K>
-bool indexed_min_heap<K>::validate() const
+template<std::copyable K, typename Compare>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+bool indexed_heap<K, Compare>::validate() const
 {
-  // (I1) heap property, for every position that has a parent
+  // (I1) heap property: no child goes before its parent
   for (std::size_t i = 1; i < heap_.size(); ++i) {
-    if (key_at(parent(i)) > key_at(i)) {
+    if (before(i, parent(i))) {
       return false;
     }
   }
@@ -152,8 +182,9 @@ bool indexed_min_heap<K>::validate() const
   return present == heap_.size();
 }
 
-template<std::floating_point K>
-void indexed_min_heap<K>::swap_nodes(std::size_t i, std::size_t j)
+template<std::copyable K, typename Compare>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+void indexed_heap<K, Compare>::swap_nodes(std::size_t i, std::size_t j)
 {
   assert(i < heap_.size() && j < heap_.size() &&
          "swap_nodes: position out of range");
@@ -163,39 +194,41 @@ void indexed_min_heap<K>::swap_nodes(std::size_t i, std::size_t j)
   pos_[heap_[j]] = j;
 }
 
-template<std::floating_point K>
-void indexed_min_heap<K>::sift_up(std::size_t i)
+template<std::copyable K, typename Compare>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+void indexed_heap<K, Compare>::sift_up(std::size_t i)
 {
   while (i > 0) {
     const std::size_t p = parent(i);
-    if (key_at(p) <= key_at(i)) {
-      return;
+    if (!before(i, p)) {
+      return; // i doesn't go before its parent: in place
     }
     swap_nodes(i, p);
     i = p;
   }
 }
 
-template<std::floating_point K>
-void indexed_min_heap<K>::sift_down(std::size_t i)
+template<std::copyable K, typename Compare>
+  requires std::strict_weak_order<Compare, const K&, const K&>
+void indexed_heap<K, Compare>::sift_down(std::size_t i)
 {
   const std::size_t n = heap_.size();
   while (true) {
     const std::size_t l = 2 * i + 1;
     const std::size_t r = 2 * i + 2;
-    std::size_t smallest = i;
+    std::size_t first = i; // whichever of i, l, r goes first
 
-    if (l < n && key_at(l) < key_at(smallest)) {
-      smallest = l;
+    if (l < n && before(l, first)) {
+      first = l;
     }
-    if (r < n && key_at(r) < key_at(smallest)) {
-      smallest = r;
+    if (r < n && before(r, first)) {
+      first = r;
     }
-    if (smallest == i) {
+    if (first == i) {
       return;
     }
-    swap_nodes(i, smallest);
-    i = smallest;
+    swap_nodes(i, first);
+    i = first;
   }
 }
 

@@ -288,7 +288,7 @@ TEST_SUITE("heap 4: decrease_key")
     h.push(1, 5.0);
     h.push(2, 6.0);
 
-    h.decrease_key(2, 5.5);
+    h.update_key(2, 5.5);
 
     CHECK(h.key(2) == 5.5);
     CHECK(h.top() == 1);
@@ -302,7 +302,7 @@ TEST_SUITE("heap 4: decrease_key")
       h.push(v, 10.0 * v);
     }
 
-    h.decrease_key(5, 1.0); // a leaf moves all the way up
+    h.update_key(5, 1.0); // a leaf moves all the way up
 
     CHECK(h.top() == 5);
     CHECK(h.size() == 5);
@@ -315,7 +315,7 @@ TEST_SUITE("heap 4: decrease_key")
     h.push(1, 2.0);
     h.push(2, 3.0);
 
-    h.decrease_key(1, 0.5);
+    h.update_key(1, 0.5);
 
     CHECK(h.top() == 1);
     CHECK(h.key(1) == 0.5);
@@ -330,8 +330,8 @@ TEST_SUITE("heap 4: decrease_key")
     for (gl::vertex_id v = 1; v <= 4; ++v) {
       h.push(v, inf);
     }
-    h.decrease_key(3, 2.0);
-    h.decrease_key(4, 1.0);
+    h.update_key(3, 2.0);
+    h.update_key(4, 1.0);
 
     CHECK(h.pop() == 4);
     CHECK(h.pop() == 3);
@@ -348,8 +348,8 @@ TEST_SUITE("heap 4: decrease_key")
     h.push(4, 4.0);
     h.push(5, 5.0);
 
-    h.decrease_key(4, 0.5);
-    h.decrease_key(5, 1.5);
+    h.update_key(4, 0.5);
+    h.update_key(5, 1.5);
 
     const std::vector<gl::vertex_id> expected{ 4, 1, 5, 2, 3 };
     for (const gl::vertex_id v : expected) {
@@ -365,7 +365,7 @@ TEST_SUITE("heap 4: decrease_key")
     h.push(2, 2.0f);
     h.push(3, 1.0f);
 
-    h.decrease_key(1, 0.5f);
+    h.update_key(1, 0.5f);
 
     CHECK(h.key(1) == 0.5f);
     CHECK(h.pop() == 1);
@@ -420,7 +420,7 @@ TEST_SUITE("heap 5: randomized")
         --ref_size;
       } else if (op == 2 && ref_in[v] && ref_key[v] > 0.0) {
         const double k = static_cast<double>(rng() % static_cast<std::uint32_t>(ref_key[v]));
-        h.decrease_key(v, k);
+        h.update_key(v, k);
         ref_key[v] = k;
       }
 
