@@ -82,7 +82,7 @@ include/graph/
 ├── io/
 │   └── edge_list.hpp      read_edge_list<W>(path): lê arquivos de 2 ou 3 colunas
 └── algorithms/
-    └── dijkstra.hpp       em andamento (Miguel)
+    └── dijkstra.hpp       em andamento (grupo)
 ```
 
 ### Os conceitos centrais, em uma frase cada
@@ -228,20 +228,25 @@ Tudo está em [`docs/CONVENTIONS.md`](CONVENTIONS.md). O essencial:
 
 ## 7. O que falta e como dividir
 
-**Miguel está fazendo:** Dijkstra (versão com vetor, depois com o
-`indexed_heap`, depois uma terceira com `std::priority_queue` e remoção
-preguiçosa, para comparação). Não mexa em `algorithms/dijkstra.hpp` nem em
-`concepts.hpp` sem combinar.
+**Divisão atual:**
 
-Convenções já decididas para Dijkstra, para você não divergir:
+- **Grupo:** Dijkstra — versão com vetor, depois com o `indexed_heap`, depois uma
+  terceira com `std::priority_queue` e remoção preguiçosa, para comparação. Fica
+  em `include/graph/algorithms/dijkstra.hpp`.
+- **Miguel:** a matriz de adjacência (tarefa C) e a migração da Parte 1
+  (tarefa D). Não mexa em `storage/matrix.hpp` nem nos algoritmos migrados sem
+  combinar.
+- **Qualquer mudança em `concepts.hpp`** (por exemplo, exigir
+  `has_negative_weight()` em `weighted_graph`) afeta todo mundo: combine antes.
+
+Convenções já decididas para Dijkstra:
 
 - resultado em `shortest_paths<W>`, com `dist` e `parent` 1-indexados;
 - vértice inalcançável: `dist = +∞` e `parent = 0`;
 - peso negativo: lança `std::invalid_argument`, verificado em O(1) via
   `has_negative_weight()`.
 
-**Tarefas paralelas, independentes do Dijkstra.** Combine qual delas é sua
-antes de começar:
+**Tarefas em aberto.** A e B estão livres; C e D estão com o Miguel:
 
 ### A. Mapeamento nome ↔ índice da rede de colaboração
 

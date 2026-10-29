@@ -58,11 +58,15 @@ make clean       # removes build/
 - `heap.hpp`: `indexed_heap<K, Compare>` with a position map and
   `update_key`; `indexed_min_heap<K>` alias. `comp_(a, b)` true means `a` is
   closer to the root (opposite of `std::priority_queue`).
-- `algorithms/dijkstra.hpp`: in progress by the project owner. **Do not edit
-  it, or `concepts.hpp`, unless the task says so.** Agreed contract:
-  `shortest_paths<W>{source, dist, parent}`, 1-indexed; unreachable means
-  `dist = +inf`, `parent = 0`; negative weights throw `std::invalid_argument`,
-  checked in O(1) via `has_negative_weight()`.
+- `algorithms/dijkstra.hpp`: Dijkstra, being written by the team. Agreed
+  contract: `shortest_paths<W>{source, dist, parent}`, 1-indexed; unreachable
+  means `dist = +inf`, `parent = 0`; negative weights throw
+  `std::invalid_argument`, checked in O(1) via `has_negative_weight()`.
+
+Ownership: the project owner is writing `storage/matrix.hpp` and migrating the
+Part 1 algorithms (BFS, DFS, components, distance, diameter) into
+`include/graph/algorithms/`. **Do not edit those files, or `concepts.hpp`,
+unless the task says so.** Changes to `concepts.hpp` affect everyone.
 
 ## Rules for writing code
 
