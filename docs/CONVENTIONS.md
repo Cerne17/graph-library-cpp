@@ -59,6 +59,9 @@ asking for a weight on an unweighted graph fails to compile.
 - Algorithms (`include/graph/algorithms/`) live in `namespace gl::algorithms`,
   separating operations from data structures, like `std::ranges` inside
   `std`. Close it with `} // namespace gl::algorithms`.
+- File readers built on top of the storage types (`io/load_graph.hpp`,
+  `io/label_map.hpp`) live in `namespace gl::io`. (`io/edge_list.hpp` predates
+  this and is still in `gl`.)
 - Templates are header-only: their full definitions live in `.hpp` files.
 - Every header starts with `#pragma once`.
 - Include project headers by their path from `include/`:
