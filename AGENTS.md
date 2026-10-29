@@ -46,7 +46,7 @@ make clean       # removes build/
   and the concepts `direction_policy`, `weight_policy`.
 - `concepts.hpp`: `graph_like` (`vertex_count()`, `for_each_neighbor(u, f)`) and
   `weighted_graph` (adds `for_each_edge(u, f)` calling `f(target, weight)`,
-  plus `G::weight_type`). Algorithms are free function templates constrained by
+  `has_negative_weight()`, plus `G::weight_type`). Algorithms are free function templates constrained by
   these concepts — never by a concrete storage type.
 Namespaces: `gl` for everything below except `algorithms/*`
 (`gl::algorithms`) and `io/*` (`gl::io`). Helpers go in the nested `detail`.
@@ -76,9 +76,10 @@ Namespaces: `gl` for everything below except `algorithms/*`
   Part 1's BFS, DFS, components, distance, diameters and degree statistics,
   over `graph_like`. `tests/test_algorithms_vs_legacy.cpp` checks them against
   Part 1, which the test binary links.
-- Part 2, being written by the team (skeletons: declarations and contracts
-  exist, bodies do not; their tests are `doctest::skip()` stubs — remove the
-  skip once a case is real). Task details in `docs/ONBOARDING.md` §7, E–H.
+- Part 2: Dijkstra and paths (tasks E–H in `docs/ONBOARDING.md` §7).
+  `tests/test_dijkstra.cpp` runs every case for all three versions;
+  `tests/test_dijkstra_differential.cpp` checks them on random graphs against
+  the shortest-path optimality conditions and BFS levels.
   - `algorithms/shortest_paths.hpp`: `shortest_paths<W>{source, dist,
     parent}`, 1-indexed; unreachable means `dist = +inf`, `parent = 0`.
     `detail::check_dijkstra_input` (asserts the source, throws
