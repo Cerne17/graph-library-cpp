@@ -32,6 +32,8 @@ struct mock_weighted
 
   template<typename F>
   void for_each_edge(gl::vertex_id u, F&& func) const;
+
+  bool has_negative_weight() const;
 };
 
 static_assert(gl::graph_like<mock_unweighted>);
@@ -76,6 +78,25 @@ struct mock_check_weight_flag
 
   template<typename F> // callable function
   void for_each_edge(gl::vertex_id u, F&& func) const;
+
+  bool has_negative_weight() const;
 };
 
 static_assert(!gl::weighted_graph<mock_check_weight_flag>);
+
+struct mock_no_negative_query // everything except has_negative_weight()
+{
+  using direction_type = gl::undirected;
+  using weighting_type = gl::weighted<>;
+  using weight_type = weighting_type::weight_type;
+  gl::vertex_id vertex_count() const;
+
+  template<typename F>
+  void for_each_neighbor(gl::vertex_id u, F&& func) const;
+
+  template<typename F>
+  void for_each_edge(gl::vertex_id u, F&& func) const;
+};
+
+static_assert(gl::graph_like<mock_no_negative_query>);
+static_assert(!gl::weighted_graph<mock_no_negative_query>);
