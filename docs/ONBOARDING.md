@@ -242,9 +242,9 @@ Tudo está em [`docs/CONVENTIONS.md`](CONVENTIONS.md). O essencial:
 
 **Divisão atual:**
 
-- **Grupo:** Dijkstra — versão com vetor, depois com o `indexed_heap`, depois uma
-  terceira com `std::priority_queue` e remoção preguiçosa, para comparação. Fica
-  em `include/graph/algorithms/dijkstra.hpp`.
+- **Grupo:** algoritmos da Parte 2 — tarefas E a H abaixo. Os arquivos já
+  existem como esqueleto (declaração + contrato nos comentários) e os testes
+  como casos marcados `doctest::skip()`: falta escrever os corpos.
 - **Miguel:** fez a matriz de adjacência (tarefa C) e a migração da Parte 1
   (tarefa D). Não mexa em `storage/matrix.hpp` nem nos algoritmos migrados sem
   combinar.
@@ -258,7 +258,8 @@ Convenções já decididas para Dijkstra:
 - peso negativo: lança `std::invalid_argument`, verificado em O(1) via
   `has_negative_weight()`.
 
-**Estado das tarefas.** A, C e D estão feitas; B está quase pronta (veja abaixo):
+**Estado das tarefas.** A, C e D estão feitas; B está quase pronta; E a H estão
+abertas para o grupo (veja abaixo):
 
 ### A. Mapeamento nome ↔ índice da rede de colaboração — feita
 
@@ -321,6 +322,64 @@ O plano original:
   5126), e `read_edge_list` / `from_edges` os rejeitam. Para conferir a Q4, os
   laços foram descartados (não mudam pais de BFS/DFS). Decidir o que fazer com
   eles antes de rodar os grafos grandes.
+
+### E. Peças comuns de Dijkstra — `algorithms/shortest_paths.hpp`
+
+Faça esta primeiro: as três versões usam estas peças.
+
+- `shortest_paths<W>{source, dist, parent}` já está pronto.
+- `detail::check_dijkstra_input(g, source)` → nada. `assert` se `source` fora de
+  1..n; lança `std::invalid_argument` se `g.has_negative_weight()`.
+- `detail::init_shortest_paths(g, source)` → `shortest_paths` com `dist = +∞`,
+  `parent = 0`, `dist[source] = 0`, vetores com n + 1 posições.
+- **Decisão antes de começar:** `check_dijkstra_input` chama
+  `has_negative_weight()`, que o conceito `weighted_graph` ainda não exige.
+  Proposta: acrescentar ao conceito (afeta `concepts.hpp`, combine).
+
+### F. Três versões de Dijkstra
+
+Uma por arquivo, para que cada pessoa trabalhe sem conflito. Todas começam
+com `check_dijkstra_input` + `init_shortest_paths`.
+
+1. `algorithms/dijkstra_array.hpp` — `dijkstra_array(g, source)`. Vetor de
+   visitados; a cada rodada, varre todos os não visitados atrás do menor
+   `dist`; para quando o menor é +∞. O(n² + m).
+2. `algorithms/dijkstra_heap.hpp` — `dijkstra_heap(g, source)`. Usa
+   `gl::indexed_min_heap<W>` (`push`, `top`, `pop`, `contains`, `update_key`).
+   Cada vértice entra no heap uma única vez. O((n + m) log n).
+3. `algorithms/dijkstra_lazy.hpp` — `dijkstra_lazy(g, source)`. Usa
+   `std::priority_queue` com `std::greater`; uma relaxação empurra uma entrada
+   nova; ao tirar uma entrada com `d > dist[u]`, ignora (está velha).
+   O((n + m) log m). Serve de linha de base para o relatório.
+
+`algorithms/dijkstra.hpp` só inclui as três.
+
+### G. Caminho mínimo — `algorithms/path.hpp`
+
+- `reconstruct_path(tree, target)` → `std::vector<vertex_id>` com o caminho da
+  origem até `target`, origem primeiro. `{source}` se `target == source`;
+  vazio se inalcançável (`parent[target] == 0` e `target != source`).
+- Funciona com `search_tree` (BFS/DFS) e `shortest_paths` (Dijkstra), via o
+  conceito `parent_tree` que já está no arquivo.
+- Dica: siga `parent` de `target` até a origem e inverta no fim
+  (`std::ranges::reverse`).
+
+### H. Testes
+
+Os casos já existem com `doctest::skip()`. Tire o `skip` quando o caso estiver
+escrito:
+
+- `tests/test_dijkstra.cpp` — comportamento comum às três versões (vértice
+  único, grafo pequeno conferido à mão, inalcançáveis, peso zero, peso negativo
+  lança, CSR = matriz, `float`). O topo do arquivo mostra como rodar cada caso
+  para as três versões com `TEST_CASE_TEMPLATE`.
+- `tests/test_dijkstra_differential.cpp` — grafos aleatórios com semente fixa:
+  as três versões concordam em `dist`; `parent` forma uma árvore de caminhos
+  mínimos; com todos os pesos 1, `dist` = nível da BFS.
+- `tests/test_path.cpp` — `reconstruct_path` em árvores montadas à mão.
+
+**Pronto quando:** nenhum caso pulado, `make test` passando no Linux (com
+AddressSanitizer) e no Mac.
 
 ---
 

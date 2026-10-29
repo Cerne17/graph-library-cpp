@@ -76,10 +76,21 @@ Namespaces: `gl` for everything below except `algorithms/*`
   Part 1's BFS, DFS, components, distance, diameters and degree statistics,
   over `graph_like`. `tests/test_algorithms_vs_legacy.cpp` checks them against
   Part 1, which the test binary links.
-- `algorithms/dijkstra.hpp`: Dijkstra, being written by the team. Agreed
-  contract: `shortest_paths<W>{source, dist, parent}`, 1-indexed; unreachable
-  means `dist = +inf`, `parent = 0`; negative weights throw
-  `std::invalid_argument`, checked in O(1) via `has_negative_weight()`.
+- Part 2, being written by the team (skeletons: declarations and contracts
+  exist, bodies do not; their tests are `doctest::skip()` stubs — remove the
+  skip once a case is real). Task details in `docs/ONBOARDING.md` §7, E–H.
+  - `algorithms/shortest_paths.hpp`: `shortest_paths<W>{source, dist,
+    parent}`, 1-indexed; unreachable means `dist = +inf`, `parent = 0`.
+    `detail::check_dijkstra_input` (asserts the source, throws
+    `std::invalid_argument` on negative weights via `has_negative_weight()`)
+    and `detail::init_shortest_paths`, shared by every version.
+  - `algorithms/dijkstra_array.hpp` (`dijkstra_array`, O(n² + m)),
+    `dijkstra_heap.hpp` (`dijkstra_heap`, `indexed_min_heap` +
+    `update_key`, O((n + m) log n)), `dijkstra_lazy.hpp` (`dijkstra_lazy`,
+    `std::priority_queue` with stale-entry skipping, O((n + m) log m)).
+    `dijkstra.hpp` includes all three.
+  - `algorithms/path.hpp`: `reconstruct_path(tree, target)` for any
+    `parent_tree` (`search_tree` or `shortest_paths`).
 
 Ownership: `storage/matrix.hpp` and the migrated Part 1 algorithms in
 `include/graph/algorithms/` belong to the project owner. **Do not edit those
