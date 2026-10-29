@@ -24,6 +24,7 @@ Run everything from the repository root.
 make test        # builds and runs all doctest tests; must end in "Status: SUCCESS!"
 make             # legacy debug build (build/graphs)
 make benchmark   # legacy optimized benchmark
+make benchmark-weighted  # Part 2 benchmark (build/benchmark_weighted), driven by analysis/harness_weighted.py
 make clean       # removes build/
 ```
 
