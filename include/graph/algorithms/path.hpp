@@ -2,6 +2,8 @@
 
 #include "graph/types.hpp"
 
+#include <algorithm>
+#include <cassert>
 #include <concepts>
 #include <vector>
 
@@ -19,5 +21,24 @@ concept parent_tree = requires(const T& t) {
 // unreachable (parent[target] == 0 and target != source).
 // O(path length). Precondition (assert): target in 1..n.
 template<parent_tree T>
-std::vector<vertex_id> reconstruct_path(const T& tree, vertex_id target);
+std::vector<vertex_id> reconstruct_path(const T& tree, vertex_id target)
+{
+  assert(target >= 1 && target < tree.parent.size() &&
+         "reconstruct_path: target out of range");
+
+  if (target == tree.source) {
+    return { tree.source };
+  }
+  if (tree.parent[target] == 0) {
+    return {};
+  }
+
+  std::vector<vertex_id> path;
+  for (vertex_id v = target; v != tree.source; v = tree.parent[v]) {
+    path.push_back(v);
+  }
+  path.push_back(tree.source);
+  std::ranges::reverse(path);
+  return path;
+}
 } // namespace gl::algorithms
