@@ -17,4 +17,4 @@ struct shortest_paths
 template<weighted_graph G>
 shortest_paths<typename G::weight_type> dijkstra_array(const G& g,
                                                        vertex_id source);
-} // namespace gl
+} // namespace gl::algorithms
