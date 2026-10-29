@@ -62,7 +62,8 @@ Namespaces: `gl` for everything below except `algorithms/*`
   "no edge", parallel edges keep the minimum weight.
 - `graph.hpp`: user-facing aliases `csr_graph<D, W>` and `matrix_graph<D, W>`.
 - `io/edge_list.hpp`: `io::read_edge_list<W>(path)` →
-  `io::edge_list<W>{n, edges}`. Throws `std::runtime_error` with
+  `io::edge_list<W>{n, edges, skipped_self_loops}` (self-loops are dropped
+  and counted; the storages reject them). Throws `std::runtime_error` with
   `file:line: message` on bad input.
 - `io/load_graph.hpp`: `io::load_graph<G>(path)` = `read_edge_list` +
   `G::from_edges`.

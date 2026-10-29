@@ -323,10 +323,10 @@ O plano original:
 - Feita em `algorithms/search.hpp`, `components.hpp`, `distance.hpp` e
   `stats.hpp`. `tests/test_algorithms_vs_legacy.cpp` compara com o código da
   Parte 1 em grafos aleatórios, e os 18 pais da Q4 conferem nos grafos 1 a 4.
-- **Atenção:** os grafos do enunciado têm laços (por exemplo, `grafo_1` linha
-  5126), e `read_edge_list` / `from_edges` os rejeitam. Para conferir a Q4, os
-  laços foram descartados (não mudam pais de BFS/DFS). Decidir o que fazer com
-  eles antes de rodar os grafos grandes.
+- Os grafos do enunciado têm laços (4, 65, 1 e 35 nos grafos 1 a 4).
+  `read_edge_list` os descarta e conta em `skipped_self_loops`; não mudam
+  BFS, DFS nem Dijkstra, mas os graus diferem da Parte 1, que contava cada
+  laço como 2.
 
 ### E. Peças comuns de Dijkstra — `algorithms/shortest_paths.hpp` — feita
 

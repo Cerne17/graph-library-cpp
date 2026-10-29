@@ -20,6 +20,7 @@ struct edge_list
 {
   vertex_id n = 0;
   std::vector<input_edge_t<W>> edges;
+  std::size_t skipped_self_loops = 0; // "v v" lines, left out of edges
 };
 
 namespace detail {
@@ -51,8 +52,10 @@ inline bool has_leftovers(std::istringstream& ls)
 
 // Reads "n" on the first non-blank line, then one edge per line:
 // "u v" for unweighted policies, "u v w" for weighted ones.
-// Blank lines and comments (marked with a starting '#') are skipped. Any
-// malformed input throws std::runtime_error.
+// Blank lines and comments (marked with a starting '#') are skipped. Self-loops
+// ("v v") are validated like any edge, then dropped and counted in
+// skipped_self_loops: the storages do not accept them. Any malformed input
+// throws std::runtime_error.
 template<weight_policy W>
 edge_list<W> read_edge_list(const std::filesystem::path& path)
 {
@@ -117,11 +120,6 @@ edge_list<W> read_edge_list(const std::filesystem::path& path)
       detail::parse_error(
         path, line_no, "vertex out of range 1.." + std::to_string(result.n));
     }
-    if (raw_u == raw_v) {
-      detail::parse_error(
-        path, line_no, "self-loop on vertex " + std::to_string(raw_u));
-    }
-
     input_edge_t<W> e{};
     e.u = static_cast<vertex_id>(raw_u);
     e.v = static_cast<vertex_id>(raw_v);
@@ -136,6 +134,10 @@ edge_list<W> read_edge_list(const std::filesystem::path& path)
       detail::parse_error(path, line_no, "unexpected text after the edge");
     }
 
+    if (e.u == e.v) {
+      ++result.skipped_self_loops;
+      continue;
+    }
     result.edges.push_back(e);
   }
 
