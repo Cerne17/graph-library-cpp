@@ -55,9 +55,9 @@ docstring com argumentos, valor de retorno e custo **nas duas representações**
 ## Compilando
 
 ```bash
-make                # app/graphs           build de debug, -g, sem otimização
-make release        # app/graphs_release   otimizado, -O2
-make benchmark      # app/benchmark        otimizado, -O2
+make                # build/graphs           build de debug, -g, sem otimização
+make release        # build/graphs_release   otimizado, -O2
+make benchmark      # build/benchmark        otimizado, -O2
 make clean
 ```
 
@@ -66,24 +66,24 @@ relativos a ela.
 
 ## Executando
 
-`app/graphs` escreve os CSVs de saída de um grafo, ou de um lote:
+`build/graphs` escreve os CSVs de saída de um grafo, ou de um lote:
 
 ```bash
-./app/graphs_release                        # sem argumentos: lê config.csv
-./app/graphs_release data/graph.txt both    # um grafo: both | list | matrix
+./build/graphs_release                      # sem argumentos: lê config.csv
+./build/graphs_release data/graph.txt both  # um grafo: both | list | matrix
 ```
 
 Sem argumentos ele percorre `config.csv`, uma linha `graph,representation` por
 grafo, resolvendo `<nome>` para `data/<nome>.txt`. Um grafo que falha é
 reportado e pulado, em vez de abortar a execução inteira.
 
-`app/benchmark` produz as medições:
+`build/benchmark` produz as medições:
 
 ```bash
-./app/benchmark data/graph.txt list time     # média e mediana de BFS e DFS, em µs
-./app/benchmark data/graph.txt list mem      # segura o grafo para que o RSS seja amostrado
-./app/benchmark data/graph.txt list report   # distâncias, componentes, diâmetros
-./app/benchmark data/graph.txt list all      # tudo acima, um processo, uma carga
+./build/benchmark data/graph.txt list time   # média e mediana de BFS e DFS, em µs
+./build/benchmark data/graph.txt list mem    # segura o grafo para que o RSS seja amostrado
+./build/benchmark data/graph.txt list report # distâncias, componentes, diâmetros
+./build/benchmark data/graph.txt list all    # tudo acima, um processo, uma carga
 python analysis/harness.py                   # conduz o acima sobre config.csv
 python analysis/harness.py retime            # refaz só os tempos, preservando o resto
 ```
@@ -347,7 +347,7 @@ a ausência fique explícita no dado em vez de virar um silêncio.
 # Resultado 3 — Estudo de caso (Q4–Q7)
 
 Todos os valores desta seção foram produzidos pelo modo `report` do
-`app/benchmark`. Onde as duas representações foram medidas, elas deram resultados
+`build/benchmark`. Onde as duas representações foram medidas, elas deram resultados
 idênticos — veja [Concordância](#lista-e-matriz-concordam-em-todas-as-respostas).
 
 ## Q4 — Pais nas árvores de busca

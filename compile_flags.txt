@@ -1,2 +1,6 @@
 -Iinclude
--std=c++17
+-Ithird_party
+-std=c++23
+-xc++
+-Wall
+-Wextra

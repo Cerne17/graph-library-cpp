@@ -1,8 +1,6 @@
-# Compiled objects and the executable
+# Compiled objects and executables
+build/
 *.o
-app/graphs
-app/graphs_release
-app/benchmark
 
 # macOS debug symbol bundles
 *.dSYM/
@@ -23,3 +21,4 @@ data/stats*.csv
 
 # Assignment graph inputs (14 MB to 689 MB, distributed separately)
 data/grafo_*.txt
+
