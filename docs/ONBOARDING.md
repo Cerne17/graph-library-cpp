@@ -75,13 +75,21 @@ include/graph/
 ├── concepts.hpp           graph_like e weighted_graph: o que um algoritmo pode exigir
 ├── heap.hpp               indexed_heap<K, Compare>, com update_key em O(log n);
 │                          indexed_min_heap<K> é o atalho para o min-heap
-├── storage/
+├── graph.hpp              csr_graph<D, W> e matrix_graph<D, W>: os nomes de uso
+├── storage/               (namespace gl)
 │   ├── csr.hpp            csr_storage<D, W>: armazenamento CSR, com ou sem pesos
+│   ├── matrix.hpp         matrix_storage<D, W>: bitset, ou (n + 1)² pesos
 │   ├── weight_column.hpp  coluna de pesos que só existe se o grafo for ponderado
 │   └── input_edge.hpp     input_edge_t<W>: escolhe edge ou weighted_edge
-├── io/
-│   └── edge_list.hpp      read_edge_list<W>(path): lê arquivos de 2 ou 3 colunas
-└── algorithms/
+├── io/                    (namespace gl::io)
+│   ├── edge_list.hpp      read_edge_list<W>(path): lê arquivos de 2 ou 3 colunas
+│   ├── load_graph.hpp     load_graph<G>(path): lê e monta o grafo
+│   └── label_map.hpp      label_map e read_label_map: nome ↔ índice
+└── algorithms/            (namespace gl::algorithms)
+    ├── search.hpp         bfs, dfs → search_tree {source, parent, level}
+    ├── components.hpp     connected_components (só não-direcionados)
+    ├── distance.hpp       distance, exact_diameter, approximate_diameter
+    ├── stats.hpp          compute_degree_stats → degree_stats
     └── dijkstra.hpp       em andamento (grupo)
 ```
 
@@ -93,19 +101,21 @@ include/graph/
   `for_each_edge(u, f)`, que chama `f(destino, peso)`. Dijkstra exige isto.
 - **`csr_storage<D, W>`**: construído só por `from_edges(n, arestas)`. Vizinhos
   saem ordenados. Grafos sem pesos não pagam nenhum byte pelos pesos.
-- **Leitura de arquivo:** `read_edge_list<gl::weighted<>>("arquivo.txt")`
-  devolve `{n, arestas}`, pronto para `from_edges`.
+- **`csr_graph<D, W>` / `matrix_graph<D, W>`** (`graph.hpp`): os nomes de uso
+  das duas representações.
+- **Leitura de arquivo:** `gl::io::load_graph<G>("arquivo.txt")` lê a lista de
+  arestas e monta o grafo. `gl::io::read_label_map(...)` lê os nomes dos
+  vértices (`name_of(v)`, `id_of(nome)`).
 
 ### Exemplo de uso de ponta a ponta
 
 ```cpp
-#include "graph/io/edge_list.hpp"
-#include "graph/storage/csr.hpp"
+#include "graph/graph.hpp"
+#include "graph/io/load_graph.hpp"
 
-using graph_t = gl::csr_storage<gl::undirected, gl::weighted<>>;
+using G = gl::csr_graph<gl::undirected, gl::weighted<>>;
 
-const auto list = gl::read_edge_list<gl::weighted<>>("data/<grafo>.txt");
-const auto g = graph_t::from_edges(list.n, list.edges);
+const G g = gl::io::load_graph<G>("data/<grafo>.txt");
 
 g.for_each_edge(10, [](gl::vertex_id v, double w) {
   // cada vizinho de 10 e o peso da aresta
@@ -126,7 +136,7 @@ g.for_each_edge(10, [](gl::vertex_id v, double w) {
 ### Passos
 
 ```bash
-git clone <URL do repositório>      # peça a URL ao Miguel
+git clone https://github.com/Cerne17/graph-library-cpp.git library
 cd library
 git switch feature/generalization   # a Parte 2 vive nesta branch
 make test                           # compila e roda todos os testes
@@ -197,7 +207,9 @@ fix: untrack test binary, correct Liar test, namespace types
 Tudo está em [`docs/CONVENTIONS.md`](CONVENTIONS.md). O essencial:
 
 - estilo da biblioteca padrão: `snake_case` para tipos, funções e *concepts*;
-- tudo dentro de `namespace gl`, fechado com `} // namespace gl`;
+- `namespace gl` para tipos, *storage* e heap; `gl::algorithms` para os
+  algoritmos; `gl::io` para os leitores. Feche com o nome completo
+  (`} // namespace gl::io`);
 - vértices são **1-indexados**, como nos arquivos de entrada;
 - **erro do programador** (pré-condição violada) → `assert`;
   **erro de entrada** (arquivo ruim, peso negativo no Dijkstra) → exceção;
@@ -233,7 +245,7 @@ Tudo está em [`docs/CONVENTIONS.md`](CONVENTIONS.md). O essencial:
 - **Grupo:** Dijkstra — versão com vetor, depois com o `indexed_heap`, depois uma
   terceira com `std::priority_queue` e remoção preguiçosa, para comparação. Fica
   em `include/graph/algorithms/dijkstra.hpp`.
-- **Miguel:** a matriz de adjacência (tarefa C) e a migração da Parte 1
+- **Miguel:** fez a matriz de adjacência (tarefa C) e a migração da Parte 1
   (tarefa D). Não mexa em `storage/matrix.hpp` nem nos algoritmos migrados sem
   combinar.
 - **Qualquer mudança em `concepts.hpp`** (por exemplo, exigir
@@ -246,9 +258,13 @@ Convenções já decididas para Dijkstra:
 - peso negativo: lança `std::invalid_argument`, verificado em O(1) via
   `has_negative_weight()`.
 
-**Tarefas em aberto.** A e B estão livres; C e D estão com o Miguel:
+**Estado das tarefas.** A, C e D estão feitas; B está quase pronta (veja abaixo):
 
-### A. Mapeamento nome ↔ índice da rede de colaboração
+### A. Mapeamento nome ↔ índice da rede de colaboração — feita
+
+Em `io/label_map.hpp` (`gl::io::label_map`, `gl::io::read_label_map`), com
+testes em `tests/test_label_map.cpp`. O plano original:
+
 
 - Uma classe pequena e separada do grafo, por exemplo `gl::label_map`:
   `std::vector<std::string>` (índice → nome) e
@@ -260,9 +276,17 @@ Convenções já decididas para Dijkstra:
 - **Pronto quando:** testes com um arquivo de nomes pequeno em `tests/data/`,
   incluindo nome com acento e nome inexistente.
 
-### B. Testes do leitor de arquivos e comentários `#`
+### B. Testes do leitor de arquivos e comentários `#` — quase pronta
 
-- `io/edge_list.hpp` funciona, mas tem só um teste.
+Já existem: comentários `#`, um teste por caso de erro (com a mensagem
+conferida), o teste da mensagem com número de linha e o de ponta a ponta
+(`tests/test_load_graph.cpp`). Os casos de erro usam arquivos temporários
+escritos pelo próprio teste, não *fixtures*. **Falta:** a *fixture* com o
+exemplo do enunciado (peso `-9.5`). Confirme com quem pegou a tarefa.
+
+O plano original:
+
+- `io/edge_list.hpp` funcionava, mas tinha só um teste.
 - Escrever os testes de arquivos bons (2 e 3 colunas), um teste de ponta a
   ponta (ler → montar CSR → conferir arestas), e um teste por caso de erro: arquivo
   inexistente, arquivo vazio, n inválido, campo faltando, lixo no fim da linha,
@@ -272,23 +296,31 @@ Convenções já decididas para Dijkstra:
 - **Pronto quando:** cada caso de erro tem *fixture* e teste, e um teste
   confere a mensagem com o número da linha.
 
-### C. Matriz de adjacência
+### C. Matriz de adjacência — feita
 
 - `storage/matrix.hpp`, com a mesma interface pública do `csr_storage`.
 - Sem pesos: **bitset plano** (`std::vector<std::uint64_t>`), com varredura de
   vizinhos palavra a palavra (`std::countr_zero`, `std::popcount`).
-- Com pesos: `std::vector<W>` plano, `+∞` como "sem aresta", guardando só o
-  triângulo superior quando não-direcionado.
+- Com pesos: `std::vector<W>` plano com as (n + 1)² células, `+∞` como "sem
+  aresta"; arestas paralelas ficam com o menor peso. (O plano original guardava
+  só o triângulo superior quando não-direcionado; ficou a matriz inteira.)
 - **Pronto quando:** satisfaz `graph_like` / `weighted_graph`, e um teste
   diferencial mostra que CSR e matriz devolvem os mesmos vizinhos e pesos em
   grafos aleatórios.
 
-### D. Migração da Parte 1
+### D. Migração da Parte 1 — feita
 
 - BFS, DFS, componentes e diâmetro reescritos como templates sobre
   `graph_like`, em `include/graph/algorithms/`.
 - **Pronto quando:** reproduzem os números da Parte 1 (`data/results.csv`; por
   exemplo, no grafo_1, o pai do vértice 10 na BFS a partir do 1 é 2042).
+- Feita em `algorithms/search.hpp`, `components.hpp`, `distance.hpp` e
+  `stats.hpp`. `tests/test_algorithms_vs_legacy.cpp` compara com o código da
+  Parte 1 em grafos aleatórios, e os 18 pais da Q4 conferem nos grafos 1 a 4.
+- **Atenção:** os grafos do enunciado têm laços (por exemplo, `grafo_1` linha
+  5126), e `read_edge_list` / `from_edges` os rejeitam. Para conferir a Q4, os
+  laços foram descartados (não mudam pais de BFS/DFS). Decidir o que fazer com
+  eles antes de rodar os grafos grandes.
 
 ---
 

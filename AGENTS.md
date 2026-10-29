@@ -13,7 +13,8 @@ lives in `docs/ONBOARDING.md`.
   Runtime polymorphism, camelCase. Delivered and graded. **Do not modify it**
   unless the task explicitly says so.
 - **New (Part 2):** `include/graph/`. Header-only C++23 templates, concepts,
-  snake_case, namespace `gl`. All new work goes here.
+  snake_case, namespaces `gl`, `gl::algorithms` and `gl::io`. All new work
+  goes here.
 
 ## Build and test
 
@@ -28,10 +29,10 @@ make clean       # removes build/
 
 - `make test` must pass before you report a task as done. Run it after every
   meaningful change, not only at the end.
-- The test build uses `-fsanitize=undefined` and libc++ hardening. On macOS,
-  AddressSanitizer hangs at startup with this toolchain: do not add
-  `-fsanitize=address` to the Makefile. On Linux/GCC, additionally verify with
-  `-fsanitize=address,undefined -D_GLIBCXX_ASSERTIONS`.
+- The test build uses `-fsanitize=undefined` plus both standard libraries'
+  debug modes (`_LIBCPP_HARDENING_MODE_DEBUG` and `_GLIBCXX_ASSERTIONS`), and
+  adds `-fsanitize=address` on Linux only. On macOS, AddressSanitizer hangs at
+  startup with this toolchain: never enable it there.
 - New test files `tests/test_*.cpp` are picked up automatically. New headers in
   `include/graph/` or one subfolder deep are tracked automatically.
 - Large graph inputs `data/grafo_*.txt` are not in the repository. Do not
@@ -47,32 +48,50 @@ make clean       # removes build/
   `weighted_graph` (adds `for_each_edge(u, f)` calling `f(target, weight)`,
   plus `G::weight_type`). Algorithms are free function templates constrained by
   these concepts — never by a concrete storage type.
+Namespaces: `gl` for everything below except `algorithms/*`
+(`gl::algorithms`) and `io/*` (`gl::io`). Helpers go in the nested `detail`.
+
 - `storage/csr.hpp`: `csr_storage<D, W>`, built only via
   `from_edges(n, edges)`. Neighbors are sorted ascending; weights are sorted
   together with their targets. Weight members exist only when weighted (via
   `if constexpr`, trailing `requires W::is_weighted`, and
   `[[no_unique_address]]` / empty-base tricks). Unweighted storage must stay
   zero-overhead.
-- `io/edge_list.hpp`: `read_edge_list<W>(path)` → `edge_list<W>{n, edges}`.
-  Throws `std::runtime_error` with `file:line: message` on bad input.
+- `storage/matrix.hpp`: `matrix_storage<D, W>`, same interface as CSR plus
+  `has_edge(u, v)`. Unweighted: a bitset; weighted: (n + 1)² cells, `+inf` for
+  "no edge", parallel edges keep the minimum weight.
+- `graph.hpp`: user-facing aliases `csr_graph<D, W>` and `matrix_graph<D, W>`.
+- `io/edge_list.hpp`: `io::read_edge_list<W>(path)` →
+  `io::edge_list<W>{n, edges}`. Throws `std::runtime_error` with
+  `file:line: message` on bad input.
+- `io/load_graph.hpp`: `io::load_graph<G>(path)` = `read_edge_list` +
+  `G::from_edges`.
+- `io/label_map.hpp`: `io::label_map` (`name_of(v)`, `id_of(name)` with a
+  transparent `string_view` lookup) and `io::read_label_map(path)` for
+  `id,name` files, ids 1..n in order.
 - `heap.hpp`: `indexed_heap<K, Compare>` with a position map and
   `update_key`; `indexed_min_heap<K>` alias. `comp_(a, b)` true means `a` is
   closer to the root (opposite of `std::priority_queue`).
+- `algorithms/search.hpp`, `components.hpp`, `distance.hpp`, `stats.hpp`:
+  Part 1's BFS, DFS, components, distance, diameters and degree statistics,
+  over `graph_like`. `tests/test_algorithms_vs_legacy.cpp` checks them against
+  Part 1, which the test binary links.
 - `algorithms/dijkstra.hpp`: Dijkstra, being written by the team. Agreed
   contract: `shortest_paths<W>{source, dist, parent}`, 1-indexed; unreachable
   means `dist = +inf`, `parent = 0`; negative weights throw
   `std::invalid_argument`, checked in O(1) via `has_negative_weight()`.
 
-Ownership: the project owner is writing `storage/matrix.hpp` and migrating the
-Part 1 algorithms (BFS, DFS, components, distance, diameter) into
-`include/graph/algorithms/`. **Do not edit those files, or `concepts.hpp`,
-unless the task says so.** Changes to `concepts.hpp` affect everyone.
+Ownership: `storage/matrix.hpp` and the migrated Part 1 algorithms in
+`include/graph/algorithms/` belong to the project owner. **Do not edit those
+files, or `concepts.hpp`, unless the task says so.** Changes to
+`concepts.hpp` affect everyone.
 
 ## Rules for writing code
 
 - Follow `docs/CONVENTIONS.md`: standard-library naming (`snake_case`,
-  `_type` aliases, `is_` flags), `namespace gl` closed with
-  `} // namespace gl`, `#pragma once`, include paths from `include/`
+  `_type` aliases, `is_` flags), the namespace of the header's folder closed
+  with its full name (`} // namespace gl::io`), `#pragma once`, include paths
+  from `include/`
   (`"graph/..."`), include what you use, no `using namespace` in headers.
 - Class layout: `private` section first, then `public`. Structs: `public`
   first. Name parameters in declarations. Light constructors and one-line

@@ -1,6 +1,7 @@
 # Conventions
 
-Conventions for the generic graph library (`include/graph/`, namespace `gl`).
+Conventions for the generic graph library (`include/graph/`, namespaces `gl`,
+`gl::algorithms` and `gl::io`).
 Part 1 code (`src/`, `app/`, `include/graph.hpp`) predates these and keeps its
 camelCase style until it is migrated.
 
@@ -55,13 +56,18 @@ asking for a weight on an unweighted graph fails to compile.
 
 ## Headers and namespaces
 
-- Everything lives in `namespace gl`. Close it with `} // namespace gl`.
-- Algorithms (`include/graph/algorithms/`) live in `namespace gl::algorithms`,
-  separating operations from data structures, like `std::ranges` inside
-  `std`. Close it with `} // namespace gl::algorithms`.
-- File readers built on top of the storage types (`io/load_graph.hpp`,
-  `io/label_map.hpp`) live in `namespace gl::io`. (`io/edge_list.hpp` predates
-  this and is still in `gl`.)
+- Each header lives in the namespace of its folder:
+
+  | namespace        | contents                                                   | headers                                        |
+  | ---------------- | ---------------------------------------------------------- | ---------------------------------------------- |
+  | `gl`             | types, policies, concepts, storage, graph aliases and heap | `types`, `policies`, `concepts`, `graph`, `heap`, `storage/*` |
+  | `gl::algorithms` | operations on graphs                                       | `algorithms/*`                                 |
+  | `gl::io`         | file readers                                               | `io/*`                                         |
+
+  Operations sit apart from data structures, like `std::ranges` inside `std`.
+  Close a namespace with its full name: `} // namespace gl::algorithms`.
+- Internal helpers go in a nested `detail` namespace of the same name
+  (`gl::detail`, `gl::io::detail`).
 - Templates are header-only: their full definitions live in `.hpp` files.
 - Every header starts with `#pragma once`.
 - Include project headers by their path from `include/`:
@@ -87,9 +93,11 @@ asking for a weight on an unweighted graph fails to compile.
 ## Tests
 
 - Framework: doctest, vendored in `third_party/doctest/doctest.h`.
-- Run with `make test`. The test build uses `-fsanitize=undefined` and libc++
-  hardening (`_LIBCPP_HARDENING_MODE_DEBUG`), which bounds-checks standard
-  containers.
+- Run with `make test`. The test build uses `-fsanitize=undefined` and
+  bounds-checks the standard containers with both standard libraries' debug
+  modes: libc++ hardening (`_LIBCPP_HARDENING_MODE_DEBUG`, macOS/clang) and
+  libstdc++ assertions (`_GLIBCXX_ASSERTIONS`, Linux/GCC). Each library ignores
+  the other's macro. On Linux it also adds `-fsanitize=address`.
 - **Compile-time facts** (concepts, type aliases): `static_assert` at file
   scope, one fact per assertion.
 - **Runtime behaviour**: `TEST_CASE` blocks with `CHECK` / `REQUIRE`.
