@@ -34,5 +34,6 @@ concept weighted_graph =
                typename G::weighting_type::weight_type> &&
   requires(const G& g, vertex_id u) {
     g.for_each_edge(u, edge_probe<typename G::weight_type>{});
+    { g.has_negative_weight() } -> std::convertible_to<bool>;
   };
 } // namespace gl

@@ -87,7 +87,24 @@ TEST_CASE("load_graph: missing file throws")
 TEST_CASE("load_graph: malformed input passes read_edge_list's error through")
 {
   using G = gl::csr_graph<gl::undirected, gl::weighted<>>;
-  CHECK_THROWS_WITH_AS(gl::io::load_graph<G>("tests/data/bad_self_loop.txt"),
-                       doctest::Contains("self-loop"),
+  CHECK_THROWS_WITH_AS(gl::io::load_graph<G>("tests/data/unweighted_small.txt"),
+                       doctest::Contains("expected an edge weight"),
                        std::runtime_error);
+}
+
+TEST_CASE("load_graph: self-loops are left out of the graph")
+{
+  using G = gl::csr_graph<gl::undirected, gl::weighted<>>;
+  const auto g = gl::io::load_graph<G>("tests/data/self_loops.txt");
+
+  // only 1-2 (1.5) remains
+  std::vector<gl::vertex_id> at_1;
+  std::vector<gl::vertex_id> at_2;
+  std::vector<gl::vertex_id> at_3;
+  g.for_each_neighbor(1, [&](gl::vertex_id v) { at_1.push_back(v); });
+  g.for_each_neighbor(2, [&](gl::vertex_id v) { at_2.push_back(v); });
+  g.for_each_neighbor(3, [&](gl::vertex_id v) { at_3.push_back(v); });
+  CHECK(at_1 == std::vector<gl::vertex_id>{ 2 });
+  CHECK(at_2 == std::vector<gl::vertex_id>{ 1 });
+  CHECK(at_3.empty());
 }

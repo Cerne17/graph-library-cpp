@@ -266,13 +266,32 @@ TEST_CASE("read_edge_list: vertex id out of range")
                        std::runtime_error); // no vertex is valid when n = 0
 }
 
-TEST_CASE("read_edge_list: self-loops are rejected")
+TEST_CASE("read_edge_list: self-loops are skipped and counted")
 {
-  CHECK_THROWS_AS(
-    gl::io::read_edge_list<gl::weighted<>>("tests/data/bad_self_loop.txt"),
-    std::runtime_error);
-  CHECK_THROWS_WITH_AS(read_string<gl::unweighted>("3\n2 2\n"),
-                       doctest::Contains("self-loop on vertex 2"),
+  const auto g =
+    gl::io::read_edge_list<gl::weighted<>>("tests/data/self_loops.txt");
+
+  CHECK(g.n == 3);
+  CHECK(g.skipped_self_loops == 2);
+  REQUIRE(g.edges.size() == 1);
+  CHECK(g.edges[0].u == 1);
+  CHECK(g.edges[0].v == 2);
+  CHECK(g.edges[0].weight == 1.5);
+
+  const auto clean = read_string<gl::unweighted>("3\n1 2\n");
+  CHECK(clean.skipped_self_loops == 0);
+}
+
+TEST_CASE("read_edge_list: a skipped self-loop is still validated")
+{
+  CHECK_THROWS_WITH_AS(read_string<gl::unweighted>("3\n4 4\n"),
+                       doctest::Contains("vertex out of range 1..3"),
+                       std::runtime_error);
+  CHECK_THROWS_WITH_AS(read_string<gl::weighted<>>("3\n2 2\n"),
+                       doctest::Contains("expected an edge weight"),
+                       std::runtime_error);
+  CHECK_THROWS_WITH_AS(read_string<gl::unweighted>("3\n2 2 x\n"),
+                       doctest::Contains("unexpected text after the edge"),
                        std::runtime_error);
 }
 

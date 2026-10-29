@@ -46,7 +46,7 @@ make clean       # removes build/
   and the concepts `direction_policy`, `weight_policy`.
 - `concepts.hpp`: `graph_like` (`vertex_count()`, `for_each_neighbor(u, f)`) and
   `weighted_graph` (adds `for_each_edge(u, f)` calling `f(target, weight)`,
-  plus `G::weight_type`). Algorithms are free function templates constrained by
+  `has_negative_weight()`, plus `G::weight_type`). Algorithms are free function templates constrained by
   these concepts — never by a concrete storage type.
 Namespaces: `gl` for everything below except `algorithms/*`
 (`gl::algorithms`) and `io/*` (`gl::io`). Helpers go in the nested `detail`.
@@ -62,7 +62,8 @@ Namespaces: `gl` for everything below except `algorithms/*`
   "no edge", parallel edges keep the minimum weight.
 - `graph.hpp`: user-facing aliases `csr_graph<D, W>` and `matrix_graph<D, W>`.
 - `io/edge_list.hpp`: `io::read_edge_list<W>(path)` →
-  `io::edge_list<W>{n, edges}`. Throws `std::runtime_error` with
+  `io::edge_list<W>{n, edges, skipped_self_loops}` (self-loops are dropped
+  and counted; the storages reject them). Throws `std::runtime_error` with
   `file:line: message` on bad input.
 - `io/load_graph.hpp`: `io::load_graph<G>(path)` = `read_edge_list` +
   `G::from_edges`.
@@ -76,10 +77,22 @@ Namespaces: `gl` for everything below except `algorithms/*`
   Part 1's BFS, DFS, components, distance, diameters and degree statistics,
   over `graph_like`. `tests/test_algorithms_vs_legacy.cpp` checks them against
   Part 1, which the test binary links.
-- `algorithms/dijkstra.hpp`: Dijkstra, being written by the team. Agreed
-  contract: `shortest_paths<W>{source, dist, parent}`, 1-indexed; unreachable
-  means `dist = +inf`, `parent = 0`; negative weights throw
-  `std::invalid_argument`, checked in O(1) via `has_negative_weight()`.
+- Part 2: Dijkstra and paths (tasks E–H in `docs/ONBOARDING.md` §7).
+  `tests/test_dijkstra.cpp` runs every case for all three versions;
+  `tests/test_dijkstra_differential.cpp` checks them on random graphs against
+  the shortest-path optimality conditions and BFS levels.
+  - `algorithms/shortest_paths.hpp`: `shortest_paths<W>{source, dist,
+    parent}`, 1-indexed; unreachable means `dist = +inf`, `parent = 0`.
+    `detail::check_dijkstra_input` (asserts the source, throws
+    `std::invalid_argument` on negative weights via `has_negative_weight()`)
+    and `detail::init_shortest_paths`, shared by every version.
+  - `algorithms/dijkstra_array.hpp` (`dijkstra_array`, O(n² + m)),
+    `dijkstra_heap.hpp` (`dijkstra_heap`, `indexed_min_heap` +
+    `update_key`, O((n + m) log n)), `dijkstra_lazy.hpp` (`dijkstra_lazy`,
+    `std::priority_queue` with stale-entry skipping, O((n + m) log m)).
+    `dijkstra.hpp` includes all three.
+  - `algorithms/path.hpp`: `reconstruct_path(tree, target)` for any
+    `parent_tree` (`search_tree` or `shortest_paths`).
 
 Ownership: `storage/matrix.hpp` and the migrated Part 1 algorithms in
 `include/graph/algorithms/` belong to the project owner. **Do not edit those
