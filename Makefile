@@ -1,7 +1,15 @@
 CXX := g++
 CXXFLAGS := -std=c++23 -Iinclude -Wall -Wextra -g
 RELFLAGS := -std=c++23 -Iinclude -Wall -Wextra -O2
-TESTFLAGS := -std=c++23 -Iinclude -Ithird_party -Wall -Wextra -g -fsanitize=undefined -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
+# Tests bounds-check the standard containers with whichever standard library
+# is in use: libc++ hardening (macOS/clang) or libstdc++ assertions (Linux/GCC).
+# Each library ignores the other's macro.
+TESTFLAGS := -std=c++23 -Iinclude -Ithird_party -Wall -Wextra -g -fsanitize=undefined -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG -D_GLIBCXX_ASSERTIONS
+
+# AddressSanitizer on Linux only: with this toolchain it hangs at startup on macOS.
+ifeq ($(shell uname),Linux)
+TESTFLAGS += -fsanitize=address
+endif
 
 # Every generated file lives under build/, mirroring the source tree:
 # src/graph.cpp -> build/src/graph.o, tests/test_csr.cpp -> build/tests/test_csr.o
@@ -51,7 +59,7 @@ $(BUILD)/tests/legacy/src/%.o: src/%.cpp include/graph.hpp
 	@mkdir -p $(@D)
 	$(CXX) $(TESTFLAGS) -c $< -o $@
 
-$(BUILD)/tests/%.o: tests/%.cpp $(HEADERS)
+$(BUILD)/tests/%.o: tests/%.cpp $(HEADERS) include/graph.hpp # graph.hpp: legacy comparison test
 	@mkdir -p $(@D)
 	$(CXX) $(TESTFLAGS) -c $< -o $@
 

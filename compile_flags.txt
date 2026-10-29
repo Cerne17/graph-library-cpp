@@ -2,3 +2,5 @@
 -Ithird_party
 -std=c++23
 -xc++
+-Wall
+-Wextra
