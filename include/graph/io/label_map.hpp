@@ -97,7 +97,7 @@ inline label_map read_label_map(const std::filesystem::path& path)
 
   while (std::getline(in, line)) {
     ++line_no;
-    if (gl::detail::is_skippable(line)) {
+    if (detail::is_skippable(line)) {
       continue;
     }
     if (!line.empty() && line.back() == '\r') {
@@ -106,17 +106,17 @@ inline label_map read_label_map(const std::filesystem::path& path)
 
     const auto comma = line.find(',');
     if (comma == std::string::npos) {
-      gl::detail::parse_error(path, line_no, "expected 'id,name'");
+      detail::parse_error(path, line_no, "expected 'id,name'");
     }
 
     std::istringstream id_field(line.substr(0, comma));
     long long raw_id;
-    if (!(id_field >> raw_id) || gl::detail::has_leftovers(id_field)) {
-      gl::detail::parse_error(path, line_no, "vertex id is not a number");
+    if (!(id_field >> raw_id) || detail::has_leftovers(id_field)) {
+      detail::parse_error(path, line_no, "vertex id is not a number");
     }
     const auto expected = static_cast<long long>(names.size());
     if (raw_id != expected) {
-      gl::detail::parse_error(path,
+      detail::parse_error(path,
                               line_no,
                               "expected vertex id " + std::to_string(expected) +
                                 ", got " + std::to_string(raw_id));
@@ -124,7 +124,7 @@ inline label_map read_label_map(const std::filesystem::path& path)
 
     std::string name = line.substr(comma + 1);
     if (name.empty()) {
-      gl::detail::parse_error(path, line_no, "empty name");
+      detail::parse_error(path, line_no, "empty name");
     }
     names.push_back(std::move(name));
   }

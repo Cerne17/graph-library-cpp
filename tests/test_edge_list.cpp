@@ -10,13 +10,13 @@
 #include <string>
 
 static_assert(
-  std::same_as<decltype(gl::edge_list<gl::unweighted>::edges)::value_type,
+  std::same_as<decltype(gl::io::edge_list<gl::unweighted>::edges)::value_type,
                gl::edge>);
 static_assert(
-  std::same_as<decltype(gl::edge_list<gl::weighted<>>::edges)::value_type,
+  std::same_as<decltype(gl::io::edge_list<gl::weighted<>>::edges)::value_type,
                gl::weighted_edge<double>>);
 static_assert(
-  std::same_as<decltype(gl::edge_list<gl::weighted<float>>::edges)::value_type,
+  std::same_as<decltype(gl::io::edge_list<gl::weighted<float>>::edges)::value_type,
                gl::weighted_edge<float>>);
 
 namespace {
@@ -42,10 +42,10 @@ struct temp_file
 };
 
 template<gl::weight_policy W>
-gl::edge_list<W> read_string(const std::string& content)
+gl::io::edge_list<W> read_string(const std::string& content)
 {
   const temp_file f(content);
-  return gl::read_edge_list<W>(f.path);
+  return gl::io::read_edge_list<W>(f.path);
 }
 } // namespace
 
@@ -54,7 +54,7 @@ gl::edge_list<W> read_string(const std::string& content)
 TEST_CASE("read_edge_list: unweighted file")
 {
   const auto g =
-    gl::read_edge_list<gl::unweighted>("tests/data/unweighted_small.txt");
+    gl::io::read_edge_list<gl::unweighted>("tests/data/unweighted_small.txt");
 
   CHECK(g.n == 3);
   REQUIRE(g.edges.size() == 2);
@@ -67,7 +67,7 @@ TEST_CASE("read_edge_list: unweighted file")
 TEST_CASE("read_edge_list: weighted file")
 {
   const auto g =
-    gl::read_edge_list<gl::weighted<>>("tests/data/weighted_small.txt");
+    gl::io::read_edge_list<gl::weighted<>>("tests/data/weighted_small.txt");
 
   CHECK(g.n == 3);
   REQUIRE(g.edges.size() == 2);
@@ -82,7 +82,7 @@ TEST_CASE("read_edge_list: weighted file")
 TEST_CASE("read_edge_list: float weights")
 {
   const auto g =
-    gl::read_edge_list<gl::weighted<float>>("tests/data/weighted_small.txt");
+    gl::io::read_edge_list<gl::weighted<float>>("tests/data/weighted_small.txt");
 
   REQUIRE(g.edges.size() == 2);
   CHECK(g.edges[0].weight == 0.5f);
@@ -188,7 +188,7 @@ TEST_CASE("read_edge_list: weight formats")
 TEST_CASE("read_edge_list: missing file")
 {
   CHECK_THROWS_WITH_AS(
-    gl::read_edge_list<gl::unweighted>("tests/data/does_not_exist.txt"),
+    gl::io::read_edge_list<gl::unweighted>("tests/data/does_not_exist.txt"),
     doctest::Contains("could not open file"),
     std::runtime_error);
 }
@@ -269,7 +269,7 @@ TEST_CASE("read_edge_list: vertex id out of range")
 TEST_CASE("read_edge_list: self-loops are rejected")
 {
   CHECK_THROWS_AS(
-    gl::read_edge_list<gl::weighted<>>("tests/data/bad_self_loop.txt"),
+    gl::io::read_edge_list<gl::weighted<>>("tests/data/bad_self_loop.txt"),
     std::runtime_error);
   CHECK_THROWS_WITH_AS(read_string<gl::unweighted>("3\n2 2\n"),
                        doctest::Contains("self-loop on vertex 2"),
@@ -279,7 +279,7 @@ TEST_CASE("read_edge_list: self-loops are rejected")
 TEST_CASE("read_edge_list: weighted edge without a valid weight")
 {
   CHECK_THROWS_WITH_AS(
-    gl::read_edge_list<gl::weighted<>>("tests/data/unweighted_small.txt"),
+    gl::io::read_edge_list<gl::weighted<>>("tests/data/unweighted_small.txt"),
     doctest::Contains("expected an edge weight"),
     std::runtime_error);
   CHECK_THROWS_WITH_AS(read_string<gl::weighted<>>("3\n1 2 abc\n"),
@@ -291,7 +291,7 @@ TEST_CASE("read_edge_list: text after the edge")
 {
   // a weighted file read as unweighted leaves the weight over
   CHECK_THROWS_WITH_AS(
-    gl::read_edge_list<gl::unweighted>("tests/data/weighted_small.txt"),
+    gl::io::read_edge_list<gl::unweighted>("tests/data/weighted_small.txt"),
     doctest::Contains("unexpected text after the edge"),
     std::runtime_error);
   CHECK_THROWS_WITH_AS(read_string<gl::weighted<>>("3\n1 2 0.5 x\n"),
@@ -307,7 +307,7 @@ TEST_CASE("read_edge_list: errors name the file and the line")
   const temp_file f("3\n1 2\n\n# comment\n1 4\n"); // bad edge on line 5
   const std::string expected = f.path.string() + ":5: vertex out of range 1..3";
 
-  CHECK_THROWS_WITH_AS(gl::read_edge_list<gl::unweighted>(f.path),
+  CHECK_THROWS_WITH_AS(gl::io::read_edge_list<gl::unweighted>(f.path),
                        expected.c_str(),
                        std::runtime_error);
 }

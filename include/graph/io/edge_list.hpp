@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace gl {
+namespace gl::io {
 
 template<weight_policy W>
 struct edge_list
@@ -142,4 +142,4 @@ edge_list<W> read_edge_list(const std::filesystem::path& path)
   return result;
 }
 
-} // namespace gl
+} // namespace gl::io
