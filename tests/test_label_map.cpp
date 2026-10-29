@@ -13,7 +13,8 @@ const std::vector<std::string> small_names{ "",
                                             "Edsger W. Dijkstra",
                                             "Alan M. Turing",
                                             "Hopper, Grace",
-                                            "Ada Lovelace" };
+                                            "Ada Lovelace",
+                                            "\u00c9va Tardos" };
 } // namespace
 
 TEST_CASE("label_map: built from names")
@@ -44,7 +45,7 @@ TEST_CASE("read_label_map: name_of and id_of agree both ways")
 {
   const auto labels = gl::io::read_label_map("tests/data/labels_small.txt");
 
-  REQUIRE(labels.size() == 4);
+  REQUIRE(labels.size() == 5);
   for (gl::vertex_id v = 1; v <= labels.size(); ++v) {
     CAPTURE(v);
     CHECK(labels.name_of(v) == small_names[v]);
@@ -59,6 +60,15 @@ TEST_CASE("read_label_map: a name containing a comma survives intact")
 
   CHECK(labels.name_of(3) == "Hopper, Grace");
   CHECK(labels.id_of("Hopper, Grace") == 3);
+}
+
+TEST_CASE("read_label_map: accented names match byte for byte")
+{
+  const auto labels = gl::io::read_label_map("tests/data/labels_small.txt");
+
+  CHECK(labels.id_of("\u00c9va Tardos") == 5); // precomposed É, as in the file
+  CHECK_THROWS_AS(labels.id_of("Eva Tardos"), std::invalid_argument);
+  CHECK_THROWS_AS(labels.id_of("E\u0301va Tardos"), std::invalid_argument);
 }
 
 TEST_CASE("read_label_map: lookup with a std::string_view")
