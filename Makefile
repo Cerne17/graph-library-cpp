@@ -25,7 +25,7 @@ TEST_OBJS := $(patsubst %.cpp,$(BUILD)/%.o,$(TEST_SRCS))
 # algorithms against the old ones: src/graph.cpp -> build/tests/legacy/src/graph.o
 LEGACY_TEST_OBJS := $(patsubst %.cpp,$(BUILD)/tests/legacy/%.o,$(LIB_SRCS))
 
-.PHONY: all release benchmark clean test
+.PHONY: all release benchmark benchmark-weighted clean test
 
 all: $(BUILD)/graphs
 
@@ -50,6 +50,14 @@ $(BUILD)/benchmark: app/benchmark.cpp $(LIB_SRCS) include/graph.hpp
 	$(CXX) $(RELFLAGS) app/benchmark.cpp $(LIB_SRCS) -o $@
 
 HEADERS := $(wildcard include/graph/*.hpp) $(wildcard include/graph/*/*.hpp)
+
+# Part 2 benchmark on the new header-only library. -DNDEBUG: the library's
+# precondition asserts cost nothing in a measured build.
+benchmark-weighted: $(BUILD)/benchmark_weighted
+
+$(BUILD)/benchmark_weighted: app/benchmark_weighted.cpp $(HEADERS)
+	@mkdir -p $(@D)
+	$(CXX) $(RELFLAGS) -DNDEBUG $< -o $@
 
 $(BUILD)/tests/test_main.o: tests/test_main.cpp # prevents doctests recompiling
 	@mkdir -p $(@D)
