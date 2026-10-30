@@ -38,10 +38,12 @@ private:
   std::vector<std::string> names_; // names_[v], index 0 unused
   std::unordered_map<std::string, vertex_id, detail::string_hash, std::equal_to<>>
     ids_;
+  std::size_t duplicates_ = 0; // names that repeat an earlier vertex's name
 
 public:
   // names[v] is the name of vertex v; names[0] is a placeholder.
-  // Throws std::invalid_argument when two vertices share a name.
+  // When several vertices share a name, id_of returns the smallest of their
+  // ids (the first one in the file); name_of still works for every id.
   explicit label_map(std::vector<std::string> names);
 
   vertex_id size() const noexcept
@@ -55,8 +57,13 @@ public:
     return names_[v];
   }
 
-  // Throws std::invalid_argument when no vertex has this name.
+  // The smallest id with this name. Throws std::invalid_argument when no
+  // vertex has it.
   vertex_id id_of(std::string_view name) const;
+
+  // How many vertices carry a name an earlier vertex already has, so that
+  // id_of cannot reach them by name (n - number of distinct names).
+  std::size_t duplicate_count() const noexcept { return duplicates_; }
 };
 
 inline label_map::label_map(std::vector<std::string> names)
@@ -66,7 +73,7 @@ inline label_map::label_map(std::vector<std::string> names)
   ids_.reserve(names_.size() - 1);
   for (vertex_id v = 1; v < names_.size(); ++v) {
     if (!ids_.emplace(names_[v], v).second) {
-      throw std::invalid_argument("duplicate name: " + names_[v]);
+      ++duplicates_; // the first id keeps the name
     }
   }
 }
@@ -82,8 +89,8 @@ inline vertex_id label_map::id_of(std::string_view name) const
 
 // Reads "id,name" lines with ids 1, 2, 3... in order. The line is split at
 // its first comma, so names may contain commas. Blank lines and '#' comments
-// are skipped. Malformed input throws std::runtime_error ("path:line: ...");
-// a duplicate name throws std::invalid_argument from label_map.
+// are skipped. Malformed input throws std::runtime_error ("path:line: ...").
+// Repeated names are allowed: see label_map::id_of.
 inline label_map read_label_map(const std::filesystem::path& path)
 {
   std::ifstream in(path);
