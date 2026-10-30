@@ -22,11 +22,12 @@ struct shortest_paths
 
 namespace detail {
 // Preconditions shared by every Dijkstra version.
-// - source in 1..n: assert (programmer error).
+// - source in 1..n: assert (programmer error). [[maybe_unused]]: the assert
+//   is its only use, so release builds (-DNDEBUG) would warn otherwise.
 // - no negative weight: throws std::invalid_argument, checked in O(1) with
 //   g.has_negative_weight().
 template<weighted_graph G>
-void check_dijkstra_input(const G& g, vertex_id source)
+void check_dijkstra_input(const G& g, [[maybe_unused]] vertex_id source)
 {
   assert(source >= 1 && source <= g.vertex_count() &&
          "dijkstra: source out of range");
