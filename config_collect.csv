@@ -1,0 +1,7 @@
+graph,weighting,representations,labels,source
+grafo_W_3,weighted,csr|matrix,,10
+grafo_W_4,weighted,csr|matrix,,10
+grafo_W_5,weighted,csr|matrix,,10
+grafo_W_6,weighted,csr|matrix,,10
+grafo_W_7,weighted,csr|matrix,,10
+rede_colaboracao,weighted,csr|matrix,rede_colaboracao_vertices,Edsger W. Dijkstra

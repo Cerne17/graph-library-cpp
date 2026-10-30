@@ -24,3 +24,7 @@ data/grafo_*.txt
 
 # Part 2 collaboration network inputs (distributed separately)
 data/rede_colaboracao*.txt
+
+# Unified collection exports and Python caches
+data/collected/
+__pycache__/

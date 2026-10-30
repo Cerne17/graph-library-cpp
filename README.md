@@ -602,3 +602,9 @@ docs/diagrama_classes.mmd  diagrama de classes em Mermaid
 
 Comece por `include/graph.hpp`, depois `src/search.cpp`. O resto decorre desses
 dois.
+
+## Coleta unificada e dados para visualização
+
+O novo coletor exporta estatísticas completas, amostras de rede e medições com
+checkpoint para grafos sem pesos e com pesos. Veja [docs/COLLECTION.md](docs/COLLECTION.md)
+para compilação, execução, limites de recursos e esquemas dos arquivos.

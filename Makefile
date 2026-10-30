@@ -84,3 +84,18 @@ $(BUILD)/run_tests: $(TEST_OBJS) $(LEGACY_TEST_OBJS)
 
 test: $(BUILD)/run_tests
 	./$(BUILD)/run_tests
+
+# Unified dataset collector; existing Part 1 and Part 2 binaries are unchanged.
+.PHONY: collector test-collector
+collector: $(BUILD)/collect_stats
+
+$(BUILD)/collect_stats: app/collect_stats.cpp $(HEADERS)
+	@mkdir -p $(@D)
+	$(CXX) $(RELFLAGS) -DNDEBUG $< -o $@
+
+$(BUILD)/collect_stats_checked: app/collect_stats.cpp $(HEADERS)
+	@mkdir -p $(@D)
+	$(CXX) $(TESTFLAGS) $< -o $@
+
+test-collector: collector $(BUILD)/collect_stats_checked
+	COLLECTOR_BINARY=$(abspath $(BUILD)/collect_stats_checked) python3 -m unittest discover -s tests -p 'test_collector.py' -v
