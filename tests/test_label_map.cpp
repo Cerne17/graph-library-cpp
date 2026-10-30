@@ -34,11 +34,23 @@ TEST_CASE("label_map: empty map")
   CHECK_THROWS_AS(labels.id_of("a"), std::invalid_argument);
 }
 
-TEST_CASE("label_map: duplicate names are rejected")
+TEST_CASE("label_map: a repeated name maps to its first id")
 {
-  CHECK_THROWS_WITH_AS(gl::io::label_map({ "", "a", "b", "a" }),
-                       "duplicate name: a",
-                       std::invalid_argument);
+  const gl::io::label_map labels({ "", "a", "b", "a", "a" });
+
+  CHECK(labels.size() == 4);
+  CHECK(labels.id_of("a") == 1);
+  CHECK(labels.id_of("b") == 2);
+  CHECK(labels.name_of(3) == "a");
+  CHECK(labels.name_of(4) == "a");
+  CHECK(labels.duplicate_count() == 2);
+}
+
+TEST_CASE("label_map: no duplicates")
+{
+  const gl::io::label_map labels({ "", "a", "b" });
+
+  CHECK(labels.duplicate_count() == 0);
 }
 
 TEST_CASE("read_label_map: name_of and id_of agree both ways")
@@ -141,10 +153,12 @@ TEST_CASE("read_label_map: empty name")
     std::runtime_error);
 }
 
-TEST_CASE("read_label_map: duplicate name")
+TEST_CASE("read_label_map: a repeated name maps to its first id")
 {
-  CHECK_THROWS_WITH_AS(
-    gl::io::read_label_map("tests/data/labels_duplicate.txt"),
-    "duplicate name: Edsger W. Dijkstra",
-    std::invalid_argument);
+  const auto labels = gl::io::read_label_map("tests/data/labels_duplicate.txt");
+
+  CHECK(labels.size() == 3);
+  CHECK(labels.id_of("Edsger W. Dijkstra") == 1);
+  CHECK(labels.name_of(3) == "Edsger W. Dijkstra");
+  CHECK(labels.duplicate_count() == 1);
 }

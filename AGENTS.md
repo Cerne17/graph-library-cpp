@@ -73,8 +73,9 @@ Namespaces: `gl` for everything below except `algorithms/*`
 - `io/load_graph.hpp`: `io::load_graph<G>(path)` = `read_edge_list` +
   `G::from_edges`.
 - `io/label_map.hpp`: `io::label_map` (`name_of(v)`, `id_of(name)` with a
-  transparent `string_view` lookup) and `io::read_label_map(path)` for
-  `id,name` files, ids 1..n in order.
+  transparent `string_view` lookup; a repeated name resolves to its first id,
+  counted by `duplicate_count()`) and `io::read_label_map(path)` for `id,name`
+  files, ids 1..n in order.
 - `heap.hpp`: `indexed_heap<K, Compare>` with a position map and
   `update_key`; `indexed_min_heap<K>` alias. `comp_(a, b)` true means `a` is
   closer to the root (opposite of `std::priority_queue`).

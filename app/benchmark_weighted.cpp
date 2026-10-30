@@ -405,6 +405,8 @@ void run_paths(const G& g, const options& opt)
                     labels->size(),
                     g.vertex_count()));
     }
+    // Repeated names resolve to their first id; report how many there are.
+    std::cout << "info,duplicate_names," << labels->duplicate_count() << "\n";
   }
   const gl::io::label_map* names = labels ? &*labels : nullptr;
   const bool by_name = names != nullptr;
