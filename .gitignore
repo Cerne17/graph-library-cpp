@@ -22,6 +22,5 @@ data/stats*.csv
 # Assignment graph inputs (14 MB to 689 MB, distributed separately)
 data/grafo_*.txt
 
-
 # Part 2 collaboration network inputs (distributed separately)
 data/rede_colaboracao*.txt
