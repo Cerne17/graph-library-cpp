@@ -140,15 +140,11 @@ def collect_one(cfg: dict, binary: Path, data: Path, baselines: dict):
 
     for rep in reps:
         try:
-            rss_mb, out, err = run_all(binary, benchmark_args(cfg, data, rep))
+            rss_mb, out, _ = run_all(binary, benchmark_args(cfg, data, rep))
         except Exception as e:
             print(f"  FAILED for {name} ({rep}): {e}", flush=True)
             results.append(result_row(name, rep, "error", None, 0, "error"))
             continue
-        if "negative edge weight" in err:
-            print(f"  {name} ({rep}): negative weight, not implemented",
-                  flush=True)
-
         base = baselines[rep]
         for metric, value in [
             ("memory_mb_raw", rss_mb),
@@ -156,7 +152,13 @@ def collect_one(cfg: dict, binary: Path, data: Path, baselines: dict):
             ("memory_mb_graph", rss_mb - base),
         ]:
             results.append(result_row(name, rep, metric, value))
+
+        first = len(results)
         parse_output(out, name, rep, results, paths)
+        # The benchmark reports a negative weight as status not_implemented.
+        if any(r["status"] == "not_implemented" for r in results[first:]):
+            print(f"  {name} ({rep}): negative weight, not implemented",
+                  flush=True)
 
     return (pd.DataFrame(results, columns=RESULT_COLUMNS),
             pd.DataFrame(paths, columns=PATH_COLUMNS))
