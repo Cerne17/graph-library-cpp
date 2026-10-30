@@ -9,12 +9,16 @@ lives in `docs/ONBOARDING.md`.
 
 ## Two codebases — know which one you are touching
 
-- **Legacy (Part 1):** `include/graph.hpp`, `src/`, `app/`, `analysis/`.
-  Runtime polymorphism, camelCase. Delivered and graded. **Do not modify it**
-  unless the task explicitly says so.
+- **Legacy (Part 1):** `include/graph.hpp`, `src/`, `app/main.cpp`,
+  `app/benchmark.cpp`, `analysis/harness.py`, `config.csv`. Runtime
+  polymorphism, camelCase. Delivered and graded. **Do not modify it** unless
+  the task explicitly says so.
 - **New (Part 2):** `include/graph/`. Header-only C++23 templates, concepts,
-  snake_case, namespaces `gl`, `gl::algorithms` and `gl::io`. All new work
-  goes here.
+  snake_case, namespaces `gl`, `gl::algorithms` and `gl::io`. All new library
+  work goes here. Its programs sit next to the legacy ones with a `_weighted`
+  suffix: `app/benchmark_weighted.cpp` (on the new library only),
+  `analysis/harness_weighted.py`, `config_weighted.csv`, writing
+  `data/results_weighted.csv` and `data/paths_weighted.csv`.
 
 ## Build and test
 
