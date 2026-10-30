@@ -12,6 +12,11 @@ Usage (from the repository root, after `make benchmark-weighted`):
     python3 analysis/harness_weighted.py --only grafo_W_3    # one graph
     python3 analysis/harness_weighted.py --only a --only b   # a few
 
+A matrix run is skipped (status no_memory, with its estimate recorded) when
+the weighted matrix, (n + 1)^2 doubles, plus the edge list would not fit in
+the memory available (or --memory-limit-gb), so "both" can be asked for every
+graph and the machine decides which matrices run.
+
 Before measuring anything, the harness checks that the benchmark is built and
 that every input file of the selected rows exists, and lists all problems at
 once. Graphs and names files may be gzipped ("<name>.txt.gz"): each one is
@@ -132,6 +137,19 @@ def plain_text(path: Path, tmp: Path) -> Iterator[Path]:
         out.unlink(missing_ok=True)
 
 
+def vertex_count(graph: Path) -> int:
+    """n, from the first line of an edge-list file."""
+    with graph.open() as f:
+        return int(f.readline())
+
+
+def matrix_bytes_needed(graph: Path) -> int:
+    """Peak memory of building the weighted matrix: (n + 1)^2 doubles, plus
+    the edge list read before it (about the size of the text file)."""
+    n = vertex_count(graph)
+    return (n + 1) ** 2 * 8 + graph.stat().st_size
+
+
 def check_setup(binary: Path, data: Path, rows: list[dict]) -> list[str]:
     """Every problem that would stop the run, so they can be fixed at once."""
     problems = []
@@ -204,7 +222,7 @@ def parse_output(text: str, name: str, rep: str, results: list, paths: list):
 
 
 def collect_one(cfg: dict, binary: Path, graph: Path, labels: Path | None,
-                baselines: dict):
+                baselines: dict, memory_limit: int):
     """Rows of both outputs for one config line, given its (plain) input
     files."""
     name = cfg["graph"]
@@ -215,6 +233,17 @@ def collect_one(cfg: dict, binary: Path, graph: Path, labels: Path | None,
     # Record skipped representations so the gap is explicit in the data.
     for skipped in sorted({"csr", "matrix"} - set(reps)):
         results.append(result_row(name, skipped, "skipped", 1, 0, "skipped"))
+
+    if "matrix" in reps:
+        needed = matrix_bytes_needed(graph)
+        if needed > memory_limit:
+            reps.remove("matrix")
+            mb = 1024 * 1024
+            print(f"  {name} (matrix): needs ~{needed / mb:,.0f} MB, "
+                  f"limit {memory_limit / mb:,.0f} MB: skipped", flush=True)
+            results.append(result_row(name, "matrix",
+                                      "memory_mb_estimate", needed / mb, 0,
+                                      "no_memory"))
 
     for rep in reps:
         try:
@@ -262,6 +291,9 @@ def main() -> None:
     parser.add_argument("--tmp", type=Path, default=Path(tempfile.gettempdir()),
                         help="where to decompress .gz inputs "
                              "(needs room for the largest graph)")
+    parser.add_argument("--memory-limit-gb", type=float,
+                        help="largest matrix run allowed (default: 90%% of "
+                             "the memory available at start)")
     args = parser.parse_args()
 
     # Strings throughout: empty cells stay "" instead of NaN.
@@ -271,6 +303,11 @@ def main() -> None:
     if problems:
         sys.exit("cannot start:\n" + "\n".join(f"  - {p}" for p in problems))
     args.out.mkdir(parents=True, exist_ok=True)
+    memory_limit = (int(args.memory_limit_gb * 1024 ** 3)
+                    if args.memory_limit_gb is not None
+                    else int(psutil.virtual_memory().available * 0.9))
+    print(f"matrix memory limit: {memory_limit / 1024 ** 3:.1f} GB",
+          flush=True)
     results_out = args.out / "results_weighted.csv"
     paths_out = args.out / "paths_weighted.csv"
 
@@ -288,7 +325,7 @@ def main() -> None:
             labels = (stack.enter_context(plain_text(labels_file, args.tmp))
                       if labels_file else None)
             results, paths = collect_one(cfg, args.binary, graph, labels,
-                                         baselines)
+                                         baselines, memory_limit)
         append_csv(results, results_out)
         if not paths.empty:
             append_csv(paths, paths_out)

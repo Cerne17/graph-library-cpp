@@ -1,7 +1,7 @@
 graph,representation,array,labels,source,targets,k,seed
-grafo_W_1,both,yes,,10,20|30|40|50|60,100,2025
-grafo_W_2,csr,yes,,10,20|30|40|50|60,100,2025
-grafo_W_3,csr,no,,10,20|30|40|50|60,100,2025
-grafo_W_4,csr,no,,10,20|30|40|50|60,100,2025
-grafo_W_5,csr,no,,10,20|30|40|50|60,100,2025
-rede_colaboracao,csr,no,rede_colaboracao_vertices,Edsger W. Dijkstra,Alan M. Turing|J. B. Kruskal|Jon M. Kleinberg|Éva Tardos|Daniel R. Figueiredo,100,2025
+grafo_W_3,both,yes,,10,20|30|40|50|60,100,2025
+grafo_W_4,both,no,,10,20|30|40|50|60,100,2025
+grafo_W_5,both,no,,10,20|30|40|50|60,100,2025
+grafo_W_6,both,no,,10,20|30|40|50|60,100,2025
+grafo_W_7,both,no,,10,20|30|40|50|60,100,2025
+rede_colaboracao,both,no,rede_colaboracao_vertices,Edsger W. Dijkstra,Alan M. Turing|J. B. Kruskal|Jon M. Kleinberg|Éva Tardos|Daniel R. Figueiredo,100,2025
