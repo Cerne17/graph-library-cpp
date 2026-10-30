@@ -18,6 +18,7 @@
 #include "graph/types.hpp"
 
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <chrono>
 #include <cmath>
@@ -261,8 +262,33 @@ void print_time_row(std::string_view algorithm,
             << "\n";
 }
 
+// The three versions, indexed so the timing loop can rotate their order.
+constexpr std::array<std::string_view, 3> version_names{ "dijkstra_heap",
+                                                         "dijkstra_lazy",
+                                                         "dijkstra_array" };
+constexpr std::size_t heap_version = 0;
+constexpr std::size_t lazy_version = 1;
+constexpr std::size_t array_version = 2;
+
+template<typename G>
+gl::algorithms::shortest_paths<double> run_version(std::size_t version,
+                                                   const G& g,
+                                                   gl::vertex_id source)
+{
+  switch (version) {
+    case heap_version:
+      return gl::algorithms::dijkstra_heap(g, source);
+    case lazy_version:
+      return gl::algorithms::dijkstra_lazy(g, source);
+    default:
+      return gl::algorithms::dijkstra_array(g, source);
+  }
+}
+
 // --- time: the Dijkstra versions over the same k random sources. Each run
-//     is timed on its own (allocation of dist/parent included); distances are
+//     is timed on its own (allocation of dist/parent included). The order of
+//     the versions rotates from one source to the next, so none of them
+//     always runs first (cold cache) or last (warm cache). Distances are
 //     compared against dijkstra_heap outside the timed region. ---
 template<typename G>
 void run_timing(const G& g, const options& opt)
@@ -274,68 +300,70 @@ void run_timing(const G& g, const options& opt)
   std::cout << "info,seed," << opt.seed << "\n";
   std::cout << "info,k," << sources.size() << "\n";
 
-  std::vector<double> array_us;
-  std::vector<double> heap_us;
-  std::vector<double> lazy_us;
-  bool array_matches = true;
-  bool lazy_matches = true;
+  const std::size_t versions = opt.run_array ? 3 : 2;
+  std::array<std::vector<double>, 3> samples;
+  std::array<bool, 3> matches{ true, true, true };
   double sink = 0;
 
   try {
-    for (const gl::vertex_id s : sources) {
-      auto t0 = clock::now();
-      const auto heap = gl::algorithms::dijkstra_heap(g, s);
-      auto t1 = clock::now();
-      heap_us.push_back(micros(t1 - t0).count());
-      sink += heap.dist[g.vertex_count()];
+    for (std::size_t i = 0; i < sources.size(); ++i) {
+      std::array<std::optional<gl::algorithms::shortest_paths<double>>, 3>
+        result;
+      for (std::size_t j = 0; j < versions; ++j) {
+        const std::size_t version = (i + j) % versions;
+        const auto t0 = clock::now();
+        result[version] = run_version(version, g, sources[i]);
+        const auto t1 = clock::now();
+        samples[version].push_back(micros(t1 - t0).count());
+      }
 
-      t0 = clock::now();
-      const auto lazy = gl::algorithms::dijkstra_lazy(g, s);
-      t1 = clock::now();
-      lazy_us.push_back(micros(t1 - t0).count());
-      lazy_matches = lazy_matches && same_distances(heap.dist, lazy.dist);
-
-      if (opt.run_array) {
-        t0 = clock::now();
-        const auto array = gl::algorithms::dijkstra_array(g, s);
-        t1 = clock::now();
-        array_us.push_back(micros(t1 - t0).count());
-        array_matches = array_matches && same_distances(heap.dist, array.dist);
+      sink += result[heap_version]->dist[g.vertex_count()];
+      for (std::size_t version = 1; version < versions; ++version) {
+        matches[version] =
+          matches[version] &&
+          same_distances(result[heap_version]->dist, result[version]->dist);
       }
     }
   } catch (const std::invalid_argument& e) {
     std::cerr << "time: " << e.what() << "\n";
-    for (const auto algorithm :
-         { "dijkstra_array", "dijkstra_heap", "dijkstra_lazy" }) {
-      std::cout << "time," << algorithm << ",,,0,not_implemented\n";
+    for (const auto name : version_names) {
+      std::cout << "time," << name << ",,,0,not_implemented\n";
     }
     return;
   }
   std::cerr << "sink=" << sink << "\n";
 
-  print_time_row("dijkstra_array",
-                 array_us,
-                 !opt.run_array ? "skipped"
-                 : array_matches ? "ok"
-                                 : "mismatch");
-  print_time_row("dijkstra_heap", heap_us, "ok");
-  print_time_row("dijkstra_lazy", lazy_us, lazy_matches ? "ok" : "mismatch");
+  for (std::size_t version = 0; version < version_names.size(); ++version) {
+    const bool skipped = version >= versions;
+    print_time_row(version_names[version],
+                   samples[version],
+                   skipped              ? "skipped"
+                   : matches[version] ? "ok"
+                                        : "mismatch");
+  }
 }
 
-void print_path_row(std::string_view source,
-                    std::string_view target,
-                    std::string_view source_name,
-                    std::string_view target_name,
-                    std::string_view distance,
-                    std::string_view hops,
-                    std::string_view path,
-                    std::string_view path_names,
-                    std::string_view status)
+// One "path" output row. Empty fields stay empty in the CSV.
+struct path_row
 {
-  std::cout << "path," << csv_field(source) << "," << csv_field(target) << ","
-            << csv_field(source_name) << "," << csv_field(target_name) << ","
-            << distance << "," << hops << "," << csv_field(path) << ","
-            << csv_field(path_names) << "," << status << "\n";
+  std::string source;      // vertex id, or as given when it does not exist
+  std::string target;
+  std::string source_name; // empty unless --labels
+  std::string target_name;
+  std::string distance;
+  std::string hops;
+  std::string path;       // ids separated by spaces
+  std::string path_names; // names separated by " | "
+  std::string status;
+};
+
+void print_path_row(const path_row& row)
+{
+  std::cout << "path," << csv_field(row.source) << ","
+            << csv_field(row.target) << "," << csv_field(row.source_name)
+            << "," << csv_field(row.target_name) << "," << row.distance << ","
+            << row.hops << "," << csv_field(row.path) << ","
+            << csv_field(row.path_names) << "," << row.status << "\n";
 }
 
 // A vertex given on the command line: an id, or a name looked up in labels.
@@ -380,77 +408,62 @@ void run_paths(const G& g, const options& opt)
   }
   const gl::io::label_map* names = labels ? &*labels : nullptr;
   const bool by_name = names != nullptr;
+  const char* const missing_status = by_name ? "unknown_name" : "out_of_range";
 
-  // Row fields for a vertex: (id column, name column).
+  // The id column holds the resolved id; when the vertex does not exist, it
+  // keeps what was given if that was an id, and stays empty if it was a name.
   const auto id_text = [by_name](std::optional<gl::vertex_id> v,
                                  const std::string& given) {
     return v ? std::to_string(*v) : (by_name ? std::string() : given);
   };
-  const auto name_text = [by_name](const std::string& given) {
-    return by_name ? given : std::string();
-  };
 
   const auto source = resolve(opt.source, g.vertex_count(), names);
-  const std::string source_id = id_text(source, opt.source);
-
-  if (!source) {
-    const char* status = by_name ? "unknown_name" : "out_of_range";
-    for (const auto& t : opt.targets) {
-      const auto target = resolve(t, g.vertex_count(), names);
-      print_path_row(source_id, id_text(target, t),
-                     name_text(opt.source), name_text(t), "", "", "", "",
-                     status);
-    }
-    return;
-  }
 
   std::optional<gl::algorithms::shortest_paths<double>> sp;
-  try {
-    sp = gl::algorithms::dijkstra_heap(g, *source);
-  } catch (const std::invalid_argument& e) {
-    std::cerr << "paths: " << e.what() << "\n";
+  if (source) {
+    try {
+      sp = gl::algorithms::dijkstra_heap(g, *source);
+    } catch (const std::invalid_argument& e) {
+      std::cerr << "paths: " << e.what() << "\n";
+    }
   }
 
   for (const auto& t : opt.targets) {
     const auto target = resolve(t, g.vertex_count(), names);
-    const std::string target_id = id_text(target, t);
-
-    if (!target) {
-      print_path_row(source_id, target_id, name_text(opt.source), name_text(t),
-                     "", "", "", "", by_name ? "unknown_name" : "out_of_range");
-      continue;
-    }
-    if (!sp) {
-      print_path_row(source_id, target_id, name_text(opt.source), name_text(t),
-                     "", "", "", "", "not_implemented");
-      continue;
+    path_row row;
+    row.source = id_text(source, opt.source);
+    row.target = id_text(target, t);
+    if (by_name) {
+      row.source_name = opt.source;
+      row.target_name = t;
     }
 
-    const double d = sp->dist[*target];
-    if (std::isinf(d)) {
-      print_path_row(source_id, target_id, name_text(opt.source), name_text(t),
-                     format_number(d), "", "", "", "unreachable");
-      continue;
-    }
-
-    const auto path = gl::algorithms::reconstruct_path(*sp, *target);
-    std::string path_ids;
-    std::string path_names;
-    for (const gl::vertex_id v : path) {
-      if (!path_ids.empty()) {
-        path_ids += ' ';
+    if (!source || !target) {
+      row.status = missing_status;
+    } else if (!sp) {
+      row.status = "not_implemented";
+    } else if (const double d = sp->dist[*target]; std::isinf(d)) {
+      row.distance = format_number(d);
+      row.status = "unreachable";
+    } else {
+      const auto path = gl::algorithms::reconstruct_path(*sp, *target);
+      for (const gl::vertex_id v : path) {
+        if (!row.path.empty()) {
+          row.path += ' ';
+          if (by_name) {
+            row.path_names += " | ";
+          }
+        }
+        row.path += std::to_string(v);
         if (by_name) {
-          path_names += " | ";
+          row.path_names += names->name_of(v);
         }
       }
-      path_ids += std::to_string(v);
-      if (by_name) {
-        path_names += names->name_of(v);
-      }
+      row.distance = format_number(d);
+      row.hops = std::to_string(path.size() - 1);
+      row.status = "ok";
     }
-    print_path_row(source_id, target_id, name_text(opt.source), name_text(t),
-                   format_number(d), std::to_string(path.size() - 1), path_ids,
-                   path_names, "ok");
+    print_path_row(row);
   }
 }
 
