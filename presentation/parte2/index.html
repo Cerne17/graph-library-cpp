@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grafos com Pesos</title>
+<meta name="description" content="COS 242 · Trabalho Parte 2 — grafos ponderados, Dijkstra por vetor e heap indexado, estudos de caso.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.1.0/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.1.0/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.1.0/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.1.0/500.css">
+<style>
+:root{
+  --ink:#ECEBE6; --surface:#F5F4F0; --surface-2:#D8D5CC; --text:#1A1B1E; --text-muted:#5A5852;
+  --heartwood:#8C3B24; --heartwood-glow:#8C3B24; --oxblood:#8C3B24; --sapwood:#3A6E52;
+  --amber:#E89A3C; --gray:#6F6C64; --line:#C9C5BA;
+  --font-display:'Clash Display','Space Grotesk',sans-serif; --font-body:'Geist Sans','Geist',sans-serif; --font-mono:'Geist Mono',monospace;
+  --tracking-display:-0.02em; --tracking-mono-eyebrow:0.08em;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#0C0D10; --surface:#14161B; --surface-2:#1F2229; --text:#E8E4DB; --text-muted:#9A968C;
+    --heartwood:#E89A3C; --heartwood-glow:#F6B65A; --oxblood:#8C3B24; --sapwood:#4E8F6B; --gray:#8D8A82; --line:#2C3038;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#0C0D10; --surface:#14161B; --surface-2:#1F2229; --text:#E8E4DB; --text-muted:#9A968C;
+  --heartwood:#E89A3C; --heartwood-glow:#F6B65A; --oxblood:#8C3B24; --sapwood:#4E8F6B; --gray:#8D8A82; --line:#2C3038;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--ink);color:var(--text);font-family:var(--font-body);overflow:hidden}
+#viewport{position:fixed;inset:0 0 46px 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#stage{width:1280px;height:720px;position:relative;overflow:hidden;flex:none;transform-origin:center center;background:var(--ink)}
+.slide{position:absolute;inset:0;padding:52px 72px 60px;display:none;flex-direction:column;gap:18px}
+.slide.active{display:flex}
+.foot{position:absolute;left:72px;right:72px;bottom:20px;display:flex;justify-content:space-between;font:500 11px/1 var(--font-mono);letter-spacing:var(--tracking-mono-eyebrow);color:var(--text-muted);text-transform:uppercase}
+.eb{font:500 13px/1 var(--font-mono);letter-spacing:var(--tracking-mono-eyebrow);color:var(--heartwood);text-transform:uppercase}
+.t{font:600 42px/1.08 var(--font-display);letter-spacing:var(--tracking-display)}
+.sub{font-size:19px;color:var(--text-muted);line-height:1.4}
+.card{background:var(--surface);border:1px solid var(--surface-2);border-radius:14px;padding:18px 20px}
+.card.hi{border-color:var(--heartwood);box-shadow:inset 3px 0 0 var(--heartwood)}
+.row{display:flex;gap:18px}.col{display:flex;flex-direction:column;gap:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.eq{font:600 22px/1.3 var(--font-display);color:var(--heartwood);letter-spacing:var(--tracking-display)}
+.mono{font-family:var(--font-mono)}
+code,.code{font-family:var(--font-mono);font-size:14px}
+pre.code{background:var(--surface);border:1px solid var(--surface-2);border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.55;white-space:pre;color:var(--text)}
+pre.code .k{color:var(--heartwood);font-weight:600}pre.code .c{color:var(--text-muted)}
+h3{font:600 18px/1.25 var(--font-body)}
+p,li{font-size:17px;line-height:1.45}
+ul.b{list-style:none;display:flex;flex-direction:column;gap:8px}
+ul.b li{padding-left:18px;position:relative}
+ul.b li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:7px;border-radius:50%;background:var(--amber)}
+.muted{color:var(--text-muted)}.acc{color:var(--heartwood)}.ok{color:var(--sapwood)}
+.sim-tag{display:inline-flex;align-items:center;gap:6px;font:500 11px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;padding:5px 9px;border-radius:99px;border:1px solid var(--heartwood);color:var(--heartwood);white-space:nowrap}
+.sim-tag::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.seg{display:inline-flex;border:1px solid var(--surface-2);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{font:500 13px/1 var(--font-mono);padding:8px 12px;border:0;background:transparent;color:var(--text);cursor:pointer;border-right:1px solid var(--surface-2)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--heartwood);color:var(--surface)}
+.btn{font:500 13px/1 var(--font-mono);padding:8px 12px;border-radius:9px;cursor:pointer;border:1px solid var(--surface-2);background:var(--surface);color:var(--text)}
+.btn.pri{background:var(--heartwood);border-color:var(--heartwood);color:var(--surface)}
+.btn:disabled{opacity:.4;cursor:default}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.ctl{display:flex;align-items:center;gap:10px;font:500 13px/1 var(--font-mono)}
+.ctl output{min-width:34px;color:var(--heartwood)}
+input[type=range]{accent-color:var(--heartwood);width:140px}
+.checks{display:flex;gap:14px;font:500 13px/1 var(--font-mono)}
+.checks label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.checks input{accent-color:var(--heartwood)}
+.ro{font:500 13px/1.2 var(--font-mono);color:var(--text-muted)}
+.ro b{color:var(--text);font-weight:600}
+.ro.main{font:600 26px/1 var(--font-display);color:var(--heartwood);letter-spacing:var(--tracking-display)}
+.kpi{display:flex;flex-direction:column;gap:6px}
+.kpi .l{font:500 11px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+svg text{font-family:var(--font-mono)}
+/* dividers & cover */
+.slide.divider{justify-content:center}
+.rings{position:absolute;right:-120px;top:50%;transform:translateY(-50%);width:640px;height:640px;opacity:.9;pointer-events:none}
+.cover .t{font-size:64px;max-width:820px}
+/* checklist */
+.req{display:grid;grid-template-columns:28px 1fr 280px;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--surface-2)}
+.req:last-child{border-bottom:0}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--amber);margin-left:6px}
+.dot.part{background:transparent;border:3px solid var(--amber)}
+.req .st{font:500 13px/1.3 var(--font-mono);color:var(--text-muted)}
+/* tables */
+table.tb{border-collapse:collapse;width:100%;font-size:15px}
+.tb th{font:500 11px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+.tb td{padding:9px 10px;border-bottom:1px solid var(--surface-2)}
+.tb td.n{font-family:var(--font-mono);text-align:right}
+.tb tr.sel td{background:color-mix(in srgb,var(--amber) 16%,transparent)}
+.tb tr[data-k]{cursor:pointer}
+/* dijkstra structure */
+.cells{display:flex;flex-wrap:wrap;gap:5px}
+.cell{min-width:44px;border:1px solid var(--surface-2);border-radius:8px;padding:5px 6px;text-align:center;font:500 12px/1.25 var(--font-mono);background:var(--surface)}
+.cell .v{color:var(--text-muted);font-size:10.5px}
+.cell.done{opacity:.4}
+.cell.scan{border-color:var(--amber)}
+.cell.pick{background:var(--amber);color:#1A1B1E;border-color:var(--amber)}
+.cell.pick .v{color:#1A1B1E}
+.cell.stale{text-decoration:line-through;opacity:.45}
+.msg{font:500 14px/1.4 var(--font-mono);min-height:40px;padding:10px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--surface-2)}
+.msg.err{border-color:var(--oxblood);color:var(--oxblood)}
+:root[data-theme="dark"] .msg.err{color:#E8805F}
+.lbl{font:500 11px/1 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+/* HUD */
+#hud{position:fixed;left:0;right:0;bottom:0;height:46px;background:var(--surface);border-top:1px solid var(--surface-2);display:flex;align-items:center;gap:14px;padding:0 14px;font:500 12px/1 var(--font-mono);color:var(--text);z-index:10}
+#hud button{background:transparent;border:1px solid var(--surface-2);color:var(--text);border-radius:7px;font:500 12px/1 var(--font-mono);padding:6px 9px;cursor:pointer}
+#prog{flex:1;display:flex;gap:2px;height:10px;align-items:stretch}
+#prog i{display:block;background:var(--surface-2);border-radius:2px;cursor:pointer;position:relative}
+#prog i.past{background:color-mix(in srgb,var(--heartwood) 45%,var(--surface-2))}
+#prog i.cur{background:var(--heartwood)}
+#clock{min-width:118px}#pace{min-width:118px;color:var(--text-muted)}#pace.late{color:var(--oxblood)}#pace.early{color:var(--sapwood)}
+:root[data-theme="dark"] #pace.late{color:#E8805F}
+#bud{width:70px;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+#bud span{display:block;height:100%;width:0;background:var(--text-muted)}
+#bud.over span{background:var(--heartwood)}
+#count{min-width:54px;text-align:right;color:var(--text-muted)}
+.panel{position:fixed;z-index:20;background:var(--surface);border:1px solid var(--surface-2);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.25);display:none;color:var(--text)}
+.panel.open{display:block}
+#notes{right:16px;bottom:60px;width:440px;max-height:70vh;overflow:auto;padding:18px 20px}
+#notes h4{font:600 18px/1.2 var(--font-body);margin:6px 0 4px}
+#notes .nt{font-size:15px;line-height:1.5;white-space:pre-line;margin-top:10px}
+#notes .nx{margin-top:12px;font:500 12px/1.4 var(--font-mono);color:var(--text-muted)}
+#help{left:50%;top:50%;transform:translate(-50%,-50%);padding:22px 26px;width:420px}
+#help table{font:500 13px/1.9 var(--font-mono)}#help td:first-child{color:var(--heartwood);padding-right:16px}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- 1 · CAPA -->
+<section class="slide cover divider" data-min="0.5" data-title="Capa" data-notes="Apresentação da dupla (João e Miguel) e do tema: a Parte 2 estende a biblioteca da Parte 1 para grafos ponderados e caminhos mínimos.
+• Tudo o que aparece é a biblioteca real (C++23, header-only) e as medições reais no Azure.
+• As demos são interativas: vou mostrar o algoritmo funcionando e os dados explorados ao vivo.
+Gancho: primeiro, o que o enunciado pede — e o que entregamos.">
+  <div class="eb">// COS 242 · Teoria dos Grafos · 2026/2</div>
+  <div class="t">Grafos com pesos, Dijkstra e caminhos mínimos</div>
+  <div class="sub" style="max-width:700px">Trabalho de disciplina, Parte 2: a biblioteca C++ estendida para pesos reais, com três estruturas de prioridade e estudos de caso até 50 milhões de vértices.</div>
+  <div class="row" style="margin-top:26px;gap:28px">
+    <div class="kpi"><span class="l">Dupla</span><span style="font-size:18px">João Costa · Miguel Cerne</span></div>
+    <div class="kpi"><span class="l">Instituição</span><span style="font-size:18px">UFRJ · Escola Politécnica</span></div>
+    <div class="kpi"><span class="l">Código</span><span class="mono" style="font-size:15px;padding-top:2px">github.com/Cerne17/graph-library-cpp</span></div>
+  </div>
+</section>
+
+<!-- 2 · ESCOPO -->
+<section class="slide" data-min="1" data-title="O que a Parte 2 pede" data-notes="O enunciado pede quatro coisas; o slide mostra o estado honesto de cada uma.
+• Pesos reais em grafos não direcionados: CSR e matriz.
+• Dijkstra com vetor e com heap de chave atualizável — ambos implementados e testados; Dijkstra recusa pesos negativos.
+• Estudos de caso: 25 pares (origem 10) + 5 pesquisadores, todos com caminho completo.
+• Lacuna: o tempo do vetor só foi medido no Grafo Ponderado 3. Nos grafos 4–7 a configuração foi array=no (custo quadrático). Dizer isso abertamente.
+Gancho: como a biblioteca foi reorganizada para acomodar pesos.">
+  <div class="eb">// escopo</div>
+  <div class="t">O que o enunciado pede — e o que foi entregue</div>
+  <div class="card" style="padding:6px 22px;margin-top:8px">
+    <div class="req"><span class="dot"></span><div><h3>Grafos não direcionados com pesos reais</h3><p class="muted">Leitor aceita <code>u v peso</code>, valida IDs, descarta laços e os contabiliza</p></div><span class="st">CSR e matriz, escolhidos em compilação</span></div>
+    <div class="req"><span class="dot"></span><div><h3>Dijkstra por vetor e por heap atualizável</h3><p class="muted">Uma interface, estruturas trocáveis; pesos negativos → aviso de “não implementado”</p></div><span class="st">implementados e testados<br>+ 3ª versão de comparação</span></div>
+    <div class="req"><span class="dot"></span><div><h3>Distâncias e caminhos: 10 → 20…60 e a rede de colaboração</h3><p class="muted">Caminho completo por destino, grafias exatas dos pesquisadores</p></div><span class="st">25 + 5 pares completos</span></div>
+    <div class="req"><span class="dot part"></span><div><h3>Tempo médio das duas versões, k = 100 origens</h3><p class="muted">Heap medido em todos os grafos; vetor medido no Grafo Ponderado 3</p></div><span class="st acc">pendente: vetor nos grafos 4 a 7</span></div>
+  </div>
+</section>
+
+<!-- 3 · ARQUITETURA -->
+<section class="slide" data-min="1" data-title="Arquitetura: políticas em compilação" data-notes="A biblioteca nova é header-only, C++23, com templates, políticas e conceitos; a da Parte 1 (herança virtual) ficou como legado.
+• Direção e ponderação são tags de tipo: o compilador escolhe o layout. Algoritmos são funções livres que exigem o conceito weighted_graph.
+• Clique nas políticas: a figura mostra os vetores paralelos do CSR e os bytes por aresta.
+  - não direcionado + double: 2 × (4 B destino + 8 B peso) = 24 B por aresta → carga 8(N+2) + 24M.
+  - unweighted: a coluna de pesos some (0 B), selecionada em compilação.
+• Ordenar vizinhos move destino e peso juntos.
+Gancho: por que CSR e não matriz nesses grafos?">
+  <div class="head"><div class="col" style="gap:10px"><div class="eb">// implementação</div><div class="t">Um tipo de grafo, montado em compilação</div></div><span class="sim-tag">layout real da biblioteca</span></div>
+  <div class="g2" style="grid-template-columns:470px 1fr;align-items:start">
+    <div class="col">
+      <pre class="code" id="archCode"></pre>
+      <div class="col" style="gap:10px">
+        <div class="ctl"><span style="width:90px">direção</span><div class="seg" id="archD"><button aria-pressed="true" data-v="u">undirected</button><button aria-pressed="false" data-v="d">directed</button></div></div>
+        <div class="ctl"><span style="width:90px">peso</span><div class="seg" id="archW"><button aria-pressed="false" data-v="n">unweighted</button><button aria-pressed="false" data-v="f">&lt;float&gt;</button><button aria-pressed="true" data-v="d">&lt;double&gt;</button></div></div>
+      </div>
+      <ul class="b" style="margin-top:6px"><li>Contratos <code>graph_like</code> e <code>weighted_graph</code>: conceitos, não classes abstratas</li><li>Buscas e Dijkstra são funções livres sobre o contrato</li></ul>
+    </div>
+    <div class="card" style="padding:16px 18px"><svg id="archSvg" width="610" height="400" aria-label="Layout CSR conforme as políticas"></svg></div>
+  </div>
+</section>
+
+<!-- 4 · MEMÓRIA -->
+<section class="slide" data-min="1" data-title="CSR vs. matriz: memória" data-notes="Todos os grafos ponderados são esparsos (densidade abaixo de 0,13%).
+• CSR ponderado ≈ 8(N+2) + 24M bytes; matriz ponderada = 8(N+1)² bytes (célula real, sem bitmask).
+• Clique numa linha: no Grafo Ponderado 3, o CSR medido (RSS) foi 140,55 MiB — bate com o teórico 140,4 MiB; a matriz precisaria de 74,5 GiB.
+• A linha vertical é a VM de 32 GiB: nenhuma matriz ponderada cabe. No Grafo 7 seriam ~17,7 PiB.
+• RSS é da representação, não pico do Dijkstra.
+Gancho: com o grafo em CSR, como o Dijkstra escolhe o próximo vértice?">
+  <div class="head"><div class="col" style="gap:10px"><div class="eb">// representação</div><div class="t">Por que CSR: a matriz ponderada não cabe</div></div><span class="sim-tag">dados reais · RSS no Azure</span></div>
+  <div class="row" style="align-items:stretch">
+    <div class="card" style="flex:1;padding:12px 14px"><svg id="memSvg" width="760" height="420" aria-label="Memória CSR e matriz por grafo, escala logarítmica"></svg></div>
+    <div class="col" style="width:300px">
+      <div class="card hi col" id="memCard" style="gap:12px"></div>
+      <p class="muted" style="font-size:14px">Clique numa linha do gráfico. Eixo em escala log, potências de 1024.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · DIJKSTRA: TRÊS FILAS -->
+<section class="slide" data-min="1" data-title="Dijkstra: um algoritmo, três estruturas" data-notes="O enunciado pede para não escrever Dijkstra duas vezes, mas abstrair onde ficam as estimativas e como se extrai o mínimo.
+• Partes comuns: check_dijkstra_input (rejeita negativo em O(1) via has_negative_weight), init_shortest_paths, reconstruct_path.
+• Vetor: varre estimativas — O(N² + M). Heap indexado: uma entrada por vértice, update_key em O(log N). Entradas obsoletas (std::priority_queue): insere de novo e descarta versões antigas; é só comparação extra, não substitui o heap exigido.
+• Melhoria estrita atualiza pai: empate não troca pai; peso zero aceito.
+Gancho: vamos ver as três rodando no mesmo grafo.">
+  <div class="eb">// algoritmo</div>
+  <div class="t">Dijkstra: o que muda é só a fila de prioridade</div>
+  <div class="g2" style="grid-template-columns:520px 1fr;align-items:start">
+<pre class="code"><span class="k">template</span>&lt;weighted_graph G&gt;
+shortest_paths&lt;W&gt; dijkstra_heap(<span class="k">const</span> G&amp; g, vertex_id s)
+{
+  detail::check_dijkstra_input(g, s); <span class="c">// peso &lt; 0 → throw</span>
+  <span class="k">auto</span> sp = detail::init_shortest_paths(g, s);
+  indexed_min_heap&lt;W&gt; heap(g.vertex_count());
+  heap.push(s, 0);
+  <span class="k">while</span> (!heap.empty()) {
+    <span class="k">const</span> vertex_id u = heap.pop(); <span class="c">// dist[u] final</span>
+    g.for_each_edge(u, [&amp;](vertex_id v, W w) {
+      <span class="k">if</span> (sp.dist[u] + w &lt; sp.dist[v]) {   <span class="c">// estrita</span>
+        sp.dist[v] = sp.dist[u] + w; sp.parent[v] = u;
+        heap.contains(v) ? heap.update_key(v, …)
+                         : heap.push(v, …);
+      }
+    });
+  }
+  <span class="k">return</span> sp;  <span class="c">// {source, dist, parent}</span>
+}</pre>
+    <div class="col">
+      <table class="tb"><thead><tr><th>Versão</th><th>Seleção / atualização</th><th>Pior caso (CSR)</th></tr></thead>
+      <tbody>
+        <tr><td>Vetor</td><td>varre as estimativas</td><td class="n">O(N² + M)</td></tr>
+        <tr><td><b>Heap indexado</b></td><td>1 entrada por vértice, <code>update_key</code></td><td class="n acc">O((N + M) log N)</td></tr>
+        <tr><td>Entradas obsoletas</td><td>reinsere, descarta antigas</td><td class="n">O(N + M log M)</td></tr>
+      </tbody></table>
+      <div class="card col" style="gap:8px;margin-top:6px">
+        <div class="lbl" style="margin:0">Saída comum</div>
+        <p><code>shortest_paths{source, dist, parent}</code> — dist = +∞ e pai 0 indicam inalcançável; <code>reconstruct_path</code> segue os pais e inverte.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · DEMO DIJKSTRA -->
+<section class="slide" data-min="2" data-title="Demo: Dijkstra passo a passo" data-notes="Dizer antes de clicar: “vou rodar o grafo do enunciado — ele tem a aresta −9,5”.
+1. Play no grafo do enunciado → erro: a biblioteca recusa pesos negativos (mesma mensagem do std::invalid_argument).
+2. Trocar para |pesos| (−9,5 → 9,5), origem 1: distâncias esperadas d(2)=0,1; d(5)=0,3; d(4)=2,6; d(3)=5,3.
+3. Alternar Vetor / Heap / Obsoletas: mesmas distâncias; mudam os contadores (comparações na varredura × trocas no heap × entradas descartadas).
+4. Clicar num vértice muda a origem. “Aleatório” gera um grafo com semente fixa.
+Pergunta provável: “por que o heap não ganha aqui?” — N pequeno; a diferença aparece com N grande (slide de tempos).">
+  <div class="head"><div class="col" style="gap:8px"><div class="eb">// demo</div><div class="t" style="font-size:36px">Dijkstra passo a passo, nas três estruturas</div></div><span class="sim-tag">simulação do algoritmo da biblioteca</span></div>
+  <div class="row" style="gap:16px;align-items:stretch">
+    <div class="card" style="padding:8px;width:560px;flex:none;position:relative">
+      <svg id="djSvg" width="542" height="392" aria-label="Grafo da demonstração de Dijkstra; clique num vértice para escolher a origem"></svg>
+      <div class="seg" id="djInst" style="position:absolute;left:12px;top:10px"><button aria-pressed="true" data-v="enun">enunciado</button><button aria-pressed="false" data-v="abs">|pesos|</button><button aria-pressed="false" data-v="rand">aleatório</button></div>
+      <button class="btn" id="djNew" style="position:absolute;right:12px;top:10px;display:none">nova semente</button>
+    </div>
+    <div class="col" style="flex:1;gap:10px">
+      <div class="seg" id="djMode"><button aria-pressed="false" data-v="array">vetor</button><button aria-pressed="true" data-v="heap">heap indexado</button><button aria-pressed="false" data-v="lazy">entradas obsoletas</button></div>
+      <div class="card" style="padding:12px 14px;min-height:150px"><div class="lbl" id="djStructLbl">estrutura</div><div id="djStruct"></div></div>
+      <div class="g4" id="djCounters"></div>
+      <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn" id="djBack" aria-label="passo anterior">◀ passo</button>
+        <button class="btn pri" id="djPlay">▶ play</button>
+        <button class="btn" id="djStep" aria-label="próximo passo">passo ▶</button>
+        <button class="btn" id="djReset">↺</button>
+        <label class="ctl" style="margin-left:6px">vel. <input type="range" id="djSpeed" min="1" max="10" value="5"></label>
+      </div>
+    </div>
+  </div>
+  <div class="msg" id="djMsg"></div>
+</section>
+
+<!-- 7 · HEAP INDEXADO -->
+<section class="slide" data-min="1" data-title="Heap indexado: update_key" data-notes="O ponto exigido pelo enunciado: atualizar a chave de um elemento de forma eficiente.
+• O heap guarda heap_ (vértice em cada posição), key_ (chave por vértice) e pos_ (posição de cada vértice). Toda troca passa por swap_nodes, que atualiza pos_ dos dois.
+• Sem pos_, achar o vértice custaria O(N); com pos_ é O(1), e subir/descer custa O(log N).
+• Demo: clicar no vértice 9, baixar a chave para 0 e aplicar update_key → sobe até a raiz; contar as trocas (≤ altura).
+• pop(): raiz vai para o fim, último sobe e desce.
+Gancho: com isso pronto, o experimento no Azure.">
+  <div class="head"><div class="col" style="gap:8px"><div class="eb">// estrutura de dados</div><div class="t" style="font-size:38px">Heap indexado: <span class="mono" style="font-size:32px">update_key</span> em O(log N)</div></div><span class="sim-tag">simulação · mesma lógica de heap.hpp</span></div>
+  <div class="row" style="gap:16px;align-items:stretch">
+    <div class="card" style="padding:8px;width:620px;flex:none"><svg id="hpSvg" width="602" height="300" aria-label="Árvore do heap; clique num vértice para selecioná-lo"></svg></div>
+    <div class="col" style="flex:1;gap:12px">
+      <div class="card col" style="gap:10px">
+        <div class="ro">vértice selecionado <b id="hpSel">—</b> · chave atual <b id="hpCur">—</b></div>
+        <label class="ctl">nova chave <input type="range" id="hpKey" min="0" max="20" value="0"><output id="hpKeyOut">0</output></label>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn pri" id="hpUpd">update_key</button><button class="btn" id="hpPop">pop()</button><button class="btn" id="hpPush">push(v)</button><button class="btn" id="hpReset">↺</button></div>
+      </div>
+      <div class="g2" style="gap:10px"><div class="card kpi"><span class="l">trocas na última operação</span><span class="ro main" id="hpSw">0</span></div><div class="card kpi"><span class="l">altura ⌊log₂ n⌋</span><span class="ro main" id="hpH">3</span></div></div>
+      <div class="msg" id="hpMsg" style="font-size:13px"></div>
+    </div>
+  </div>
+  <div class="card" style="padding:10px 14px"><svg id="hpArr" width="1120" height="104" aria-label="Vetores heap_, key_ e pos_"></svg></div>
+</section>
+
+<!-- 8 · PROTOCOLO -->
+<section class="slide" data-min="0.5" data-title="Protocolo experimental" data-notes="Rodada de Dijkstra em 30/10/2026, Azure Standard_E4as_v4 (4 vCPUs, 32 GiB, AMD EPYC 7763), g++ 13.3, commit b414456.
+• k = 100 origens distintas, semente 2025, mesma sequência entre versões; ordem das versões alterna a cada origem.
+• Intervalo medido inclui a chamada e suas alocações; exclui leitura, descompactação, validação e exportação.
+• As distâncias das versões são comparadas fora do intervalo de tempo.
+Gancho: os tempos.">
+  <div class="eb">// método</div>
+  <div class="t">Como os tempos foram medidos</div>
+  <div class="g3" style="margin-top:10px">
+    <div class="card col"><div class="lbl">máquina</div><h3>Azure Standard_E4as_v4</h3><p class="muted">4 vCPUs AMD EPYC 7763 · 32 GiB · belgiumcentral · g++ 13.3 · commit <code>b414456</code></p></div>
+    <div class="card col"><div class="lbl">amostra</div><h3>k = 100 origens, semente 2025</h3><p class="muted">Mesma sequência para as três versões; a ordem das versões alterna a cada origem</p></div>
+    <div class="card col"><div class="lbl">intervalo medido</div><h3>Só a chamada do Dijkstra</h3><p class="muted">Inclui alocações da busca; exclui leitura, descompactação, validação e exportação</p></div>
+  </div>
+  <div class="card hi" style="margin-top:6px"><p>Grafos: Ponderados 3 a 7 (10⁵ a 5·10⁷ vértices, até 7,3·10⁷ arestas) e a rede de colaboração (722.385 pesquisadores). Todos em CSR.</p></div>
+</section>
+
+<!-- 9 · TEMPOS -->
+<section class="slide" data-min="1.5" data-title="Resultados: tempos de Dijkstra" data-notes="Escala log por padrão; trocar para linear mostra por que: o Grafo 3 some.
+• Grafo Ponderado 3: vetor 26,50 s × heap indexado 0,118 s → ~224×. É a comparação exigida, medida.
+• Grafos 4–7: vetor não medido (array=no). Barra tracejada = ausência, não zero nem estimativa.
+• Surpresa: entradas obsoletas foram mais rápidas que o heap indexado nos grafos grandes — 2,71× no Grafo 7.
+• Hipóteses (não demonstradas): localidade (pares contíguos na fila vs. acessos a key_/pos_ por vértice), volume de update_key. O assintótico não decide sozinho.
+• Média vs. mediana: na rede, origens em componentes pequenas puxam a média para baixo.
+Gancho: os caminhos encontrados.">
+  <div class="head"><div class="col" style="gap:8px"><div class="eb">// resultados</div><div class="t" style="font-size:38px">Tempo médio por origem, 100 origens</div></div><span class="sim-tag">dados reais · Azure</span></div>
+  <div class="row" style="gap:16px;align-items:stretch">
+    <div class="card" style="flex:1;padding:10px 12px"><svg id="tmSvg" width="790" height="400" aria-label="Tempos de Dijkstra por grafo e versão"></svg></div>
+    <div class="col" style="width:290px;gap:12px">
+      <div class="seg" id="tmStat"><button aria-pressed="true" data-v="mean">média</button><button aria-pressed="false" data-v="med">mediana</button></div>
+      <div class="seg" id="tmScale"><button aria-pressed="true" data-v="log">escala log</button><button aria-pressed="false" data-v="lin">linear</button></div>
+      <div class="checks" style="flex-direction:column;gap:9px" id="tmChecks">
+        <label><input type="checkbox" data-v="array" checked> vetor</label>
+        <label><input type="checkbox" data-v="heap" checked> heap indexado</label>
+        <label><input type="checkbox" data-v="lazy" checked> entradas obsoletas</label>
+      </div>
+      <div class="card hi col" id="tmCard" style="gap:8px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 · CAMINHOS -->
+<section class="slide" data-min="1.5" data-title="Caminhos mínimos a partir do vértice 10" data-notes="Cada destino tem um caminho completo (heap indexado), conferido com a rodada histórica.
+• A distância é soma de pesos; “arestas” é o comprimento desse caminho, não uma distância de BFS. Empates podem gerar outros caminhos igualmente válidos.
+• Mostrar: Grafo 3 → destino 20: d = 0,8 em 18 arestas, quase todas de peso ≤ 0,17.
+• Grafo 7 → destino 40: 46 arestas, d = 100,69; destino 60 tem d menor (82,25) com 36 arestas.
+• As barras são o peso de cada aresta (extraído do arquivo); a linha é a distância acumulada.
+Gancho: e na rede de colaboração?">
+  <div class="head"><div class="col" style="gap:8px"><div class="eb">// estudo de caso 1</div><div class="t" style="font-size:38px">Origem 10 → destinos 20, 30, 40, 50, 60</div></div><span class="sim-tag">dados reais · caminhos exportados</span></div>
+  <div class="row" style="gap:12px;align-items:center">
+    <div class="seg" id="ptG"><button data-v="grafo_W_3" aria-pressed="true">Ponderado 3</button><button data-v="grafo_W_4" aria-pressed="false">4</button><button data-v="grafo_W_5" aria-pressed="false">5</button><button data-v="grafo_W_6" aria-pressed="false">6</button><button data-v="grafo_W_7" aria-pressed="false">7</button></div>
+    <div class="seg" id="ptT"></div>
+    <div style="flex:1"></div>
+    <div class="kpi"><span class="l">distância</span><span class="ro main" id="ptD"></span></div>
+    <div class="kpi" style="margin-left:18px"><span class="l">arestas</span><span class="ro main" id="ptH"></span></div>
+    <div class="kpi" style="margin-left:18px"><span class="l">peso médio</span><span class="ro main" id="ptM"></span></div>
+  </div>
+  <div class="card" style="padding:8px 10px"><svg id="ptSvg" width="1116" height="380" aria-label="Caminho mínimo: vértices, peso de cada aresta e distância acumulada"></svg></div>
+</section>
+
+<!-- 11 · REDE -->
+<section class="slide" data-min="1" data-title="Rede de colaboração: a partir de Dijkstra" data-notes="Origem: Edsger W. Dijkstra (ID 2722), grafias exatas do enunciado. Peso inversamente proporcional ao número de artigos em coautoria: aresta grossa = muitos artigos.
+• A figura é a árvore de caminhos mínimos restrita aos 4 destinos alcançáveis.
+• Kleinberg: 2,707 em 9 arestas; Tardos: 2,754 em 11; Figueiredo: 2,943 em 8; Kruskal: 3,480 em 8.
+• Turing (ID 11365) existe, mas está em outra componente: distância +∞, sem caminho — diferente de nome desconhecido.
+• Minimizar soma de pesos ≠ minimizar intermediários, e não prova relação social direta.
+Gancho: como garantimos que está certo.">
+  <div class="head"><div class="col" style="gap:8px"><div class="eb">// estudo de caso 2</div><div class="t" style="font-size:38px">Edsger W. Dijkstra → cinco pesquisadores</div></div><span class="sim-tag">dados reais · rede de colaboração</span></div>
+  <div class="row" style="gap:10px;align-items:center" id="rdBtns"></div>
+  <div class="card" style="padding:8px 10px"><svg id="rdSvg" width="1116" height="330" aria-label="Árvore de caminhos mínimos a partir de Edsger W. Dijkstra"></svg></div>
+  <div class="msg" id="rdMsg" style="font-family:var(--font-body);font-size:15px"></div>
+</section>
+
+<!-- 12 · VALIDAÇÃO -->
+<section class="slide" data-min="0.5" data-title="Validação e lacunas" data-notes="• 178 casos C++ passaram; no Linux, com sanitizadores.
+• Testes diferenciais: as três versões de Dijkstra produzem as mesmas distâncias; com pesos unitários, coincidem com os níveis da BFS.
+• 11 grafos artificiais calculados à mão: peso zero e negativo, inalcançáveis, empates, reduções de chave, arestas paralelas, profundidade ≠ distância — 160 resultados conferidos.
+• Pendência dita claramente: medir o vetor nos Grafos 4 a 7.">
+  <div class="eb">// validação</div>
+  <div class="t">Como sabemos que está certo</div>
+  <div class="g3" style="margin-top:8px">
+    <div class="card col"><span class="ro main">178</span><h3>casos de teste C++</h3><p class="muted">Execução Linux com sanitizadores</p></div>
+    <div class="card col"><span class="ro main">3 = 3</span><h3>testes diferenciais</h3><p class="muted">As versões concordam; com pesos unitários, distância = nível da BFS</p></div>
+    <div class="card col"><span class="ro main">160</span><h3>resultados à mão</h3><p class="muted">11 grafos: pesos zero/negativos, empates, paralelas, inalcançáveis, reduções de chave</p></div>
+  </div>
+  <div class="card hi"><h3>Lacuna aberta</h3><p class="muted">O tempo da versão por vetor nos Grafos Ponderados 4 a 7 ainda precisa de uma rodada própria. “Não medido” não é zero nem estimativa, e a versão com entradas obsoletas não preenche essa lacuna.</p></div>
+</section>
+
+<!-- 13 · SÍNTESE -->
+<section class="slide" data-min="0.5" data-title="Síntese" data-notes="Quatro mensagens, cada uma ligada a uma demo:
+1. Políticas em compilação (demo de layout).
+2. CSR viabiliza 50 M de vértices (demo de memória).
+3. Heap ≫ vetor, mas constantes importam (gráfico de tempos).
+4. Peso ≠ número de arestas; inalcançável ≠ inexistente (caminhos e rede).">
+  <div class="eb">// síntese</div>
+  <div class="t">Quatro coisas para levar</div>
+  <div class="g2" style="margin-top:8px">
+    <div class="card col"><div class="lbl">01 · arquitetura</div><h3>Políticas resolvem o layout em compilação</h3><p class="muted">Peso ausente custa 0 B; algoritmos escritos uma vez sobre conceitos.</p></div>
+    <div class="card col"><div class="lbl">02 · memória</div><h3>CSR: 1,7 GiB onde a matriz pediria 17,7 PiB</h3><p class="muted">Grafo Ponderado 7, 50 milhões de vértices, numa VM de 32 GiB.</p></div>
+    <div class="card col"><div class="lbl">03 · desempenho</div><h3>Heap 224× mais rápido que vetor no Grafo 3</h3><p class="muted">Mas entradas obsoletas venceram o heap indexado nos grandes: constantes importam.</p></div>
+    <div class="card col"><div class="lbl">04 · interpretação</div><h3>Menor peso ≠ menos arestas; +∞ ≠ inexistente</h3><p class="muted">46 arestas para d = 100,69; Turing existe, mas noutra componente.</p></div>
+  </div>
+</section>
+
+<!-- 14 · PERGUNTAS -->
+<section class="slide divider" data-min="0" data-title="Perguntas" data-notes="Perguntas prováveis:
+• Por que não Fibonacci heap? Constantes altas; o binário indexado já dá update_key em O(log N).
+• Por que o vetor não foi medido nos grandes? Custo quadrático: N² varreduras com N = 10⁶–5·10⁷ por origem × 100 origens.
+• Por que entradas obsoletas ganharam? Hipóteses: localidade e volume de update_key; não demonstrado.">
+  <div class="eb">// obrigado</div>
+  <div class="t" style="font-size:64px">Perguntas?</div>
+  <div class="col" style="margin-top:22px;gap:10px">
+    <div class="mono" style="font-size:17px">github.com/Cerne17/graph-library-cpp</div>
+    <div class="mono muted" style="font-size:15px">miguelbadanycerne.20231@poli.ufrj.br</div>
+    <div class="muted" style="font-size:15px">João Costa · Miguel Cerne — COS 242, UFRJ, 2026/2</div>
+  </div>
+</section>
+
+</div></div>
+
+<div id="hud">
+  <button id="hPrev" aria-label="slide anterior">◀</button><button id="hNext" aria-label="próximo slide">▶</button>
+  <span id="count"></span>
+  <div id="prog"></div>
+  <div id="bud" title="orçamento do slide"><span></span></div>
+  <button id="hPlay" aria-label="iniciar ou pausar cronômetro">▶</button><button id="hReset" aria-label="zerar cronômetro">↺</button>
+  <span id="clock">00:00 / 00:00</span><span id="pace">no ritmo</span>
+  <button id="hNotes">N notas</button><button id="hTheme" aria-label="alternar tema">◐</button><button id="hHelp">?</button>
+</div>
+<div class="panel" id="notes"></div>
+<div class="panel" id="help"><h4 style="font:600 18px var(--font-body);margin-bottom:10px">Atalhos</h4><table>
+<tr><td>← → espaço</td><td>navegar</td></tr><tr><td>Home / End</td><td>primeiro / último</td></tr><tr><td>T</td><td>iniciar/pausar cronômetro</td></tr><tr><td>R R</td><td>zerar cronômetro</td></tr><tr><td>N</td><td>notas do apresentador</td></tr><tr><td>F</td><td>tela cheia</td></tr><tr><td>D</td><td>tema claro/escuro</td></tr><tr><td>?</td><td>esta ajuda</td></tr><tr><td>Esc</td><td>fechar painéis</td></tr></table></div>
+
+<script>
+const PATHS = {"grafo_W_3":[{"t":20,"d":0.8,"p":[10,2858,35293,3905,24445,39345,61279,41321,70540,26049,84450,68904,87862,86778,27694,16608,86355,15760,20],"w":[0.05,0.08,0.01,0.01,0.03,0.04,0.04,0.09,0.09,0.02,0.01,0.05,0.0,0.17,0.06,0.03,0.02,0.0]},{"t":30,"d":0.89,"p":[10,2858,35293,96094,85187,53177,64898,87087,77935,42304,78071,93985,27642,26151,30],"w":[0.05,0.08,0.05,0.04,0.05,0.1,0.0,0.09,0.12,0.13,0.07,0.08,0.03,0.0]},{"t":40,"d":0.84,"p":[10,2858,35293,3905,24445,86286,14327,19697,15930,46307,40],"w":[0.05,0.08,0.01,0.01,0.0,0.14,0.11,0.15,0.26,0.03]},{"t":50,"d":0.87,"p":[10,56663,84437,19040,82510,17622,94992,70948,19878,50],"w":[0.16,0.06,0.23,0.08,0.08,0.11,0.07,0.05,0.03]},{"t":60,"d":0.97,"p":[10,2858,35293,3905,24445,89584,2874,99253,66532,33719,96654,75728,79865,74717,59399,8718,60],"w":[0.05,0.08,0.01,0.01,0.04,0.02,0.01,0.01,0.13,0.03,0.26,0.06,0.01,0.04,0.17,0.04]}],"grafo_W_4":[{"t":20,"d":2.66,"p":[10,532245,877016,554617,430107,437166,805646,841402,663364,655748,634947,318070,807260,20],"w":[0.12,0.14,0.68,0.07,0.04,0.26,0.14,0.21,0.1,0.11,0.54,0.15,0.1]},{"t":30,"d":2.02,"p":[10,873980,182382,261305,81769,694525,219466,207765,44636,183747,920911,35338,239369,417194,132461,740528,707581,30],"w":[0.11,0.24,0.12,0.0,0.05,0.64,0.01,0.13,0.06,0.02,0.1,0.2,0.04,0.06,0.12,0.07,0.05]},{"t":40,"d":2.52,"p":[10,873980,182382,674971,557022,188455,418550,275098,277633,801708,730863,274827,386086,188007,477496,40],"w":[0.11,0.24,0.1,0.46,0.14,0.01,0.01,0.15,0.25,0.26,0.23,0.09,0.06,0.18,0.23]},{"t":50,"d":2.69,"p":[10,873980,182382,261305,81769,694525,382144,748624,663332,149827,349584,735867,9905,716970,472621,407659,994210,630598,50],"w":[0.11,0.24,0.12,0.0,0.05,0.06,0.2,0.07,0.12,0.15,0.07,0.56,0.1,0.12,0.02,0.07,0.39,0.24]},{"t":60,"d":2.41,"p":[10,873980,182382,674971,106317,27985,280367,227336,364950,883474,283156,161217,224210,188021,614364,358029,855615,822462,774634,60],"w":[0.11,0.24,0.1,0.05,0.13,0.09,0.02,0.33,0.03,0.15,0.04,0.12,0.05,0.26,0.15,0.18,0.11,0.13,0.12]}],"grafo_W_5":[{"t":20,"d":17.34,"p":[10,7622850,4615833,6528266,1295458,7103730,8790605,7788327,6766415,7155379,2031914,3908338,8885874,20],"w":[2.08,0.78,0.06,1.64,0.19,2.52,1.89,1.7,0.23,1.61,1.91,1.91,0.82]},{"t":30,"d":17.24,"p":[10,2846336,5413988,202621,9270546,6836812,2983314,8775277,5549785,3485759,4341576,8868678,3166991,5117196,7291082,1816279,5664093,8947758,30],"w":[2.31,0.1,0.72,1.69,0.38,0.27,0.47,4.19,0.01,0.75,0.88,1.23,0.29,0.23,0.09,0.06,3.17,0.4]},{"t":40,"d":17.37,"p":[10,1299954,1419794,9885733,5641294,409605,4105715,660832,5850281,3215052,7676193,9008138,4846487,9798152,40],"w":[2.02,0.62,0.57,1.21,1.2,5.27,2.17,0.2,1.43,0.36,0.73,0.79,0.54,0.26]},{"t":50,"d":15.43,"p":[10,1299954,9927727,8451042,5368621,4276332,3716282,3724752,700154,9271362,6416250,396789,50],"w":[2.02,0.32,1.06,2.8,1.34,3.17,0.81,0.99,1.92,0.19,0.6,0.21]},{"t":60,"d":17.99,"p":[10,1299954,1419794,1899178,7524819,757290,9445351,9611705,9104671,8941517,264365,3945175,3090234,2071841,8424191,2860740,1175531,1925405,7718765,3193827,7824884,1454010,60],"w":[2.02,0.62,1.04,0.01,1.09,0.21,0.21,0.25,0.34,0.84,2.28,1.49,2.99,0.04,0.37,0.5,0.45,0.95,0.69,0.41,0.81,0.38]}],"grafo_W_6":[{"t":20,"d":11.26,"p":[10,7194590,1623776,6004729,5713792,8358296,2533780,5227148,8652974,6001519,3007875,2659882,1975860,7178227,4239765,4333977,5135142,7805172,6937097,2042733,20],"w":[1.56,1.2,0.47,0.24,0.13,0.06,0.07,0.2,0.49,0.09,1.55,0.24,0.31,0.59,1.54,0.25,0.42,0.97,0.6,0.28]},{"t":30,"d":10.67,"p":[10,6473892,2441538,1548272,787618,5728075,8108429,6007822,5550988,2523255,782814,7306955,153130,9107012,8930108,2199545,9604404,5436447,8094054,8301086,7882916,7776260,30],"w":[0.02,0.59,0.4,0.11,0.1,1.06,0.13,0.3,0.0,2.99,0.33,0.24,0.23,0.46,1.23,0.85,0.23,0.33,0.05,0.04,0.29,0.69]},{"t":40,"d":11.31,"p":[10,7194590,1308444,2430454,9006783,9339181,6729573,6733497,5619464,9959710,9649921,40],"w":[1.56,0.25,0.31,0.95,0.36,2.32,0.14,1.78,0.38,0.19,3.07]},{"t":50,"d":9.6,"p":[10,6473892,2441538,3496708,8719217,3608871,1734087,8196874,3353190,4171489,6448393,8854015,50],"w":[0.02,0.59,0.3,0.52,1.51,0.4,1.22,0.89,1.28,0.7,0.25,1.92]},{"t":60,"d":10.72,"p":[10,6473892,2441538,1548272,787618,9566932,345742,218396,8462300,2279724,9337595,9606830,9928328,8701739,8354591,8135590,4215828,8346899,3411658,6447603,60],"w":[0.02,0.59,0.4,0.11,0.71,0.65,0.33,0.39,0.23,0.0,0.35,0.08,0.65,1.21,1.56,0.04,0.59,1.0,1.64,0.17]}],"grafo_W_7":[{"t":20,"d":93.47,"p":[10,44348966,895015,41433396,36342079,15296633,26159915,16943639,38743389,10078159,21570419,11797967,14033688,15395825,37638078,10256175,47812933,16114395,3709139,16167977,42063355,25051663,11357393,1237413,44073100,46623569,16564439,33972685,44128375,38865462,44580311,49167593,34107790,20],"w":[3.1,0.13,3.53,3.31,1.2,2.61,1.87,1.42,9.13,0.27,0.09,4.13,2.93,4.72,0.22,7.22,3.08,0.73,9.36,1.58,4.64,1.09,2.24,6.34,2.36,0.17,4.05,1.24,3.11,1.91,1.86,3.41,0.42]},{"t":30,"d":95.08,"p":[10,44348966,895015,41433396,49215936,31738577,6483504,6934370,37879154,8001897,22183730,7265763,1661582,11612335,1574885,30723220,39141968,27645810,37795681,33920812,34023581,12510615,18298407,31754868,14520632,7334968,721843,7608283,44662249,46198809,161794,37094018,30],"w":[3.1,0.13,3.53,4.79,0.09,3.37,8.42,0.79,4.22,0.13,3.66,0.98,1.95,0.19,3.34,1.15,6.32,4.12,4.31,7.18,0.16,0.28,2.7,1.08,9.87,1.62,1.01,3.04,5.15,2.23,1.01,5.16]},{"t":40,"d":100.69,"p":[10,44348966,895015,41433396,49215936,31738577,6483504,35576121,13084740,8200352,334647,21020208,33240812,43511183,39829015,31993368,35257514,1449696,2909571,35131499,46634817,8774626,26615224,12496865,25597904,17624904,28515031,9039078,42335617,44883250,25945871,4357404,43686238,2293704,18096524,17747192,14433007,4134285,11543624,49518359,34048991,36125121,20450161,31315434,44798389,37766241,40],"w":[3.1,0.13,3.53,4.79,0.09,3.37,2.06,1.99,1.73,0.26,1.27,1.95,2.01,0.41,2.81,2.99,4.44,0.0,2.26,1.65,2.26,3.01,2.18,0.05,1.55,1.04,7.18,6.61,1.58,0.6,1.4,0.85,0.76,1.8,0.73,2.44,1.83,2.87,0.02,3.67,0.2,3.64,6.01,2.89,2.84,1.84]},{"t":50,"d":95.77,"p":[10,44348966,895015,41433396,30012782,5306752,45425007,45928549,3090492,35262022,25302788,39964857,25438408,42769429,18259600,14013095,21407931,29028767,13632589,26269428,19841425,16775149,408668,33679805,18032133,15314852,41061763,21731902,43132195,43482012,248139,24050455,39437117,4560936,50],"w":[3.1,0.13,3.53,9.13,3.14,1.62,2.34,0.48,4.65,8.36,0.54,2.11,0.75,0.53,6.33,0.39,3.57,0.54,4.13,3.1,1.03,0.96,1.71,2.66,2.98,3.61,3.97,1.62,2.84,2.73,6.01,1.04,3.45,2.69]},{"t":60,"d":82.25,"p":[10,44348966,895015,41433396,36342079,15296633,26159915,27614435,30636628,46606379,39970228,44691860,28472827,14457897,49527742,23832529,33803765,40354942,41967334,30441838,2384620,9629521,15597152,8376037,19638652,35026345,21270637,16840822,36015359,4125149,20825658,31193177,35236066,37175171,16297527,34154631,60],"w":[3.1,0.13,3.53,3.31,1.2,2.61,4.18,0.86,1.22,4.46,0.5,4.07,3.15,2.85,1.69,2.99,0.15,2.34,1.13,3.89,0.49,3.67,0.54,2.73,7.88,0.97,4.12,4.79,0.69,0.51,0.55,1.45,0.82,0.05,3.17,2.46]}],"rede_colaboracao":[{"t":11365,"d":null,"p":[],"w":[],"tn":"Alan M. Turing"},{"t":471365,"d":3.480368455,"p":[2722,9490,7200,10343,646765,490368,10746,3655,471365],"w":[1.0,0.133333333333333,0.29925187032419,0.258620689655172,0.103448275862069,0.285714285714286,0.4,1.0],"n":["Edsger W. Dijkstra","John R. Rice","Dan C. Marinescu","Howard Jay Siegel","Edwin K. P. Chong","Ness B. Shroff","R. Srikant","Albert G. Greenberg","J. B. Kruskal"],"tn":"J. B. Kruskal"},{"t":5709,"d":2.706993618,"p":[2722,217250,11456,768,11448,101826,12242,11834,9608,5709],"w":[0.4,1.0,0.307692307692308,0.0972447325769854,0.205378973105135,0.272727272727273,0.181818181818182,0.101522842639594,0.140609306996987],"n":["Edsger W. Dijkstra","A. J. M. van Gasteren","Gerard Tel","Hans L. Bodlaender","Dimitrios M. Thilikos","Prabhakar Ragde","Avi Wigderson","Eli Upfal","Prabhakar Raghavan","Jon M. Kleinberg"],"tn":"Jon M. Kleinberg"},{"t":11386,"d":2.753514179,"p":[2722,217250,11456,768,6479,8528,10572,357587,11649,3694,318911,11386],"w":[0.4,1.0,0.307692307692308,0.166666666666667,0.105263157894737,0.108303249097473,0.137614678899083,0.100502512562814,0.130434782608696,0.170454545454545,0.126582278481013],"n":["Edsger W. Dijkstra","A. J. M. van Gasteren","Gerard Tel","Hans L. Bodlaender","Jan van Leeuwen","Mark H. Overmars","Micha Sharir","Haim Kaplan","Robert Endre Tarjan","Andrew V. Goldberg","Serge A. Plotkin","Éva Tardos"],"tn":"Éva Tardos"},{"t":343930,"d":2.94283087,"p":[2722,9490,7200,391667,371226,4379,68773,11466,343930],"w":[1.0,0.133333333333333,0.3,0.394736842105263,0.258620689655172,0.218181818181818,0.16551724137931,0.47244094488189],"n":["Edsger W. Dijkstra","John R. Rice","Dan C. Marinescu","Chuang Lin","Bo Li","Y. Thomas Hou","Zhi-Li Zhang","Donald F. Towsley","Daniel R. Figueiredo"],"tn":"Daniel R. Figueiredo"}]};
+</script>
+<script>
+(() => {
+'use strict';
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs={}, parent, text) => { const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(text!=null) e.textContent=text; if(parent) parent.appendChild(e); return e; };
+const clear = n => { while(n.firstChild) n.removeChild(n.firstChild); };
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const nf = (x, d=2) => x.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:d});
+const nfx = (x, d) => x.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtD = x => x===Infinity ? '∞' : nf(Math.round(x*100)/100, 2);
+const AMBER='#E89A3C';
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function segBind(id, fn){ const s=$(id); s.addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; s.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); fn(b.dataset.v);}); return ()=>s.querySelector('[aria-pressed="true"]').dataset.v; }
+function segSet(id, v){ $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===v)); }
+const bytesFmt = b => { const u=['B','KiB','MiB','GiB','TiB','PiB','EiB']; let i=0; while(b>=1024&&i<u.length-1){b/=1024;i++;} return nf(b, b<10?2:1)+' '+u[i]; };
+
+/* ---------- engine ---------- */
+const slides=[...document.querySelectorAll('.slide')], N=slides.length;
+const mins=slides.map(s=>parseFloat(s.dataset.min||'1'));
+const start=mins.map((_,i)=>mins.slice(0,i).reduce((a,b)=>a+b,0)), total=mins.reduce((a,b)=>a+b,0);
+const hooks={}; let cur=0;
+const stage=$('#stage'), vp=$('#viewport');
+const fit=()=>stage.style.transform=`scale(${Math.min(vp.clientWidth/1280,vp.clientHeight/720)})`;
+addEventListener('resize',fit); fit();
+const ringsSvg = () => { const s=el('svg',{class:'rings',viewBox:'-100 -100 200 200','aria-hidden':'true'}); [96,76,56,36].forEach((r,i)=>el('circle',{r,fill:'none',stroke:i<2?'var(--oxblood)':AMBER,'stroke-width':i===3?2.4:1.4,opacity:.25+i*.18},s)); el('circle',{r:13,fill:AMBER},s); el('circle',{r:22,fill:AMBER,opacity:.18},s); return s; };
+slides.forEach((s,i)=>{
+  if(s.classList.contains('divider')) s.appendChild(ringsSvg());
+  if(i>0 && i<N-1){ const f=document.createElement('div'); f.className='foot'; f.innerHTML=`<span>COS 242 · Parte 2 — grafos com pesos</span><span>${i+1} / ${N}</span>`; s.appendChild(f); }
+});
+const prog=$('#prog');
+slides.forEach((s,i)=>{ const seg=document.createElement('i'); seg.style.flex=Math.max(mins[i],0.15); seg.title=`${i+1}. ${s.dataset.title}`; seg.onclick=()=>go(i); prog.appendChild(seg); });
+const mmss = t => { t=Math.max(0,Math.round(t)); return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); };
+let running=false, acc=0, t0=0, slideStart=0;
+const elapsed=()=>acc+(running?(performance.now()-t0)/1000:0);
+function renderNotes(){
+  const s=slides[cur], nx=slides[cur+1];
+  $('#notes').innerHTML=`<div class="eb">slide ${cur+1} de ${N} · ${nf(mins[cur],1)} min · início ${mmss(start[cur]*60)}</div><h4>${s.dataset.title}</h4><div class="nt"></div><div class="nx">${nx?'próximo → '+nx.dataset.title:'fim'}</div>`;
+  $('#notes .nt').textContent=s.dataset.notes||'';
+}
+function go(i){ i=Math.max(0,Math.min(N-1,i)); if(i!==cur||!slides[cur].classList.contains('active')){ hooks[cur]?.leave?.(); slides[cur].classList.remove('active'); cur=i; slides[cur].classList.add('active'); try{hooks[cur]?.enter?.()}catch(e){console.error(e)} slideStart=elapsed(); }
+  $('#count').textContent=`${cur+1} / ${N}`;
+  [...prog.children].forEach((c,j)=>{c.className=j<cur?'past':j===cur?'cur':''});
+  renderNotes(); history.replaceState(null,'','#'+(cur+1)); }
+function toggleTimer(){ if(running){acc=elapsed();running=false}else{t0=performance.now();running=true} $('#hPlay').textContent=running?'⏸':'▶'; }
+let rArm=0; function resetTimer(){ acc=0; t0=performance.now(); slideStart=0; }
+setInterval(()=>{ const e=elapsed(), on=e-slideStart, bud=mins[cur]*60;
+  $('#clock').textContent=`${mmss(e)} / ${mmss(total*60)}`;
+  const d=e-(start[cur]*60+Math.min(on,bud)); const p=$('#pace');
+  if(!running&&e===0){p.textContent='pronto';p.className='';}
+  else if(Math.abs(d)<30){p.textContent='no ritmo';p.className='';} else if(d>0){p.textContent=mmss(d)+' atrasado';p.className='late';} else {p.textContent=mmss(-d)+' adiantado';p.className='early';}
+  const b=$('#bud'); b.querySelector('span').style.width=(bud?Math.min(100,on/bud*100):100)+'%'; b.classList.toggle('over',bud>0&&on>bud);
+},250);
+const togglePanel=id=>$(id).classList.toggle('open');
+function toggleTheme(){ const r=document.documentElement; r.dataset.theme=r.dataset.theme==='dark'?'light':'dark'; hooks[cur]?.enter?.(); }
+addEventListener('keydown',e=>{
+  const tg=e.target; if(tg && (tg.tagName==='INPUT'&&tg.type!=='range'&&tg.type!=='checkbox' || tg.tagName==='TEXTAREA')) return;
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  const k=e.key;
+  if(k==='ArrowRight'||k==='PageDown'||k===' '){e.preventDefault();go(cur+1)}
+  else if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();go(cur-1)}
+  else if(k==='Home'){go(0)} else if(k==='End'){go(N-1)}
+  else if(k==='t'||k==='T'){toggleTimer()}
+  else if(k==='r'||k==='R'){ const n=performance.now(); if(n-rArm<900){resetTimer();rArm=0}else rArm=n; }
+  else if(k==='n'||k==='N'){togglePanel('#notes')}
+  else if(k==='f'||k==='F'){ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.() }
+  else if(k==='d'||k==='D'){toggleTheme()}
+  else if(k==='?'){togglePanel('#help')}
+  else if(k==='Escape'){$('#notes').classList.remove('open');$('#help').classList.remove('open')}
+});
+addEventListener('pointerup',e=>{ if(e.target.type==='range') setTimeout(()=>e.target.blur(),0) });
+document.addEventListener('click',e=>{ if(e.target.closest('.seg,.btn')) setTimeout(()=>{ if(document.activeElement&&document.activeElement.tagName==='BUTTON') document.activeElement.blur(); },0); });
+$('#hPrev').onclick=()=>go(cur-1); $('#hNext').onclick=()=>go(cur+1);
+$('#hPlay').onclick=toggleTimer; $('#hReset').onclick=resetTimer; $('#hNotes').onclick=()=>togglePanel('#notes'); $('#hHelp').onclick=()=>togglePanel('#help'); $('#hTheme').onclick=toggleTheme;
+const idx=sel=>slides.indexOf(document.querySelector(sel).closest('.slide'));
+
+/* =========================================================
+   DEMO 1 · arquitetura (layout CSR conforme políticas)
+   ========================================================= */
+(() => {
+  let D='u', W='d';
+  const svg=$('#archSvg');
+  function draw(){
+    const typeW = W==='n'?'unweighted':W==='f'?'weighted&lt;float&gt;':'weighted&lt;double&gt;';
+    const dir = D==='u'?'undirected':'directed';
+    $('#archCode').innerHTML = `<span class="k">using</span> G = gl::csr_graph&lt;\n    gl::${dir},\n    gl::${typeW}&gt;;\n\n<span class="k">auto</span> g  = gl::io::load_graph&lt;G&gt;(<span class="c">"grafo_W_3.txt"</span>);\n<span class="k">auto</span> sp = gl::algorithms::dijkstra_heap(g, 10);${W==='n'?'  <span class="c">// ✗ não compila:\n                       // G não é weighted_graph</span>':''}`;
+    clear(svg);
+    const txt=css('--text'), mut=css('--text-muted'), s2=css('--surface-2'), acc=css('--heartwood');
+    // example graph: 1-2 (0.1), 1-3 (1.0), 2-3 (0.2)
+    const E=[[1,2,0.1],[1,3,1.0],[2,3,0.2]], n=3;
+    const adj=Array.from({length:n+1},()=>[]);
+    E.forEach(([a,b,w])=>{adj[a].push([b,w]); if(D==='u') adj[b].push([a,w]);});
+    adj.forEach(l=>l.sort((x,y)=>x[0]-y[0]));
+    const offs=[0]; for(let v=1;v<=n;v++) offs.push(offs[offs.length-1]+adj[v].length);
+    const tgt=[], wt=[]; for(let v=1;v<=n;v++) adj[v].forEach(([t,w])=>{tgt.push(t);wt.push(w)});
+    el('text',{x:0,y:16,fill:mut,'font-size':12},svg,'exemplo: 1–2 (0,1) · 1–3 (1,0) · 2–3 (0,2)');
+    const row=(y,label,vals,bytes,cw,color,show=true)=>{
+      el('text',{x:0,y:y+21,fill:txt,'font-size':13,'font-weight':600},svg,label);
+      el('text',{x:0,y:y+38,fill:mut,'font-size':11},svg,show?bytes:'0 B — coluna vazia');
+      vals.forEach((v,i)=>{ const x=130+i*cw; el('rect',{x,y,width:cw-4,height:32,rx:6,fill:show?'var(--surface)':'none',stroke:show?color:s2,'stroke-dasharray':show?'':'4 4'},svg); if(show) el('text',{x:x+(cw-4)/2,y:y+21,'text-anchor':'middle',fill:txt,'font-size':13},svg,v); });
+    };
+    row(36,'offsets',offs.map(String),'uint64 · 8 B × (N+1)',46,mut);
+    row(104,'targets',tgt.map(String),'uint32 · 4 B por entrada',46,acc);
+    row(172,'weights',wt.map(v=>nf(v,1)),(W==='f'?'float · 4 B':'double · 8 B')+' por entrada',46,AMBER,W!=='n');
+    // arrows offsets → ranges
+    for(let v=1;v<=n;v++){ const a=offs[v-1], b=offs[v]; if(b>a){ const x1=130+a*46, x2=130+b*46-4; el('path',{d:`M${x1} 96 L${x1} 100 L${x2} 100 L${x2} 96`,fill:'none',stroke:mut},svg); el('text',{x:(x1+x2)/2,y:94,'text-anchor':'middle',fill:mut,'font-size':10},svg,'vizinhos de '+v); } }
+    const per = (D==='u'?2:1)*(4+(W==='n'?0:W==='f'?4:8));
+    const y0=250;
+    el('line',{x1:0,x2:600,y1:y0,y2:y0,stroke:s2},svg);
+    el('text',{x:0,y:y0+30,fill:mut,'font-size':12},svg,'bytes por aresta');
+    el('text',{x:0,y:y0+74,fill:acc,'font-size':44,'font-weight':600,style:'font-family:var(--font-display)'},svg,per+' B');
+    el('text',{x:150,y:y0+56,fill:txt,'font-size':14},svg,`${D==='u'?'2 sentidos':'1 sentido'} × (4 B destino${W==='n'?'':' + '+(W==='f'?'4':'8')+' B peso'})`);
+    el('text',{x:150,y:y0+80,fill:mut,'font-size':13},svg,`carga ≈ 8(N+1) + ${per}·M bytes`);
+    // bar for G7 estimate
+    const M7=59999999,N7=5e7, bytes=8*(N7+2)+per*M7;
+    el('text',{x:0,y:y0+112,fill:mut,'font-size':12},svg,'Grafo Ponderado 7 (N = 5·10⁷, M = 6·10⁷), carga teórica:');
+    const bw=bytes/(8*(N7+2)+24*M7)*360;
+    el('rect',{x:0,y:y0+122,width:bw,height:16,rx:4,fill:AMBER},svg);
+    el('text',{x:bw+8,y:y0+135,fill:txt,'font-size':13},svg,'≈ '+bytesFmt(bytes));
+  }
+  segBind('#archD',v=>{D=v;draw()}); segBind('#archW',v=>{W=v;draw()});
+  hooks[idx('#archSvg')]={enter:()=>{D='u';W='d';segSet('#archD','u');segSet('#archW','d');draw()}};
+})();
+
+/* =========================================================
+   DEMO 2 · memória
+   ========================================================= */
+(() => {
+  const G=[
+    {k:'Ponderado 3',N:1e5,M:6099941,rss:140.55,dens:'0,122%'},
+    {k:'Ponderado 4',N:1e6,M:30999978,rss:717.39,dens:'0,0062%'},
+    {k:'Ponderado 5',N:1e7,M:39999995,rss:992.05,dens:'8·10⁻⁵ %'},
+    {k:'Ponderado 6',N:1e7,M:73403372,rss:1756.5,dens:'1,5·10⁻⁴ %'},
+    {k:'Ponderado 7',N:5e7,M:59999999,rss:1755,dens:'4,8·10⁻⁶ %'},
+    {k:'Rede de colab.',N:722385,M:2272543,rss:57.73,dens:'8,7·10⁻⁴ %'},
+  ];
+  let sel=0; const svg=$('#memSvg');
+  const L=150, R=740, lo=20, hi=56; // log2 bytes range
+  const X=b=>L+(Math.log2(b)-lo)/(hi-lo)*(R-L);
+  function draw(){
+    clear(svg); const txt=css('--text'),mut=css('--text-muted'),s2=css('--surface-2'),acc=css('--heartwood'),ox=css('--oxblood');
+    const ticks=[[20,'1 MiB'],[30,'1 GiB'],[40,'1 TiB'],[50,'1 PiB']];
+    ticks.forEach(([p,l])=>{ el('line',{x1:X(2**p),x2:X(2**p),y1:24,y2:392,stroke:s2},svg); el('text',{x:X(2**p),y:410,'text-anchor':'middle',fill:mut,'font-size':11},svg,l); });
+    const vm=X(32*2**30); el('line',{x1:vm,x2:vm,y1:14,y2:392,stroke:ox,'stroke-width':2,'stroke-dasharray':'6 4'},svg); el('text',{x:vm+6,y:20,fill:ox,'font-size':11},svg,'VM: 32 GiB');
+    el('rect',{x:480,y:2,width:10,height:10,fill:AMBER},svg); el('text',{x:496,y:11,fill:mut,'font-size':11},svg,'CSR medido (RSS)');
+    el('rect',{x:600,y:2,width:10,height:10,fill:'none',stroke:mut,'stroke-dasharray':'3 2'},svg); el('text',{x:616,y:11,fill:mut,'font-size':11},svg,'matriz (teórica)');
+    G.forEach((g,i)=>{ const y=34+i*60, on=i===sel;
+      const grp=el('g',{style:'cursor:pointer',tabindex:0,role:'button','aria-label':g.k},svg);
+      el('rect',{x:0,y:y-6,width:R+10,height:56,rx:8,fill:on?'color-mix(in srgb, #E89A3C 14%, transparent)':'transparent'},grp);
+      el('text',{x:8,y:y+26,fill:on?acc:txt,'font-size':13,'font-weight':on?700:500},grp,g.k);
+      const csr=g.rss*2**20, mat=8*(g.N+1)**2;
+      el('rect',{x:L,y:y+2,width:X(csr)-L,height:18,rx:4,fill:AMBER,opacity:on?1:.7},grp);
+      el('text',{x:X(csr)+6,y:y+16,fill:txt,'font-size':11},grp,bytesFmt(csr));
+      el('rect',{x:L,y:y+24,width:X(mat)-L,height:18,rx:4,fill:'none',stroke:on?acc:mut,'stroke-dasharray':'4 3'},grp);
+      el('text',{x:Math.min(X(mat)+6,R-70),y:y+38,fill:mut,'font-size':11},grp,bytesFmt(mat));
+      grp.addEventListener('click',()=>{sel=i;draw()}); grp.addEventListener('keydown',e=>{if(e.key==='Enter'){sel=i;draw()}});
+    });
+    const g=G[sel], th=8*(g.N+2)+24*g.M, mat=8*(g.N+1)**2;
+    $('#memCard').innerHTML=`<div class="eb">${g.k}</div>
+      <div class="ro">N = <b>${g.N.toLocaleString('pt-BR')}</b> · M = <b>${g.M.toLocaleString('pt-BR')}</b></div>
+      <div class="ro">densidade <b>${g.dens}</b></div>
+      <div class="kpi"><span class="l">CSR medido / teórico</span><span style="font:600 20px var(--font-display)">${bytesFmt(g.rss*2**20)} <span class="muted" style="font-size:15px">/ ${bytesFmt(th)}</span></span></div>
+      <div class="kpi"><span class="l">matriz ponderada</span><span style="font:600 20px var(--font-display)">${bytesFmt(mat)}</span></div>
+      <div class="kpi"><span class="l">matriz ÷ CSR</span><span class="ro main">${Math.round(mat/(g.rss*2**20)).toLocaleString('pt-BR')}×</span></div>`;
+  }
+  hooks[idx('#memSvg')]={enter:()=>{sel=0;draw()}};
+})();
+
+/* =========================================================
+   DEMO 3 · Dijkstra passo a passo
+   ========================================================= */
+(() => {
+  const svg=$('#djSvg');
+  let inst='enun', mode='heap', seed=7, src=1, G=null, snaps=[], si=0, timer=null;
+  function enunciado(abs){
+    const pos={1:[80,190],2:[230,90],3:[450,130],4:[400,320],5:[180,330]};
+    const E=[[1,2,0.1],[2,5,0.2],[5,3,5],[3,4,abs?9.5:-9.5],[4,5,2.3],[1,5,1]];
+    return build(5,pos,E);
+  }
+  function random(sd){
+    const r=mulberry32(sd), n=11, pts=[];
+    let guard=0; while(pts.length<n && guard++<5000){ const p=[40+r()*460, 70+r()*300]; if(pts.every(q=>Math.hypot(p[0]-q[0],p[1]-q[1])>78)) pts.push(p); }
+    const pos={}; pts.forEach((p,i)=>pos[i+1]=p);
+    const d=(a,b)=>Math.hypot(pos[a][0]-pos[b][0],pos[a][1]-pos[b][1]);
+    const key=new Set(), E=[]; const add=(a,b)=>{const k=Math.min(a,b)+'-'+Math.max(a,b); if(a!==b&&!key.has(k)){key.add(k);E.push([a,b,1+Math.floor(r()*9)])}};
+    // Prim euclidiano (conexo) + 1 vizinho extra
+    const inT=new Set([1]); while(inT.size<pts.length){ let best=null; for(const a of inT) for(let b=1;b<=pts.length;b++) if(!inT.has(b)&&(!best||d(a,b)<best[2])) best=[a,b,d(a,b)]; add(best[0],best[1]); inT.add(best[1]); }
+    for(let a=1;a<=pts.length;a++){ const o=[...Array(pts.length).keys()].map(i=>i+1).filter(b=>b!==a).sort((x,y)=>d(a,x)-d(a,y)); if(r()<0.6) add(a,o[1]); }
+    return build(pts.length,pos,E);
+  }
+  function build(n,pos,E){ const adj=Array.from({length:n+1},()=>[]); E.forEach(([a,b,w])=>{adj[a].push([b,w]);adj[b].push([a,w])}); adj.forEach(l=>l.sort((x,y)=>x[0]-y[0])); return {n,pos,E,adj,neg:E.some(e=>e[2]<0)}; }
+  class IHeap{ constructor(n,C){this.h=[];this.k=Array(n+1).fill(0);this.p=Array(n+1).fill(-1);this.C=C}
+    sw(i,j){const h=this.h;[h[i],h[j]]=[h[j],h[i]];this.p[h[i]]=i;this.p[h[j]]=j;this.C.ops++}
+    up(i){while(i>0){const q=(i-1)>>1; if(!(this.k[this.h[i]]<this.k[this.h[q]]))return; this.sw(i,q); i=q;}}
+    down(i){const n=this.h.length; for(;;){const l=2*i+1,r=l+1; let f=i; if(l<n&&this.k[this.h[l]]<this.k[this.h[f]])f=l; if(r<n&&this.k[this.h[r]]<this.k[this.h[f]])f=r; if(f===i)return; this.sw(i,f); i=f;}}
+    has(v){return this.p[v]>=0} push(v,key){this.k[v]=key;this.h.push(v);this.p[v]=this.h.length-1;this.up(this.p[v])}
+    pop(){const r=this.h[0]; this.sw(0,this.h.length-1); this.h.pop(); this.p[r]=-1; if(this.h.length) this.down(0); return r}
+    upd(v,key){const upw=key<this.k[v]; this.k[v]=key; upw?this.up(this.p[v]):this.down(this.p[v])} }
+  function run(){
+    const {n,adj}=G; const dist=Array(n+1).fill(Infinity), par=Array(n+1).fill(0), done=Array(n+1).fill(false);
+    const C={cmp:0,ops:0,relax:0,stale:0}; const out=[];
+    let H=null, Q=null;
+    const S=(msg,u=0,e=null,extra={})=>out.push({dist:dist.slice(),par:par.slice(),done:done.slice(),u,e,msg,C:{...C},
+      heap:H?H.h.map(v=>[v,H.k[v]]):null, q:Q?Q.map(x=>x.slice()):null, ...extra});
+    if(G.neg){ out.push({err:true,dist,par,done,u:0,e:null,C,msg:'std::invalid_argument: "dijkstra: graph has a negative edge weight" — a biblioteca ainda não implementa caminhos mínimos com pesos negativos.'}); return out; }
+    dist[src]=0;
+    if(mode==='heap'){ H=new IHeap(n,C); H.push(src,0); }
+    if(mode==='lazy'){ Q=[[0,src]]; C.ops++; }
+    S(`início: dist[${src}] = 0, demais = ∞`+(mode==='heap'?'; heap.push('+src+', 0)':mode==='lazy'?'; fila ← (0, '+src+')':''));
+    for(;;){
+      let u=0;
+      if(mode==='array'){ let best=Infinity; const scan=[]; for(let v=1;v<=n;v++){ if(!done[v]){C.cmp++; scan.push(v); if(dist[v]<best){best=dist[v];u=v}} } if(!u){S('a menor estimativa restante é ∞ → fim');break;} done[u]=true; S(`varredura de ${scan.length} estimativas → menor: ${u} (d = ${fmtD(dist[u])})`,u,null,{scan}); }
+      else if(mode==='heap'){ if(!H.h.length){S('heap vazio → fim');break;} u=H.pop(); done[u]=true; S(`heap.pop() → ${u}; dist[${u}] = ${fmtD(dist[u])} é final`,u); }
+      else { if(!Q.length){S('fila vazia → fim');break;} let bi=0; Q.forEach((x,i)=>{if(x[0]<Q[bi][0]||(x[0]===Q[bi][0]&&x[1]<Q[bi][1]))bi=i}); const [d,v]=Q.splice(bi,1)[0]; C.ops++;
+        if(d>dist[v]){C.stale++; S(`pop (${fmtD(d)}, ${v}) → obsoleta (dist[${v}] = ${fmtD(dist[v])}), descartada`,0,null,{popped:[d,v]}); continue;}
+        u=v; done[u]=true; S(`pop (${fmtD(d)}, ${u}) → dist[${u}] é final`,u); }
+      for(const [v,w] of adj[u]){
+        const nd=dist[u]+w; C.relax++;
+        if(nd<dist[v] && !done[v]){ const old=dist[v]; dist[v]=nd; par[v]=u;
+          let act='';
+          if(mode==='heap'){ if(H.has(v)){H.upd(v,nd);act=`update_key(${v}, ${fmtD(nd)})`} else {H.push(v,nd);act=`push(${v}, ${fmtD(nd)})`} }
+          else if(mode==='lazy'){ Q.push([nd,v]); C.ops++; act=`fila ← (${fmtD(nd)}, ${v})`+(old<Infinity?' — a antiga fica obsoleta':''); }
+          S(`relaxa ${u}–${v}: ${fmtD(dist[u])} + ${nf(w,2)} = ${fmtD(nd)} < ${fmtD(old)} ✓ ${act}`,u,[u,v]);
+        } else S(`relaxa ${u}–${v}: ${fmtD(nd)} ≥ ${fmtD(dist[v])}${done[v]?' (já final)':''} — nada muda`,u,[u,v],{nochg:true});
+      }
+    }
+    return out;
+  }
+  function draw(){
+    const s=snaps[si]; const {pos,E,n}=G; clear(svg);
+    const txt=css('--text'),mut=css('--text-muted'),s2=css('--surface-2'),acc=css('--heartwood'),surf=css('--surface'),ox=css('--oxblood');
+    const tree=new Set(); for(let v=1;v<=n;v++) if(s.par[v]) tree.add(Math.min(v,s.par[v])+'-'+Math.max(v,s.par[v]));
+    E.forEach(([a,b,w])=>{ const k=Math.min(a,b)+'-'+Math.max(a,b), isT=tree.has(k), isC=s.e&&((s.e[0]===a&&s.e[1]===b)||(s.e[0]===b&&s.e[1]===a));
+      const [x1,y1]=pos[a],[x2,y2]=pos[b];
+      el('line',{x1,y1,x2,y2,stroke:isC?AMBER:isT?acc:(s.err&&w<0?ox:s2),'stroke-width':isC?5:isT?4:2,'stroke-dasharray':(s.err&&w<0)?'6 4':''},svg);
+      const mx=(x1+x2)/2,my=(y1+y2)/2, lab=nf(w,2);
+      el('rect',{x:mx-17,y:my-10,width:34,height:19,rx:5,fill:surf,stroke:w<0?ox:s2},svg);
+      el('text',{x:mx,y:my+4,'text-anchor':'middle','font-size':11.5,fill:w<0?ox:txt,'font-weight':w<0?700:400},svg,lab);
+    });
+    for(let v=1;v<=n;v++){ const [x,y]=pos[v]; const isU=s.u===v, d=s.dist[v], fr=!s.done[v]&&d<Infinity;
+      const g=el('g',{style:'cursor:pointer'},svg);
+      el('circle',{cx:x,cy:y,r:17,fill:isU?AMBER:s.done[v]?css('--surface-2'):surf,stroke:isU?AMBER:fr?AMBER:v===src?acc:mut,'stroke-width':fr||v===src?3:1.5},g);
+      el('text',{x,y:y+5,'text-anchor':'middle','font-size':14,'font-weight':600,fill:isU?'#1A1B1E':txt},g,v);
+      el('text',{x,y:y-24,'text-anchor':'middle','font-size':12,fill:d<Infinity?acc:mut,'font-weight':600,stroke:surf,'stroke-width':4,'paint-order':'stroke'},g,s.err?'':fmtD(d));
+      g.addEventListener('click',()=>{src=v;recompute()});
+    }
+    // structure panel
+    const box=$('#djStruct'); box.innerHTML='';
+    const lbl=$('#djStructLbl');
+    if(s.err){ lbl.textContent='estrutura'; box.innerHTML='<p class="muted">Nenhuma — a entrada é rejeitada antes da busca (<code>check_dijkstra_input</code>, O(1) via <code>has_negative_weight()</code>).</p>'; }
+    else if(mode==='array'){ lbl.textContent='vetor de estimativas dist[1..N] — varrido a cada seleção'; const c=document.createElement('div'); c.className='cells';
+      for(let v=1;v<=n;v++){ const d=document.createElement('div'); d.className='cell'+(s.u===v&&s.scan?' pick':s.scan&&s.scan.includes(v)?' scan':'')+(s.done[v]&&!(s.u===v&&s.scan)?' done':''); d.innerHTML=`<div class="v">${v}</div>${fmtD(s.dist[v])}`; c.appendChild(d);} box.appendChild(c); }
+    else if(mode==='heap'){ lbl.textContent='heap_[i] = vértice:chave · pos_ atualizado a cada troca'; const c=document.createElement('div'); c.className='cells';
+      if(!s.heap.length) c.innerHTML='<span class="muted mono" style="font-size:13px">vazio</span>';
+      s.heap.forEach(([v,k],i)=>{ const d=document.createElement('div'); d.className='cell'+(i===0?' scan':''); d.innerHTML=`<div class="v">[${i}]</div>${v}:${fmtD(k)}`; c.appendChild(d); }); box.appendChild(c);
+      const p=document.createElement('div'); p.className='ro'; p.style.marginTop='10px'; p.innerHTML='pos_ = ['+Array.from({length:n},(_,i)=>{const j=s.heap.findIndex(x=>x[0]===i+1); return `${i+1}→<b>${j<0?'∅':j}</b>`}).join(', ')+']'; box.appendChild(p); }
+    else { lbl.textContent='std::priority_queue de pares (dist, vértice) — riscadas: obsoletas'; const c=document.createElement('div'); c.className='cells';
+      const q=s.q.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+      if(!q.length) c.innerHTML='<span class="muted mono" style="font-size:13px">vazia</span>';
+      q.forEach(([d,v])=>{ const e=document.createElement('div'); e.className='cell'+(d>s.dist[v]?' stale':''); e.innerHTML=`<div class="v">v ${v}</div>${fmtD(d)}`; c.appendChild(e); }); box.appendChild(c); }
+    const C=s.C, cn=$('#djCounters');
+    const items = mode==='array'?[['comparações na varredura',C.cmp],['relaxações',C.relax],['passo',`${si+1}/${snaps.length}`],['custo','O(N²+M)']]
+      : mode==='heap'?[['trocas no heap',C.ops],['relaxações',C.relax],['passo',`${si+1}/${snaps.length}`],['custo','O((N+M) log N)']]
+      : [['push + pop',C.ops],['obsoletas descartadas',C.stale],['passo',`${si+1}/${snaps.length}`],['custo','O(N+M log M)']];
+    cn.innerHTML=items.map(([l,v])=>`<div class="card kpi" style="padding:10px 12px"><span class="l">${l}</span><span style="font:600 ${String(v).length>8?14:20}px var(--font-display);color:var(--heartwood)">${v}</span></div>`).join('');
+    const m=$('#djMsg'); m.textContent=s.msg; m.className='msg'+(s.err?' err':'');
+    $('#djBack').disabled=si===0; $('#djStep').disabled=si>=snaps.length-1;
+  }
+  function stop(){ if(timer){clearInterval(timer);timer=null} $('#djPlay').textContent='▶ play'; }
+  function play(){ if(timer){stop();return} if(si>=snaps.length-1) si=0; $('#djPlay').textContent='⏸ pausa'; const sp=+$('#djSpeed').value; timer=setInterval(()=>{ if(si>=snaps.length-1){stop();return} si++; draw(); }, 1500-sp*130); }
+  function recompute(keep){ stop(); G = inst==='rand'?random(seed):enunciado(inst==='abs'); if(src>G.n) src=1; snaps=run(); si=0; draw(); }
+  segBind('#djInst',v=>{inst=v; $('#djNew').style.display=v==='rand'?'':'none'; src=1; recompute();});
+  segBind('#djMode',v=>{mode=v; recompute();});
+  $('#djNew').onclick=()=>{seed++; src=1; recompute()};
+  $('#djPlay').onclick=play; $('#djStep').onclick=()=>{stop(); if(si<snaps.length-1){si++;draw()}}; $('#djBack').onclick=()=>{stop(); if(si>0){si--;draw()}}; $('#djReset').onclick=()=>{stop();si=0;draw()};
+  $('#djSpeed').addEventListener('input',()=>{ if(timer){stop();play()} });
+  hooks[idx('#djSvg')]={enter:()=>{inst='enun';mode='heap';seed=7;src=1;segSet('#djInst','enun');segSet('#djMode','heap');$('#djNew').style.display='none';recompute()}, leave:stop};
+  window.__dj={get snaps(){return snaps}, set:(i,m,s)=>{inst=i;mode=m;src=s||1;segSet('#djInst',i);segSet('#djMode',m);recompute()}, last:()=>{si=snaps.length-1;draw()}, to:(k)=>{si=Math.min(k,snaps.length-1);draw()}};
+})();
+
+/* =========================================================
+   DEMO 4 · heap indexado
+   ========================================================= */
+(() => {
+  const svg=$('#hpSvg'), arr=$('#hpArr'); const NV=9;
+  const init=[[1,7],[2,3],[3,9],[4,1],[5,8],[6,5],[7,12],[8,6],[9,4]];
+  let h,k,p,sel=9,frames=[],fi=0,anim=null,hl=null,lastSw=0;
+  const snap=(mark)=>frames.push({h:h.slice(),k:k.slice(),p:p.slice(),mark});
+  function sw(i,j){ [h[i],h[j]]=[h[j],h[i]]; p[h[i]]=i; p[h[j]]=j; lastSw++; snap([h[i],h[j]]); }
+  const before=(i,j)=>k[h[i]]<k[h[j]];
+  function up(i){ while(i>0){const q=(i-1)>>1; if(!before(i,q))return; sw(i,q); i=q;} }
+  function down(i){ for(;;){const n=h.length,l=2*i+1,r=l+1; let f=i; if(l<n&&before(l,f))f=l; if(r<n&&before(r,f))f=r; if(f===i)return; sw(i,f); i=f;} }
+  function reset(){ h=[];k=Array(NV+1).fill(0);p=Array(NV+1).fill(-1); frames=[]; init.forEach(([v,key])=>{k[v]=key;h.push(v);p[v]=h.length-1;up(p[v])}); frames=[]; sel=9; lastSw=0; hl=null; $('#hpMsg').textContent='Clique num vértice da árvore, escolha a nova chave e aplique update_key.'; draw(); }
+  function animate(msg){ if(anim) clearInterval(anim); const fs=frames.slice(); frames=[]; if(!fs.length){draw();$('#hpMsg').textContent=msg+' — nenhuma troca necessária.';return}
+    const final={h:h.slice(),k:k.slice(),p:p.slice()}; let i=0;
+    const showF=()=>{ const f=fs[i]; draw(f,f.mark); };
+    showF(); anim=setInterval(()=>{ i++; if(i>=fs.length){clearInterval(anim);anim=null;draw(final,fs[fs.length-1].mark);return} showF(); },520);
+    $('#hpMsg').textContent=msg+` — ${fs.length} troca(s) via swap_nodes, cada uma atualiza pos_ dos dois vértices.`; }
+  function draw(st,mark){ st=st||{h,k,p}; hl=mark||null; clear(svg); clear(arr);
+    const txt=css('--text'),mut=css('--text-muted'),s2=css('--surface-2'),acc=css('--heartwood'),surf=css('--surface');
+    const n=st.h.length, P=i=>{const lv=Math.floor(Math.log2(i+1)), idx=i-(2**lv-1), cnt=2**lv; return [ (idx+0.5)*602/cnt, 32+lv*78 ];};
+    for(let i=1;i<n;i++){ const [x1,y1]=P((i-1)>>1),[x2,y2]=P(i); el('line',{x1,y1,x2,y2,stroke:s2,'stroke-width':2},svg); }
+    for(let i=0;i<n;i++){ const v=st.h[i], [x,y]=P(i), isS=v===sel, isM=mark&&mark.includes(v);
+      const g=el('g',{style:'cursor:pointer'},svg);
+      el('circle',{cx:x,cy:y,r:22,fill:isM?AMBER:surf,stroke:isS?acc:isM?AMBER:mut,'stroke-width':isS?3.5:1.5},g);
+      el('text',{x,y:y+5,'text-anchor':'middle','font-size':15,'font-weight':700,fill:isM?'#1A1B1E':txt},g,st.k[v]);
+      el('text',{x:x+26,y:y-12,'font-size':11,fill:isS?acc:mut,'font-weight':isS?700:400},g,'v'+v);
+      if(isS && !anim){ const nk=+$('#hpKey').value; if(nk!==st.k[v]) el('text',{x:x+26,y:y+16,'font-size':11,fill:acc},g,'→ '+nk); }
+      g.addEventListener('click',()=>{ if(anim) return; sel=v; syncSel(); draw(); });
+    }
+    // arrays
+    const cw=48, rows=[['heap_[i]',Array.from({length:NV},(_,i)=>i<n?'v'+st.h[i]:''),'posição i',i=>i<n&&mark&&mark.includes(st.h[i])],
+      ['key_[v]',Array.from({length:NV},(_,i)=>st.p[i+1]>=0?String(st.k[i+1]):'—'),'vértice v',i=>i+1===sel],
+      ['pos_[v]',Array.from({length:NV},(_,i)=>st.p[i+1]>=0?String(st.p[i+1]):'∅'),'vértice v',i=>mark&&mark.includes(i+1)]];
+    rows.forEach(([lab,vals,idxl,hi],r)=>{ const y=4+r*34; el('text',{x:0,y:y+19,'font-size':13,'font-weight':600,fill:txt},arr,lab);
+      vals.forEach((v,i)=>{ const x=110+i*cw, on=hi(i); el('rect',{x,y,width:cw-5,height:26,rx:5,fill:on?AMBER:surf,stroke:on?AMBER:s2},arr); el('text',{x:x+(cw-5)/2,y:y+17,'text-anchor':'middle','font-size':12,fill:on?'#1A1B1E':txt},arr,v); });
+      el('text',{x:110+NV*cw+10,y:y+18,'font-size':11,fill:mut},arr,'índice: '+(r===0?'0..'+(NV-1):'1..'+NV)); });
+    $('#hpH').textContent=n?Math.floor(Math.log2(n)):'—'; $('#hpSw').textContent=lastSw;
+  }
+  function syncSel(){ $('#hpSel').textContent=p[sel]>=0?'v'+sel:'v'+sel+' (fora do heap)'; $('#hpCur').textContent=p[sel]>=0?k[sel]:'—'; $('#hpUpd').disabled=p[sel]<0; $('#hpPush').disabled=p[sel]>=0; }
+  $('#hpKey').addEventListener('input',()=>{$('#hpKeyOut').textContent=$('#hpKey').value; if(!anim) draw();});
+  $('#hpUpd').onclick=()=>{ if(anim||p[sel]<0) return; const nk=+$('#hpKey').value, old=k[sel]; lastSw=0; frames=[]; const upw=nk<old; k[sel]=nk; upw?up(p[sel]):down(p[sel]); syncSel(); animate(`update_key(v${sel}, ${nk}): ${old} → ${nk}, ${upw?'sobe (sift_up)':nk>old?'desce (sift_down)':'igual'}`); };
+  $('#hpPop').onclick=()=>{ if(anim||!h.length) return; lastSw=0; frames=[]; const r=h[0]; sw(0,h.length-1); h.pop(); p[r]=-1; if(h.length) down(0); sel=r; syncSel(); animate(`pop() → v${r} (chave ${k[r]}); último vai à raiz e desce`); };
+  $('#hpPush').onclick=()=>{ if(anim||p[sel]>=0) return; lastSw=0; frames=[]; k[sel]=+$('#hpKey').value; h.push(sel); p[sel]=h.length-1; snap([sel]); up(p[sel]); syncSel(); animate(`push(v${sel}, ${k[sel]}): entra no fim e sobe`); };
+  $('#hpReset').onclick=()=>{ if(anim){clearInterval(anim);anim=null} reset(); syncSel(); };
+  hooks[idx('#hpSvg')]={enter:()=>{ if(anim){clearInterval(anim);anim=null} $('#hpKey').value=0; $('#hpKeyOut').textContent='0'; reset(); syncSel(); }, leave:()=>{ if(anim){clearInterval(anim);anim=null} }};
+})();
+
+/* =========================================================
+   DEMO 5 · tempos
+   ========================================================= */
+(() => {
+  const D=[
+    {g:'Ponderado 3',array:[26.5001,26.5003],heap:[0.118048,0.117863],lazy:[0.153913,0.153597]},
+    {g:'Ponderado 4',array:null,heap:[2.14328,2.13201],lazy:[2.04099,2.03725]},
+    {g:'Ponderado 5',array:null,heap:[23.6919,23.7072],lazy:[12.827,12.8327]},
+    {g:'Ponderado 6',array:null,heap:[27.7484,27.7863],lazy:[17.9488,17.9854]},
+    {g:'Ponderado 7',array:null,heap:[110.913,111.100],lazy:[40.9326,40.9552]},
+    {g:'Rede colab.',array:null,heap:[0.374306,0.474432],lazy:[0.240864,0.307880]},
+  ];
+  const V=[['array','vetor'],['heap','heap indexado'],['lazy','entradas obsoletas']];
+  let stat='mean', scale='log', on={array:true,heap:true,lazy:true}, sel=0; const svg=$('#tmSvg');
+  const col=()=>({array:css('--oxblood'),heap:AMBER,lazy:css('--gray')});
+  function draw(){
+    clear(svg); const txt=css('--text'),mut=css('--text-muted'),s2=css('--surface-2'),acc=css('--heartwood'), C=col();
+    const L=60,R=780,T=20,B=350, si=stat==='mean'?0:1;
+    const lo=-1.3, hi=2.3, Ylog=v=>B-(Math.log10(v)-lo)/(hi-lo)*(B-T), Ylin=v=>B-v/120*(B-T), Y=scale==='log'?Ylog:Ylin;
+    const ticks=scale==='log'?[0.1,1,10,100]:[0,20,40,60,80,100,120];
+    ticks.forEach(t=>{ const y=Y(Math.max(t,1e-9)); el('line',{x1:L,x2:R,y1:y,y2:y,stroke:s2},svg); el('text',{x:L-8,y:y+4,'text-anchor':'end','font-size':11,fill:mut},svg,nf(t,1)+' s'); });
+    const vis=V.filter(([k])=>on[k]); const gw=(R-L)/D.length, bw=Math.min(34,(gw-26)/Math.max(vis.length,1));
+    D.forEach((d,i)=>{ const gx=L+i*gw, isS=i===sel;
+      const grp=el('g',{style:'cursor:pointer'},svg);
+      el('rect',{x:gx+4,y:T-6,width:gw-8,height:B-T+44,rx:8,fill:isS?'color-mix(in srgb, #E89A3C 12%, transparent)':'transparent'},grp);
+      vis.forEach(([k],j)=>{ const x=gx+(gw-vis.length*bw)/2+j*bw, val=d[k]?.[si];
+        if(val==null){ el('rect',{x:x+3,y:B-46,width:bw-6,height:46,fill:'none',stroke:C[k],'stroke-dasharray':'4 3',opacity:.8},grp); el('text',{x:x+bw/2,y:B-52,'text-anchor':'middle','font-size':9.5,fill:mut},grp,'n/m'); return; }
+        const y=Math.min(Y(val),B-1); el('rect',{x:x+3,y,width:bw-6,height:B-y,rx:3,fill:C[k]},grp);
+        if(isS) el('text',{x:x+bw/2,y:y-6,'text-anchor':'middle','font-size':10.5,fill:txt},grp,nf(val,val<1?3:1));
+      });
+      el('text',{x:gx+gw/2,y:B+20,'text-anchor':'middle','font-size':12,fill:isS?acc:txt,'font-weight':isS?700:500},grp,d.g);
+      grp.addEventListener('click',()=>{sel=i;draw()});
+    });
+    let lx=L; V.forEach(([k,l])=>{ el('rect',{x:lx,y:B+38,width:11,height:11,fill:C[k],opacity:on[k]?1:.25},svg); el('text',{x:lx+16,y:B+48,'font-size':11.5,fill:on[k]?txt:mut},svg,l); lx+=l.length*7.4+40; });
+    el('text',{x:R,y:B+48,'text-anchor':'end','font-size':11,fill:mut},svg,'n/m = não medido (≠ zero)');
+    const d=D[sel]; let h=`<div class="eb">${d.g} · ${stat==='mean'?'média':'mediana'}</div>`;
+    V.forEach(([k,l])=>h+=`<div class="ro">${l}: <b>${d[k]?nf(d[k][si],d[k][si]<1?4:2)+' s':'não medido'}</b></div>`);
+    if(d.array) h+=`<div class="kpi" style="margin-top:4px"><span class="l">vetor ÷ heap indexado</span><span class="ro main">${nf(d.array[si]/d.heap[si],0)}×</span></div>`;
+    const r=d.heap[si]/d.lazy[si]; h+=`<div class="kpi"><span class="l">heap indexado ÷ obsoletas</span><span class="ro main" style="font-size:22px">${nfx(r,2)}×</span></div><p class="muted" style="font-size:13px">${r>1?'Obsoletas mais rápidas: localidade e volume de atualizações são hipóteses, não causas demonstradas.':'Heap indexado mais rápido neste grafo.'}</p>`;
+    $('#tmCard').innerHTML=h;
+  }
+  segBind('#tmStat',v=>{stat=v;draw()}); segBind('#tmScale',v=>{scale=v;draw()});
+  $('#tmChecks').addEventListener('change',e=>{on[e.target.dataset.v]=e.target.checked;draw()});
+  hooks[idx('#tmSvg')]={enter:()=>{stat='mean';scale='log';sel=0;on={array:true,heap:true,lazy:true};segSet('#tmStat','mean');segSet('#tmScale','log');document.querySelectorAll('#tmChecks input').forEach(c=>c.checked=true);draw()}};
+  window.__tm={sel:i=>{sel=i;draw()}};
+})();
+
+/* =========================================================
+   DEMO 6 · caminhos origem 10
+   ========================================================= */
+(() => {
+  const svg=$('#ptSvg'); let g='grafo_W_3', t=20;
+  function drawT(){ const s=$('#ptT'); s.innerHTML=PATHS[g].map(e=>`<button data-v="${e.t}" aria-pressed="${e.t===t}">→ ${e.t}</button>`).join(''); }
+  function draw(){
+    const e=PATHS[g].find(x=>x.t===t); clear(svg);
+    const txt=css('--text'),mut=css('--text-muted'),s2=css('--surface-2'),acc=css('--heartwood'),surf=css('--surface');
+    const hops=e.p.length-1, L=40, R=1090, dx=(R-L)/Math.max(hops,1), yN=84;
+    const maxW=Math.max(...PATHS[g].flatMap(x=>x.w)), maxD=Math.max(...PATHS[g].map(x=>x.d));
+    // nodes
+    el('line',{x1:L,x2:L+hops*dx,y1:yN,y2:yN,stroke:acc,'stroke-width':3},svg);
+    e.p.forEach((v,i)=>{ const x=L+i*dx, end=i===0||i===hops;
+      el('circle',{cx:x,cy:yN,r:end?9:5.5,fill:end?AMBER:surf,stroke:end?AMBER:acc,'stroke-width':2},svg);
+      const lab=el('text',{x:x+3,y:yN-14,'font-size':end?12:(hops>30?8.5:10),fill:end?txt:mut,'font-weight':end?700:400,transform:`rotate(-55 ${x+3} ${yN-14})`},svg,String(v));
+    });
+    // weight bars
+    const yb=140, hb=110;
+    el('text',{x:0,y:yb-6,'font-size':11,fill:mut},svg,'peso de cada aresta');
+    el('line',{x1:L-10,x2:R+10,y1:yb+hb,y2:yb+hb,stroke:s2},svg);
+    e.w.forEach((w,i)=>{ const x=L+i*dx+dx*0.18, bwid=dx*0.64, h=Math.max(1.5,w/maxW*hb);
+      el('rect',{x,y:yb+hb-h,width:bwid,height:h,rx:2,fill:AMBER},svg);
+      if(hops<=20) el('text',{x:x+bwid/2,y:yb+hb-h-4,'text-anchor':'middle','font-size':10,fill:txt},svg,nf(w,2)); });
+    // cumulative
+    const yc=280, hc=86; el('text',{x:0,y:yc-6,'font-size':11,fill:mut},svg,'distância acumulada (escala comum aos 5 destinos)');
+    el('line',{x1:L-10,x2:R+10,y1:yc+hc,y2:yc+hc,stroke:s2},svg);
+    let c=0; const pts=[[L,yc+hc]]; e.w.forEach((w,i)=>{c+=w; pts.push([L+(i+1)*dx, yc+hc-c/maxD*hc])});
+    el('polyline',{points:pts.map(p=>p.join(',')).join(' '),fill:'none',stroke:acc,'stroke-width':2.5},svg);
+    el('circle',{cx:pts[pts.length-1][0],cy:pts[pts.length-1][1],r:4,fill:acc},svg);
+    el('text',{x:pts[pts.length-1][0]-8,y:pts[pts.length-1][1]-8,'text-anchor':'end','font-size':12,fill:acc,'font-weight':700},svg,'d = '+nf(e.d,2));
+    $('#ptD').textContent=nf(e.d,2); $('#ptH').textContent=hops; $('#ptM').textContent=nfx(e.d/hops,2);
+  }
+  segBind('#ptG',v=>{g=v; if(!PATHS[g].some(x=>x.t===t)) t=20; drawT(); draw();});
+  $('#ptT').addEventListener('click',ev=>{const b=ev.target.closest('button'); if(!b) return; t=+b.dataset.v; drawT(); draw();});
+  hooks[idx('#ptSvg')]={enter:()=>{g='grafo_W_3';t=20;segSet('#ptG',g);drawT();draw()}};
+  window.__pt={set:(gg,tt)=>{g=gg;t=tt;segSet('#ptG',g);drawT();draw()}};
+})();
+
+/* =========================================================
+   DEMO 7 · rede de colaboração
+   ========================================================= */
+(() => {
+  const svg=$('#rdSvg'); const R=PATHS.rede_colaboracao; let sel=2;
+  const order=['J. B. Kruskal','Daniel R. Figueiredo','Jon M. Kleinberg','Éva Tardos','Alan M. Turing'];
+  const ents=order.map(n=>R.find(e=>e.tn===n));
+  $('#rdBtns').innerHTML='<span class="ro" style="margin-right:4px">destino:</span><div class="seg" id="rdSeg">'+ents.map((e,i)=>`<button data-v="${i}" aria-pressed="${i===sel}">${e.tn}</button>`).join('')+'</div>';
+  // tree layout: nodes by id, depth=index; y by leaf row
+  const nodes=new Map(); const rows=[0,1,2,3];
+  ents.slice(0,4).forEach((e,r)=>e.p.forEach((v,i)=>{ if(!nodes.has(v)) nodes.set(v,{v,name:e.n[i],depth:i,rows:[],w:i?e.w[i-1]:0,par:i?e.p[i-1]:0}); nodes.get(v).rows.push(r); }));
+  const maxDepth=11, X=dpt=>40+dpt*(1030/maxDepth), Yr=r=>40+r*64;
+  nodes.forEach(n=>{ n.x=X(n.depth); n.y=n.rows.reduce((a,b)=>a+Yr(b),0)/n.rows.length; });
+  const short=name=>{ const parts=name.split(' '); return parts.length>2&&parts[parts.length-2].length<=3&&/^[a-z]/.test(parts[parts.length-2])?parts.slice(-2).join(' '):parts[parts.length-1]; };
+  function draw(){
+    clear(svg); const txt=css('--text'),mut=css('--text-muted'),s2=css('--surface-2'),acc=css('--heartwood'),surf=css('--surface');
+    const e=ents[sel], onP=new Set(e.p||[]);
+    nodes.forEach(n=>{ if(!n.par) return; const p=nodes.get(n.par); const on=onP.has(n.v)&&onP.has(n.par);
+      const sw=Math.max(1.2, Math.min(9, 1.6/n.w));
+      el('path',{d:`M${p.x} ${p.y} C${(p.x+n.x)/2} ${p.y}, ${(p.x+n.x)/2} ${n.y}, ${n.x} ${n.y}`,fill:'none',stroke:on?AMBER:s2,'stroke-width':sw,opacity:on?1:.9},svg);
+      if(on) el('text',{x:(p.x+n.x)/2,y:(p.y+n.y)/2-7,'text-anchor':'middle','font-size':10,fill:acc},svg,nf(n.w,2));
+    });
+    nodes.forEach(n=>{ const on=onP.has(n.v), root=n.depth===0, leaf=order.slice(0,4).includes(n.name);
+      el('circle',{cx:n.x,cy:n.y,r:root||leaf?9:5.5,fill:on&&(root||leaf)?AMBER:on?surf:surf,stroke:on?AMBER:mut,'stroke-width':on?2.5:1.2},svg);
+      el('text',{x:n.x,y:n.y+(root||leaf?24:20),'text-anchor':'middle','font-size':root||leaf?11.5:10,fill:on?txt:mut,'font-weight':root||leaf?700:400,style:'font-family:var(--font-body)'},svg,root?'Dijkstra':short(n.name));
+    });
+    // Turing row
+    const yT=Yr(4)+14; el('circle',{cx:X(0),cy:yT,r:6,fill:surf,stroke:mut},svg);
+    el('line',{x1:X(0)+10,x2:X(4),y1:yT,y2:yT,stroke:sel===4?css('--oxblood'):s2,'stroke-dasharray':'5 5','stroke-width':2},svg);
+    el('circle',{cx:X(4)+12,cy:yT,r:8,fill:sel===4?AMBER:surf,stroke:sel===4?AMBER:mut,'stroke-width':2},svg);
+    el('text',{x:X(4)+28,y:yT+4,'font-size':12,fill:sel===4?txt:mut,'font-weight':700,style:'font-family:var(--font-body)'},svg,'Turing — outra componente: d = +∞');
+    el('text',{x:1100,y:yT+4,'text-anchor':'end','font-size':11,fill:mut},svg,'traço mais grosso = mais coautoria (peso menor)');
+    const m=$('#rdMsg');
+    if(e.d==null) m.innerHTML=`<b>Alan M. Turing</b> (ID 11365) existe no grafo, mas não está na componente de Dijkstra: <b>distância +∞, sem caminho</b>. Isso é diferente de um nome inexistente.`;
+    else m.innerHTML=`<b class="acc">d = ${nfx(e.d,3)}</b> em ${e.p.length-1} arestas: `+e.n.map((x,i)=>i===0||i===e.n.length-1?`<b>${x}</b>`:x).join(' → ');
+  }
+  $('#rdBtns').addEventListener('click',ev=>{const b=ev.target.closest('button'); if(!b) return; sel=+b.dataset.v; segSet('#rdSeg',String(sel)); draw();});
+  hooks[idx('#rdSvg')]={enter:()=>{sel=2;segSet('#rdSeg','2');draw()}};
+  window.__rd={sel:i=>{sel=i;segSet('#rdSeg',String(i));draw()}};
+})();
+
+const h=parseInt(location.hash.slice(1),10); slides[0].classList.add('active'); cur=0; go(isFinite(h)?h-1:0); hooks[cur]?.enter?.();
+})();
+</script>
+</body>
+</html>

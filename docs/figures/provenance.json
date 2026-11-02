@@ -1,0 +1,295 @@
+{
+  "graphs": {
+    "grafo_1": {
+      "input_sha256": "0c7f08ea9f989891f898e4902eeedb21988d990d5b92ea7cef83dc6a116a8d89",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "e049031fc1e47354b54eb4c6d743d13ede9d0fb4",
+      "local_changes": true,
+      "finished_at": "2026-10-31T18:33:15.046669+00:00"
+    },
+    "grafo_2": {
+      "input_sha256": "30aaf447d5a47865544893f8b31b2a9755713a668f3b642db5da10001ae85569",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "e049031fc1e47354b54eb4c6d743d13ede9d0fb4",
+      "local_changes": true,
+      "finished_at": "2026-10-31T18:33:15.726055+00:00"
+    },
+    "grafo_3": {
+      "input_sha256": "21748c127452c1f43fa50f8c242d5c03b3da570b60597cfaa0b330d3b9c970c2",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "e049031fc1e47354b54eb4c6d743d13ede9d0fb4",
+      "local_changes": true,
+      "finished_at": "2026-10-31T18:33:17.076578+00:00"
+    },
+    "grafo_4": {
+      "input_sha256": "d8b8d106c4dbd60e6fe792e2c58c1ad0324d72320053787e7068b60b5bde8376",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "e049031fc1e47354b54eb4c6d743d13ede9d0fb4",
+      "local_changes": true,
+      "finished_at": "2026-10-31T18:33:21.155775+00:00"
+    },
+    "grafo_5": {
+      "input_sha256": "fc8306fbea9974703ef6e6bee418d0ae82bccdb080202d2603afd910b4392c2d",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "e049031fc1e47354b54eb4c6d743d13ede9d0fb4",
+      "local_changes": true,
+      "finished_at": "2026-10-31T18:33:36.178521+00:00"
+    },
+    "grafo_6": {
+      "input_sha256": "785d2e47bd6290284f20f58a0cbab3284e606530d31f4f349e0624373396ba60",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "e049031fc1e47354b54eb4c6d743d13ede9d0fb4",
+      "local_changes": true,
+      "finished_at": "2026-10-31T18:34:10.835365+00:00"
+    },
+    "grafo_W_3": {
+      "input_sha256": "79a49f29ce90de5bc51118f23a1de045eaa1ad84da217efe969baf60abf359c5",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "40c70138678f68073230f6be37d2a3a16f98df47",
+      "local_changes": true,
+      "finished_at": "2026-10-30T21:44:48.310088+00:00"
+    },
+    "grafo_W_4": {
+      "input_sha256": "8f6b0543b7f30ba71d6b72ada0e6ef67060fcb19a8f224003017becb50d74836",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "40c70138678f68073230f6be37d2a3a16f98df47",
+      "local_changes": true,
+      "finished_at": "2026-10-30T21:45:09.114511+00:00"
+    },
+    "grafo_W_5": {
+      "input_sha256": "ceeda4d78fe4da6b8848d3c644fbe2528dbd25e8e991de376b803eb6a75ec142",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "40c70138678f68073230f6be37d2a3a16f98df47",
+      "local_changes": true,
+      "finished_at": "2026-10-30T21:46:02.264126+00:00"
+    },
+    "grafo_W_6": {
+      "input_sha256": "d130a586ad318d48c47a051c6e43337034541bbc67f11e4bd09ec51b96967b77",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "40c70138678f68073230f6be37d2a3a16f98df47",
+      "local_changes": true,
+      "finished_at": "2026-10-30T21:47:48.682126+00:00"
+    },
+    "grafo_W_7": {
+      "input_sha256": "8c636cb4ee5f8f129ade4e4745fff97ff87d4ea0dc2fecc774d464211fbfeac3",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "40c70138678f68073230f6be37d2a3a16f98df47",
+      "local_changes": true,
+      "finished_at": "2026-10-30T21:50:27.480032+00:00"
+    },
+    "rede_colaboracao": {
+      "input_sha256": "519952a470989c6b1ae865f8992851bbc57c436fda099d0e403f732217459d6a",
+      "binary_sha256": "22e725710b81c66736d64a1fba8d2fb8dc57465cf6d707efc43ce2256a3192f7",
+      "library_commit": "40c70138678f68073230f6be37d2a3a16f98df47",
+      "local_changes": true,
+      "finished_at": "2026-10-30T21:52:14.155417+00:00"
+    }
+  },
+  "plotting_versions": {
+    "matplotlib": "3.10.8",
+    "numpy": "2.4.4",
+    "networkx": "3.6.1",
+    "scipy": "1.17.1",
+    "python": "3.14.2 (v3.14.2:df793163d58, Dec  5 2025, 12:18:06) [Clang 16.0.0 (clang-1600.0.26.6)]"
+  },
+  "network_layout": {
+    "seed": 2025,
+    "iterations": 45,
+    "method": "force",
+    "weight": null
+  },
+  "azure_commit": "b414456",
+  "figures": [
+    {
+      "name": "parte1/graph_sizes",
+      "caption": "Quantidades de v\u00e9rtices e arestas n\u00e3o direcionadas dos grafos originais; arestas paralelas s\u00e3o contadas individualmente."
+    },
+    {
+      "name": "parte1/degree_frequencies",
+      "caption": "Frequ\u00eancias exatas dos graus, incluindo grau zero. Arestas paralelas contribuem para o grau. Cada ponto representa um grau discreto; n\u00e3o h\u00e1 linhas de liga\u00e7\u00e3o."
+    },
+    {
+      "name": "parte1/degree_tails",
+      "caption": "Distribui\u00e7\u00f5es acumuladas complementares exatas dos graus: P(grau \u2265 k). O denominador inclui todos os v\u00e9rtices. Os valores discretos s\u00e3o representados apenas por pontos."
+    },
+    {
+      "name": "parte1/component_sizes",
+      "caption": "Frequ\u00eancias exatas dos tamanhos das componentes, representadas apenas por pontos. Cada ponto informa quantas componentes possuem aquele tamanho."
+    },
+    {
+      "name": "parte1/case_distances",
+      "caption": "Dist\u00e2ncias dos caminhos m\u00ednimos e n\u00famero de arestas dos caminhos salvos. Nos grafos ponderados, as dist\u00e2ncias s\u00e3o ponderadas; nos demais, contam arestas. Destinos inalcan\u00e7\u00e1veis n\u00e3o possuem barra nem dist\u00e2ncia zero."
+    },
+    {
+      "name": "parte1/search_depths",
+      "caption": "Profundidades das \u00e1rvores BFS e DFS nos pares exigidos. BFS fornece dist\u00e2ncias m\u00ednimas em arestas; a profundidade da DFS n\u00e3o \u00e9 uma dist\u00e2ncia m\u00ednima. Destinos inalcan\u00e7\u00e1veis n\u00e3o possuem ponto. Escala vertical linear pr\u00f3xima de zero e logar\u00edtmica acima de uma aresta."
+    },
+    {
+      "name": "parte2/graph_sizes",
+      "caption": "Quantidades de v\u00e9rtices e arestas n\u00e3o direcionadas dos grafos originais; arestas paralelas s\u00e3o contadas individualmente."
+    },
+    {
+      "name": "parte2/degree_frequencies",
+      "caption": "Frequ\u00eancias exatas dos graus, incluindo grau zero. Arestas paralelas contribuem para o grau. Cada ponto representa um grau discreto; n\u00e3o h\u00e1 linhas de liga\u00e7\u00e3o."
+    },
+    {
+      "name": "parte2/degree_tails",
+      "caption": "Distribui\u00e7\u00f5es acumuladas complementares exatas dos graus: P(grau \u2265 k). O denominador inclui todos os v\u00e9rtices. Os valores discretos s\u00e3o representados apenas por pontos."
+    },
+    {
+      "name": "parte2/weight_distributions",
+      "caption": "Histograma dos pesos nos intervalos coletados. A contagem de pesos zero \u00e9 exata. A rede de colabora\u00e7\u00e3o usa escala log nas contagens; intervalos vazios n\u00e3o t\u00eam barra."
+    },
+    {
+      "name": "parte2/component_sizes",
+      "caption": "Frequ\u00eancias exatas dos tamanhos das componentes, representadas apenas por pontos. Cada ponto informa quantas componentes possuem aquele tamanho."
+    },
+    {
+      "name": "parte2/case_distances",
+      "caption": "Dist\u00e2ncias dos caminhos m\u00ednimos e n\u00famero de arestas dos caminhos salvos. Nos grafos ponderados, as dist\u00e2ncias s\u00e3o ponderadas; nos demais, contam arestas. Destinos inalcan\u00e7\u00e1veis n\u00e3o possuem barra nem dist\u00e2ncia zero."
+    },
+    {
+      "name": "parte2/azure_timings",
+      "caption": "M\u00e9dias e medianas dos tempos no Azure, convertidas de microssegundos para segundos. H\u00e1 medi\u00e7\u00f5es com vetor apenas para o Grafo Ponderado 3; barras ausentes indicam medi\u00e7\u00f5es n\u00e3o realizadas. A tabela informa o n\u00famero de amostras."
+    },
+    {
+      "name": "parte2/azure_memory",
+      "caption": "RSS medido para a representa\u00e7\u00e3o CSR no Azure. As estimativas da matriz aparecem separadamente na tabela; esses valores n\u00e3o representam o pico de mem\u00f3ria de Dijkstra."
+    },
+    {
+      "name": "azure_traversals",
+      "caption": "Tempos de BFS e DFS da nova rodada no Azure. O n\u00famero de origens aleat\u00f3rias distintas varia por grafo e armazenamento; BFS e DFS mant\u00eam as mesmas origens. A tabela informa os n\u00fameros efetivos de amostras. As buscas ignoram pesos; resultados da rodada anterior de Dijkstra aparecem separadamente."
+    },
+    {
+      "name": "azure_traversals_matrix",
+      "caption": "Compara\u00e7\u00e3o de BFS e DFS em CSR e matriz com bitmask nos grafos 1 a 4, restrita \u00e0s mesmas origens aleat\u00f3rias nas quatro combina\u00e7\u00f5es. A m\u00e9dia CSR deste gr\u00e1fico usa o prefixo comum com a matriz, n\u00e3o necessariamente todas as amostras CSR. As matrizes dos grafos 5 e 6 excedem o limite de mem\u00f3ria e n\u00e3o s\u00e3o executadas."
+    },
+    {
+      "name": "azure_traversals_memory",
+      "caption": "Mem\u00f3ria residente da representa\u00e7\u00e3o antes das buscas, descontado o processo m\u00ednimo: m\u00e9dia das cargas de BFS e DFS. Os valores n\u00e3o representam o pico de mem\u00f3ria dos algoritmos. Barras ausentes indicam representa\u00e7\u00f5es n\u00e3o executadas; as matrizes ponderadas n\u00e3o fazem parte desta rodada."
+    },
+    {
+      "name": "network_grafo_1",
+      "caption": "Grafo 1: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_grafo_2",
+      "caption": "Grafo 2: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_grafo_3",
+      "caption": "Grafo 3: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_grafo_4",
+      "caption": "Grafo 4: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_grafo_5",
+      "caption": "Grafo 5: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_grafo_6",
+      "caption": "Grafo 6: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_grafo_W_3",
+      "caption": "Grafo Ponderado 3: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_grafo_W_4",
+      "caption": "Grafo Ponderado 4: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_grafo_W_5",
+      "caption": "Grafo Ponderado 5: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_grafo_W_6",
+      "caption": "Grafo Ponderado 6: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_grafo_W_7",
+      "caption": "Grafo Ponderado 7: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    },
+    {
+      "name": "network_rede_colaboracao",
+      "caption": "Rede de colabora\u00e7\u00e3o: duas amostras limitadas por busca em largura (at\u00e9 1.000 v\u00e9rtices e 4.000 arestas cada), com semente 2025. As amostras n\u00e3o s\u00e3o aleat\u00f3rias uniformes. Arestas paralelas se sobrep\u00f5em neste desenho da topologia simples. Os comprimentos desenhados n\u00e3o representam pesos; o limite de arestas pode produzir desconex\u00f5es visuais."
+    }
+  ],
+  "sha256": {
+    "parte1/graph_sizes.svg": "f9581ce2cc62ea52b30f3696bc4771fd659673c502fcca4ddb614a3d7094b949",
+    "parte1/graph_sizes.png": "b3a353f355528f61f728346b12fd1e6e306c9becfdc1d0f0a69b1df7efa4f9a6",
+    "parte1/degree_frequencies.svg": "6720a058e2b7e99def53966f483c14fc8767852dcb666ded65c046e6d91fa822",
+    "parte1/degree_frequencies.png": "36698e0128c25c3fdc3ce3a5125e35a96a6d3eb21fb023ea4315da83884272b2",
+    "parte1/degree_tails.svg": "22d323629fca2fc469881d8993ea7c05ea6460b49e96467970ca8cfe3e185e10",
+    "parte1/degree_tails.png": "da29448d543c15541a61dc6427738cfa8925ab312b97248da75e77a86a422f4f",
+    "parte1/component_sizes.svg": "dde12bb5d64600f397bf4cfe59fb31ab15e5845f67ef9f7351eaf583ad06c1cd",
+    "parte1/component_sizes.png": "70e9bb6ff6230ed782b9a1fe245b8068368aa2765470cdb6ea7dc14f6efe2365",
+    "parte1/case_distances.svg": "3626c1854da919000dfc71dbf108ede61aa769286d1d0bfddd079efa1998689b",
+    "parte1/case_distances.png": "14f36e842b1edf0583a79a7dede0db4d7d3ff31c04e8bd543dc5feea94c40ce5",
+    "parte1/search_depths.svg": "057f0c8637edde272522f76a182163504a21a7368a6fcf5eab3cb0d69c09d7f0",
+    "parte1/search_depths.png": "af2c5e0a4581b2d9487c61cd6e7a32ffb7455e2bba062e6f7de2058b4a599bf5",
+    "parte2/graph_sizes.svg": "0b20671e0dd9b11db0f6293907db8ed53f75db6833812dc9b1afcb23f77b48a8",
+    "parte2/graph_sizes.png": "a150f1ec994b0a7e6102c899106139fc614d3b78490ac0a25c7960e77cd818ac",
+    "parte2/degree_frequencies.svg": "5ee1f386c69d68524eba9f17db5f858e6a6eb2aec5768bde9714eca4cf6f08fb",
+    "parte2/degree_frequencies.png": "10e3a666bc3ec076a6d1741b63d7507b3bcfd3a4d562b2fdf6633687fc14edef",
+    "parte2/degree_tails.svg": "b7f42c6308a1ba95e134477ee0fd79276a8f6ff7745fb3065b6ac43e7471b09c",
+    "parte2/degree_tails.png": "95a7218113a1b083679fff98358f6ad18732a56d5003103d86303e745293f7f1",
+    "parte2/weight_distributions.svg": "723fff0f9a88726082fa95f045272c3a10ba4cd81f6678f7c12952299d7153db",
+    "parte2/weight_distributions.png": "19a44715614bfcbcd5f3b090600c1a2a2c71db062212aca043343798b1bdb454",
+    "parte2/component_sizes.svg": "f7b8f3b04eee9ac2fad90e32a62b0466275def4e22477984f5e7d2c43aa79996",
+    "parte2/component_sizes.png": "e874488d1c820d4cd5046b3428daa01c5f170e25a0772d22918367213e0752de",
+    "parte2/case_distances.svg": "29432b49462cb36bfcca0c49497737140544f178111ac2b0a4548733979f2c12",
+    "parte2/case_distances.png": "99bf0ceaa38b2925351dc8351cf06752f4ce639b70c95f367f7dc94ffbf5161f",
+    "parte2/azure_timings.svg": "3fc88dd80a711ed3ae3ec0877d87e046b1200b2c439b2f2884cb217a950f173b",
+    "parte2/azure_timings.png": "b009ec2b6fad71581ef8d0b429fd646441038cbde962a5ee15c84bea22c00370",
+    "parte2/azure_memory.svg": "bbe03068ee28efdbf12d3435dbd93b1a97d0e1a746da53f8d25c6df64deb4616",
+    "parte2/azure_memory.png": "14b07344245952b4181819f19610c92180ef2f2206d62b7e4ed9ae504cbcbec5",
+    "azure_traversals.svg": "4f057bf499c4b29ae51ed041e0d22572bb640883ae5ff8e69bdbe31e4ed77acf",
+    "azure_traversals.png": "3e0c2354d9d6c3791b9506f7524467957c31f7f5b60f3fcad3795227ac77496e",
+    "azure_traversals_matrix.svg": "7ff020bb142d25d07f9976237b599a630e1805f71c77062545ad8f0fbc6ec12b",
+    "azure_traversals_matrix.png": "22a7bdf841a7a2ba8c388a312185c11799beb912ae98c92d55fd5f73d727bd8c",
+    "azure_traversals_memory.svg": "9d02a643c9f11f97d6af3f15ba825ca69a191d6793e128387e45d3b20342e386",
+    "azure_traversals_memory.png": "7d1843d3f903e6e7ae48bc22861593a700dd93c6f47be7d42d45e305487de63f",
+    "network_grafo_1.svg": "5ce33b84789d35a351ed738f27a344f70b1b89e682c58deb527b7c9a6afb8b00",
+    "network_grafo_1.png": "60f87878df30cb50878e17aace79a9dd85aa82fe2e2c48cf37fe78fa94fae101",
+    "network_grafo_2.svg": "8c91c67ba16929857c96e8c91ca88a998c4dbcf02eb042b91c42cd72ecbd846e",
+    "network_grafo_2.png": "51828642d8a6887e84a6bccf9da5df23b724c6504fad58045b30c9deb39c6702",
+    "network_grafo_3.svg": "e8a762e3838f55e29bb8e7bda10198fdd4f805467288c25b8023cd8202246b36",
+    "network_grafo_3.png": "db30ef7fd79f04d39f5597283f2fe3a289d7c47ede43dce75ef89df73de57b78",
+    "network_grafo_4.svg": "c233404c032f03aa9e4fc9160db97a33f990f13ed8e2edc09fe04ece33ebf1b7",
+    "network_grafo_4.png": "33d20a40d738be2499b7b76b448a8adc4247f466b4ea15d2ec42d31123f41351",
+    "network_grafo_5.svg": "bf3b515db061018fa4582d2b20a90a914c2c79087a30d7e6cf54496f3887f115",
+    "network_grafo_5.png": "2effff136e64ff55c0cf4ef57b9e82e52284c9ec9946091060ad40779a91018d",
+    "network_grafo_6.svg": "ecc03d68939ac9fc1d55be262232572065d4e7c4ae70eb7fed945fcabe19dbe0",
+    "network_grafo_6.png": "912dbde2c8bdce125a3a3ca4a2bd6de563feed0a246b1369ce2c721ca5272821",
+    "network_grafo_W_3.svg": "eac275101bd807dec2b600bb9722c0322aaf8826060e5fb634637f321b555756",
+    "network_grafo_W_3.png": "8caa4e572af3b28022b2454d3b4baf2a0216ed4f45c7627b4776305976d7bee2",
+    "network_grafo_W_4.svg": "38cfe2de42754a66d4725c83fc0b7e6712c50dd6c80180894bda08c07a574d3a",
+    "network_grafo_W_4.png": "d06232623683036386c240dadde7e2f8b2e6dc50d6da9ee30b02a4e49c5ccecf",
+    "network_grafo_W_5.svg": "067455e0757b7aa2d3356df02a367b483720f305eaf7eb4e3707c40915414d89",
+    "network_grafo_W_5.png": "accbe8fc477a3ae09cad5e46f358999a6128ae81e30984a30594cc9528060af1",
+    "network_grafo_W_6.svg": "b3033878b9a74e071e963d3ed344f9fd6d30e13e7ab6fc9119ff14481bd12488",
+    "network_grafo_W_6.png": "c0a91e3eb18c7394885026f326352142325586f32b1632fb1b3b4352a6b5a213",
+    "network_grafo_W_7.svg": "08888cce219154703c08e0c4882924f3fa09ad5567f3479ec05fa72c398cfb4e",
+    "network_grafo_W_7.png": "b15fe4799b5df73b2b8cbbcac41647d018108b5041744560162c87b3751f8b3c",
+    "network_rede_colaboracao.svg": "1ae05c6a51476670b94aa804b31b28623122c3e228e5cf229beb4eb1f3a6ad38",
+    "network_rede_colaboracao.png": "3c7c8927e5022b3939dce60c26c77ab1074cc2f6da30a7a0019bb66c075e0139"
+  },
+  "script_sha256": {
+    "plot_graphs.py": "10394ce72ecfba04f141e677643fee1c16061c26bcf79874b167121485588963",
+    "visualization_data.py": "c72435fe644f6f470dd3cc1d7fd6bd2027790715804ec62ce386e97e11c9e743"
+  },
+  "config_sha256": "da011ec8e569804b063453ac1dd05f21107c4a4980b45b365c4f05b69512c1d0",
+  "traversal_config_sha256": "c0d84a91892347e1df11b484fb565c05a8ffc416eb2b83f60081d551bfa6d336",
+  "traversal_forecast_sha256": "03f793ce4db58d664bf7727369d44b779b2ba272414c6ad87b30706f32eb62fc",
+  "azure_results_sha256": "4e5d01f7592511867daee7d4c853968ddc86257be9d82f681d2ed53eb618f9a9",
+  "azure_environment_sha256": "b88849bbed7b6b45551115a12b6fca73411e01912803c9aedcb51ae7b2b394bc",
+  "azure_paths_sha256": "f2a14a67d841c23fb134dc0234b2b725d578d33db6f769df77c6c6b7b96fe306",
+  "traversal_results_sha256": "dd7e1e80c9d3bc0aa1faa41d9613421b47541440e0f5e711c09708fac8168949",
+  "traversal_paired_results_sha256": "aacc86cca45c2043f4096e56be847d97baddf739192505edaa0f939783a5cd9a",
+  "traversal_summary_sha256": "8eb8045510a7d34dc31e55625145f4839288964930a97768ad538865d0977b25",
+  "traversal_environment_sha256": "45719c8308f49de925e8592e23d09d2403fba4937459865823064bc72c52c5aa",
+  "traversal_source_manifest_sha256": "d60e7053510779abef25939132a2dcff86994729c4caf609d6e435f668ca82dc"
+}

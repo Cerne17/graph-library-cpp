@@ -1,0 +1,18 @@
+{
+  "start_utc": "2026-10-31T22:35:38.582356+00:00",
+  "end_utc": "2026-10-31T22:53:05.916383+00:00",
+  "elapsed_seconds": 1047.334027,
+  "algorithm_seconds": 704.403240726,
+  "jobs": 32,
+  "traversals": 2150,
+  "source_files_verified": 99,
+  "reachability_validation": "all samples match exact component sizes",
+  "azure_vm_size": "Standard_E4as_v4",
+  "azure_region": "belgiumcentral",
+  "linux_cpp_test_cases": 178,
+  "linux_cpp_test_assertions": 700189,
+  "cleanup_status": "resource_group_deleted",
+  "cleanup_verified_utc": "2026-10-31T22:58:15.459927+00:00",
+  "temporary_role_removed": true,
+  "resource_group_exists": false
+}

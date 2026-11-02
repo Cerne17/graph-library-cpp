@@ -1,0 +1,182 @@
+%% Arquitetura atual: contratos estaticos; nenhuma heranca virtual na biblioteca nova.
+classDiagram
+    direction TB
+    class policies {
+        <<politicas de compilacao>>
+        undirected
+        directed
+        unweighted
+        weighted_W
+    }
+    class graph_like {
+        <<concept>>
+        vertex_count()
+        for_each_neighbor(u, f)
+    }
+    class weighted_graph {
+        <<concept>>
+        weight_type
+        for_each_edge(u, f)
+        has_negative_weight()
+    }
+    class csr_storage {
+        <<template D W>>
+        -vertex_id n_
+        -vector offsets_
+        -vector targets_
+        -weight_column weights_
+        +from_edges(n, edges)$
+        +vertex_count()
+        +for_each_neighbor(u, f)
+        +for_each_edge(u, f)
+    }
+    class matrix_storage {
+        <<template D W>>
+        +from_edges(n, edges)$
+        +vertex_count()
+        +for_each_neighbor(u, f)
+        +for_each_edge(u, f)
+        +has_edge(u, v)
+    }
+    class graph_aliases {
+        <<aliases sem objeto adicional>>
+        csr_graph_D_W
+        matrix_graph_D_W
+    }
+    class edge_list {
+        <<template W>>
+        +vertex_id n
+        +vector edges
+        +size_t skipped_self_loops
+    }
+    class io {
+        <<funcoes livres gl::io>>
+        read_edge_list_W(path)
+        load_graph_G(path)
+        read_label_map(path)
+    }
+    class label_map {
+        +name_of(v)
+        +id_of(name)
+        +duplicate_count()
+    }
+    class search_algorithms {
+        <<funcoes livres gl::algorithms>>
+        bfs(g, source)
+        dfs(g, source)
+        connected_components(g)
+        compute_degree_stats(g)
+        distance(g, source, target)
+        exact_diameter(g)
+        approximate_diameter(g)
+    }
+    class search_tree {
+        +vertex_id source
+        +vector parent
+        +vector level
+    }
+    class dijkstra_array {
+        <<funcao livre>>
+        dijkstra_array(g, source)
+    }
+    class dijkstra_heap {
+        <<funcao livre>>
+        dijkstra_heap(g, source)
+    }
+    class dijkstra_lazy {
+        <<funcao livre>>
+        dijkstra_lazy(g, source)
+    }
+    class indexed_heap {
+        <<template K Compare>>
+        -vector heap_
+        -vector key_
+        -vector pos_
+        +push(v, key)
+        +top()
+        +pop()
+        +contains(v)
+        +update_key(v, key)
+        +validate()
+    }
+    class indexed_min_heap {
+        <<alias>>
+        indexed_heap_K_less
+    }
+    class priority_queue {
+        <<biblioteca padrao>>
+        entradas de distancia e vertice
+    }
+    class shortest_paths {
+        <<template W>>
+        +vertex_id source
+        +vector dist
+        +vector parent
+    }
+    class reconstruct_path {
+        <<funcao livre>>
+        reconstruct_path(tree, target)
+    }
+    class parent_tree {
+        <<concept>>
+        source
+        parent
+    }
+    class experiments {
+        <<executaveis C++>>
+        benchmark_weighted
+        collect_stats
+        baseline_cases
+    }
+    class python_tools {
+        <<orquestracao Python>>
+        harness_weighted
+        collect
+        summarize_traversals
+        validate_traversal_reachability
+        plot_graphs
+        build_report_part2
+    }
+    class legacy {
+        <<base preservada Parte 1>>
+        Graph
+        AdjacencyList
+        AdjacencyMatrix
+        benchmark
+        harness
+    }
+    weighted_graph ..> graph_like : refina
+    csr_storage ..> policies : parametrizado por
+    matrix_storage ..> policies : parametrizado por
+    graph_aliases ..> csr_storage : alias
+    graph_aliases ..> matrix_storage : alias
+    csr_storage ..> graph_like : satisfaz
+    matrix_storage ..> graph_like : satisfaz
+    csr_storage ..> weighted_graph : quando ponderado
+    matrix_storage ..> weighted_graph : quando ponderado
+    io ..> edge_list : produz
+    io ..> label_map : produz
+    io ..> csr_storage : constroi via from_edges
+    io ..> matrix_storage : constroi via from_edges
+    search_algorithms ..> graph_like : requer
+    search_algorithms ..> search_tree : buscas produzem
+    dijkstra_array ..> weighted_graph : requer
+    dijkstra_heap ..> weighted_graph : requer
+    dijkstra_lazy ..> weighted_graph : requer
+    dijkstra_heap ..> indexed_min_heap : usa
+    indexed_min_heap ..> indexed_heap : alias com std less
+    dijkstra_lazy ..> priority_queue : usa
+    dijkstra_array ..> shortest_paths : produz
+    dijkstra_heap ..> shortest_paths : produz
+    dijkstra_lazy ..> shortest_paths : produz
+    reconstruct_path ..> parent_tree : requer
+    search_tree ..> parent_tree : satisfaz
+    shortest_paths ..> parent_tree : satisfaz
+    experiments ..> io : carrega dados
+    experiments ..> search_algorithms : mede e exporta
+    experiments ..> dijkstra_heap : mede e exporta
+    experiments ..> dijkstra_array : mede quando habilitado
+    experiments ..> dijkstra_lazy : compara
+    python_tools ..> experiments : executa e agrega CSV
+    python_tools ..> label_map : usa nomes nos resultados
+    legacy ..> search_algorithms : comparada em testes diferenciais

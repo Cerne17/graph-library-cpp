@@ -99,3 +99,24 @@ $(BUILD)/collect_stats_checked: app/collect_stats.cpp $(HEADERS)
 
 test-collector: collector $(BUILD)/collect_stats_checked
 	COLLECTOR_BINARY=$(abspath $(BUILD)/collect_stats_checked) python3 -m unittest discover -s tests -p 'test_collector.py' -v
+
+# Saved figures only: no graph algorithms or timing runs.
+PYTHON ?= python3
+.PHONY: figures test-visualizations
+figures:
+	$(PYTHON) analysis/plot_graphs.py
+
+test-visualizations:
+	$(PYTHON) -m unittest discover -s tests -p 'test_visualization*.py' -v
+
+.PHONY: baselines
+baselines: $(BUILD)/baseline_cases
+	$(PYTHON) analysis/run_baselines.py
+
+$(BUILD)/baseline_cases: app/baseline_cases.cpp $(HEADERS)
+	@mkdir -p $(@D)
+	$(CXX) $(RELFLAGS) -DNDEBUG $< -o $@
+
+.PHONY: test-traversals
+test-traversals:
+	$(PYTHON) -m unittest discover -s tests -p 'test_traversals.py' -v

@@ -1,0 +1,23 @@
+{
+  "scope": [
+    "grafo_W_3",
+    "grafo_W_4",
+    "grafo_W_5",
+    "grafo_W_6",
+    "grafo_W_7",
+    "rede_colaboracao"
+  ],
+  "required_case_pairs": 30,
+  "traversals": 2150,
+  "known_gap": "array timings only measured for grafo_W_3; no inferred measurements",
+  "sources": {
+    "data/azure/results_weighted.csv": "4e5d01f7592511867daee7d4c853968ddc86257be9d82f681d2ed53eb618f9a9",
+    "data/azure/paths_weighted.csv": "f2a14a67d841c23fb134dc0234b2b725d578d33db6f769df77c6c6b7b96fe306",
+    "data/azure/environment.txt": "b88849bbed7b6b45551115a12b6fca73411e01912803c9aedcb51ae7b2b394bc",
+    "docs/results/traversals/traversal_summary.csv": "8eb8045510a7d34dc31e55625145f4839288964930a97768ad538865d0977b25",
+    "docs/results/traversals/results_traversals_paired.csv": "aacc86cca45c2043f4096e56be847d97baddf739192505edaa0f939783a5cd9a",
+    "docs/figures/provenance.json": "ae958b3e8df89ca9f825fb913e7a3743c820d20d798556a89197f55b55e8a8ec",
+    "tests/data/baselines/manifest.json": "c7d8540bbefa9e4cf2825ca533cf5aa47be25b6ab04a168f623ea8c4d49aff72",
+    "analysis/build_report_part2.py": "3476c326378c0ebb609a311c8c31ba3c2411832d3c8164f67b42dfa6fa1edeff"
+  }
+}

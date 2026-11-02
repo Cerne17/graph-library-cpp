@@ -88,6 +88,32 @@ class CollectorTests(unittest.TestCase):
             self.assertTrue(all(e["source"] in ids and e["target"] in ids for e in edges))
         self.assertFalse(list(self.base.glob("cos242-input-*")))
 
+    def test_select_searches_only_without_repeating_dijkstra_or_matrix(self):
+        self.configure("6\n1 2 1\n2 3 2\n4 5 3\n")
+        self.assertEqual(self.run_collect("--phases", "timing", "--algorithms", "bfs,dfs", "--representations", "csr"), 0)
+        directories = {p.name for p in (self.out / "tiny").iterdir() if p.is_dir()}
+        self.assertEqual(directories, {"timing_csr_bfs", "timing_csr_dfs"})
+        bfs = self.rows("timing_csr_bfs", "timings.csv")
+        dfs = self.rows("timing_csr_dfs", "timings.csv")
+        self.assertEqual([r["source"] for r in bfs], [r["source"] for r in dfs])
+        self.assertEqual([r["reachable_vertices"] for r in bfs], [r["reachable_vertices"] for r in dfs])
+
+    def test_per_representation_counts_keep_same_random_prefix(self):
+        self.configure("6\n1 2\n2 3\n4 5\n", weighting="unweighted")
+        text=self.config.read_text().splitlines()
+        self.config.write_text(text[0]+",k_csr,k_matrix\n"+text[1]+",4,2\n")
+        self.assertEqual(self.run_collect("--phases","timing"),0)
+        csr=[r["source"] for r in self.rows("timing_csr_bfs","timings.csv")]
+        matrix=[r["source"] for r in self.rows("timing_matrix_bfs","timings.csv")]
+        self.assertEqual(len(csr),4)
+        self.assertEqual(len(matrix),2)
+        self.assertEqual(csr[:2],matrix)
+        self.assertEqual(self.job("timing_csr_bfs")["settings"]["k"],4)
+        self.assertEqual(self.job("timing_matrix_bfs")["settings"]["k"],2)
+        self.assertEqual(self.run_collect("--phases","timing","--ignore-config-counts","--k","2"),0)
+        self.assertEqual(self.job("timing_csr_bfs")["settings"]["k"],2)
+        self.assertEqual(len(self.rows("timing_csr_bfs","timings.csv")),2)
+
     def test_raw_sources_match_across_representations_and_resume(self):
         self.configure("6\n1 2\n2 3\n4 5\n", weighting="unweighted")
         self.assertEqual(self.run_collect(), 0)

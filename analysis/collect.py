@@ -212,11 +212,11 @@ def memory_estimate(n: int, text_bytes: int, weighted: bool, rep: str, phase: st
     # algorithm workspace and (when selected) the dense matrix. This is a
     # preflight estimate, never reported as measured RSS.
     staging = text_bytes * 4 + (n + 2) * (96 if phase == "stats" else 80)
-    matrix = ((n + 1) ** 2 * 8 if weighted else (((n + 1) ** 2 + 63) // 64) * 8)
+    matrix = ((n + 1) ** 2 * 8 if weighted else (n + 1) * ((n + 64) // 64) * 8)
     return staging + (matrix if rep == "matrix" else 0)
 
 
-def jobs(cfg: dict, phases: list[str]):
+def jobs(cfg: dict, phases: list[str], selected_algorithms=None, selected_representations=None):
     if "stats" in phases:
         yield "stats", "csr", ""
     if "cases" in phases:
@@ -225,7 +225,9 @@ def jobs(cfg: dict, phases: list[str]):
         algorithms = ["bfs", "dfs"]
         if cfg["weighting"] == "weighted":
             algorithms += ["dijkstra_array", "dijkstra_heap", "dijkstra_lazy"]
-        for rep in cfg["representations"].split("|"):
+        if selected_algorithms is not None:
+            algorithms = [a for a in algorithms if a in selected_algorithms]
+        for rep in (selected_representations or cfg["representations"].split("|")):
             for algorithm in algorithms:
                 yield "timing", rep, algorithm
 
@@ -272,18 +274,19 @@ def collect_graph(cfg: dict, args, binary_hash: str, run_metadata: dict) -> bool
             "implementation": "gl_header_only", "self_loops": "dropped_and_counted",
             "parallel_edges": "CSR keeps all; matrix keeps minimum weight or one unweighted edge",
         })
-        for phase, rep, algorithm in jobs(cfg, args.phases):
+        for phase, rep, algorithm in jobs(cfg, args.phases, args.algorithms, args.representations):
             key = phase if phase != "timing" else f"timing_{rep}_{algorithm}"
             final = graph_out / key
             backup = graph_out / ("." + key + ".previous")
             if not final.exists() and backup.exists():
                 backup.rename(final)
+            repetitions = int(cfg.get("k_" + rep) or args.k) if phase == "timing" and not args.ignore_config_counts else args.k
             settings = {"schema_version": SCHEMA_VERSION, "binary_sha256": binary_hash,
                         "runner_sha256": run_metadata["runner_sha256"],
                         "graph_sha256": graph_hash, "labels_sha256": label_hash,
                         "weighting": cfg["weighting"], "phase": phase, "representation": rep,
                         "algorithm": algorithm, "source": cfg.get("source", ""),
-                        "seed": args.seed, "k": args.k, "sample_nodes": args.sample_nodes,
+                        "seed": args.seed, "k": repetitions, "sample_nodes": args.sample_nodes,
                         "sample_edges": args.sample_edges, "exact_work": args.exact_work,
                         "array_work": args.array_work, "memory_limit_bytes": args.memory_limit,
                         "timeout_seconds": args.timeout,
@@ -305,7 +308,7 @@ def collect_graph(cfg: dict, args, binary_hash: str, run_metadata: dict) -> bool
                 else:
                     base = baseline(args, cfg["weighting"], rep, binary_hash, run_metadata)
                     cmd = [str(args.binary), str(graph), cfg["weighting"], rep, phase, str(stage),
-                           "--seed", str(args.seed), "--k", str(args.k),
+                           "--seed", str(args.seed), "--k", str(repetitions),
                            "--sample-nodes", str(args.sample_nodes), "--sample-edges", str(args.sample_edges),
                            "--exact-work", str(args.exact_work)]
                     if algorithm:
@@ -411,8 +414,11 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--tmp", type=Path, default=Path(tempfile.gettempdir()))
     p.add_argument("--only", action="append")
     p.add_argument("--phases", default="stats,cases,timing")
+    p.add_argument("--algorithms", help="Comma-separated timing algorithms; default: all supported")
+    p.add_argument("--representations", help="Comma-separated timing representations; default: config")
     p.add_argument("--seed", type=int, default=2025)
     p.add_argument("--k", type=int, default=100)
+    p.add_argument("--ignore-config-counts", action="store_true", help="Use --k for every timing job, including short pilots")
     p.add_argument("--sample-nodes", type=int, default=1000)
     p.add_argument("--sample-edges", type=int, default=4000)
     p.add_argument("--exact-work", type=int, default=100000000)
@@ -425,6 +431,12 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     p = parser(); args = p.parse_args(argv)
+    args.algorithms = args.algorithms.split(",") if args.algorithms else None
+    args.representations = args.representations.split(",") if args.representations else None
+    if args.algorithms and set(args.algorithms) - {"bfs", "dfs", "dijkstra_array", "dijkstra_heap", "dijkstra_lazy"}:
+        p.error("invalid timing algorithms")
+    if args.representations and set(args.representations) - {"csr", "matrix"}:
+        p.error("invalid timing representations")
     args.phases = args.phases.split(",")
     if not args.phases or set(args.phases) - {"stats", "cases", "timing"}:
         p.error("phases must contain stats, cases and/or timing")
@@ -451,6 +463,9 @@ def main(argv=None) -> int:
         try:
             if cfg["weighting"] not in ("weighted", "unweighted") or set(cfg["representations"].split("|")) - {"csr", "matrix"}:
                 raise ValueError("invalid weighting or representations")
+            for rep in (args.representations or cfg["representations"].split("|")):
+                if int(cfg.get("k_" + rep) or args.k) <= 0:
+                    raise ValueError("timing sample counts must be positive")
             find_input(args.data, cfg["graph"])
             if cfg.get("labels"):
                 find_input(args.data, cfg["labels"])

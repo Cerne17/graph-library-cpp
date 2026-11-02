@@ -1,0 +1,28 @@
+{
+  "required_case_pairs": 30,
+  "known_gap": [
+    "grafo_W_4: array not measured",
+    "grafo_W_5: array not measured",
+    "grafo_W_6: array not measured",
+    "grafo_W_7: array not measured"
+  ],
+  "pdf": {
+    "relatorio_parte2.pdf": {
+      "pages": 5,
+      "sha256": "6545dd4382548c8f1218a1df843da1fc297d62cb42525cbbc8b8e17a77d117a3",
+      "tex_sha256": "e9dca80eab840c4ebc26e9782dad975ed67cecf56869423b2471c89236443964",
+      "safe_bounds": true
+    },
+    "material_complementar_parte2.pdf": {
+      "pages": 24,
+      "sha256": "399d5f55723e8ec6b271a2fe06e3ebcf0050aeeede5a6f4f55ba5d7222a302fc",
+      "tex_sha256": "050cf003d8282faa0b3f796eb8873eaae5fa7a1f703f198e1b6581bc86b6b9b3",
+      "safe_bounds": true
+    }
+  },
+  "mermaid": {
+    "classes": 23,
+    "relationships": 35,
+    "references_declared": true
+  }
+}

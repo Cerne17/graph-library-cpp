@@ -1,0 +1,502 @@
+{
+  "kind": "forecast_not_azure_measurement",
+  "calibration_ratios": [
+    1.977455730825412,
+    1.640830532051609,
+    2.514562709165712,
+    2.2036304190942926
+  ],
+  "scenario_multiplier": [
+    1.3126644256412874,
+    3.771844063748568
+  ],
+  "assumptions": "CSR: n + vértices alcançados + arcos alcançados; matriz: n + vértices alcançados × ceil((n+1)/64) + arcos alcançados. Faixas são cenários, não intervalos de confiança.",
+  "all_100_algorithm_seconds": [
+    3734.1624718732633,
+    17324.72905681628
+  ],
+  "chosen_algorithm_seconds": [
+    551.6735420278708,
+    2500.7866188787903
+  ],
+  "loading_allowance_seconds": [
+    390.7160089733667,
+    1172.8077331581887
+  ],
+  "measured_local_input_preparation_seconds": 11.924973249435425,
+  "all_100_run_seconds": [
+    4124.87848084663,
+    18497.536789974467
+  ],
+  "chosen_run_seconds": [
+    942.3895510012375,
+    3673.594352036979
+  ],
+  "upload_bytes": 2538310082,
+  "upload_seconds_at_100mbps": 203.06480656,
+  "upload_seconds_at_20mbps": 1015.3240328,
+  "traversal_count": 2150,
+  "decisions": [
+    {
+      "graph": "grafo_1",
+      "representation": "csr",
+      "vertices": 10000,
+      "edges": 109973,
+      "density_simple": 0.002198639863986399,
+      "expected_reachable_vertices": 10000.0,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.000495333,
+          "azure_lower_seconds": 0.0005201648063569407,
+          "azure_upper_seconds": 0.0022419826027545234
+        },
+        "dfs": {
+          "local_model_seconds": 0.001002375,
+          "azure_lower_seconds": 0.0010526256029217485,
+          "azure_upper_seconds": 0.004536962632079965
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 100,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_1",
+      "representation": "matrix",
+      "vertices": 10000,
+      "edges": 109973,
+      "density_simple": 0.002198639863986399,
+      "expected_reachable_vertices": 10000.0,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.003909958,
+          "azure_lower_seconds": 0.004105970217881246,
+          "azure_upper_seconds": 0.017697302246167466
+        },
+        "dfs": {
+          "local_model_seconds": 0.0044369579999999995,
+          "azure_lower_seconds": 0.004659389539731612,
+          "azure_upper_seconds": 0.020082616432082062
+        }
+      },
+      "methods": {
+        "bfs": "piloto matricial corrigido pela componente alcançada",
+        "dfs": "piloto matricial corrigido pela componente alcançada"
+      },
+      "repetitions_per_algorithm": 100,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_2",
+      "representation": "csr",
+      "vertices": 49948,
+      "edges": 1299729,
+      "density_simple": 0.001041153274108258,
+      "expected_reachable_vertices": 16683.94666453111,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.0018091948306338877,
+          "azure_lower_seconds": 0.0018998925545817748,
+          "azure_upper_seconds": 0.00818880093850923
+        },
+        "dfs": {
+          "local_model_seconds": 0.0058659313481809585,
+          "azure_lower_seconds": 0.006159999523208944,
+          "azure_upper_seconds": 0.02655045400079158
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 100,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_2",
+      "representation": "matrix",
+      "vertices": 49948,
+      "edges": 1299729,
+      "density_simple": 0.001041153274108258,
+      "expected_reachable_vertices": 16683.94666453111,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.017969327193142405,
+          "azure_lower_seconds": 0.018870157247317314,
+          "azure_upper_seconds": 0.08133300012361187
+        },
+        "dfs": {
+          "local_model_seconds": 0.02048993493372414,
+          "azure_lower_seconds": 0.02151712693696348,
+          "azure_upper_seconds": 0.09274180733563415
+        }
+      },
+      "methods": {
+        "bfs": "piloto matricial corrigido pela componente alcançada",
+        "dfs": "piloto matricial corrigido pela componente alcançada"
+      },
+      "repetitions_per_algorithm": 100,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_3",
+      "representation": "csr",
+      "vertices": 375000,
+      "edges": 765617,
+      "density_simple": 1.0888775703401877e-05,
+      "expected_reachable_vertices": 208333.33333333334,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.005813699814451299,
+          "azure_lower_seconds": 0.006105149542230059,
+          "azure_upper_seconds": 0.02631404296026514
+        },
+        "dfs": {
+          "local_model_seconds": 0.010930302832157707,
+          "azure_lower_seconds": 0.011478255751407707,
+          "azure_upper_seconds": 0.04947287742293785
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 100,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_3",
+      "representation": "matrix",
+      "vertices": 375000,
+      "edges": 765617,
+      "density_simple": 1.0888775703401877e-05,
+      "expected_reachable_vertices": 208333.33333333334,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 2.094581388934882,
+          "azure_lower_seconds": 2.0621118568988526,
+          "azure_upper_seconds": 11.850651566838398
+        },
+        "dfs": {
+          "local_model_seconds": 2.2375325504967316,
+          "azure_lower_seconds": 2.202847035188608,
+          "azure_upper_seconds": 12.659435802052936
+        }
+      },
+      "methods": {
+        "bfs": "extrapolação de palavras de 64 bits a partir das matrizes pequenas; não medida localmente",
+        "dfs": "extrapolação de palavras de 64 bits a partir das matrizes pequenas; não medida localmente"
+      },
+      "repetitions_per_algorithm": 10,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_4",
+      "representation": "csr",
+      "vertices": 375000,
+      "edges": 8187392,
+      "density_simple": 0.00011643744472207481,
+      "expected_reachable_vertices": 208333.33333333334,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.0458177991407633,
+          "azure_lower_seconds": 0.048114715994606344,
+          "azure_upper_seconds": 0.20738111244373478
+        },
+        "dfs": {
+          "local_model_seconds": 0.07650940007768631,
+          "azure_lower_seconds": 0.08034493416730845,
+          "azure_upper_seconds": 0.3462978318047824
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 100,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_4",
+      "representation": "matrix",
+      "vertices": 375000,
+      "edges": 8187392,
+      "density_simple": 0.00011643744472207481,
+      "expected_reachable_vertices": 208333.33333333334,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 2.1098458768137514,
+          "azure_lower_seconds": 2.0771397195595207,
+          "azure_upper_seconds": 11.937014468826511
+        },
+        "dfs": {
+          "local_model_seconds": 2.2538388103900275,
+          "azure_lower_seconds": 2.218900520646501,
+          "azure_upper_seconds": 12.75169280642364
+        }
+      },
+      "methods": {
+        "bfs": "extrapolação de palavras de 64 bits a partir das matrizes pequenas; não medida localmente",
+        "dfs": "extrapolação de palavras de 64 bits a partir das matrizes pequenas; não medida localmente"
+      },
+      "repetitions_per_algorithm": 10,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_5",
+      "representation": "csr",
+      "vertices": 4843750,
+      "edges": 13168921,
+      "density_simple": 1.1225779519661455e-06,
+      "expected_reachable_vertices": 1718750.0,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.20208305368907126,
+          "azure_lower_seconds": 0.21221378848208175,
+          "azure_upper_seconds": 0.9146709197295678
+        },
+        "dfs": {
+          "local_model_seconds": 0.40678847844149346,
+          "azure_lower_seconds": 0.427181411528717,
+          "azure_upper_seconds": 1.841211249133031
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 100,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_6",
+      "representation": "csr",
+      "vertices": 4843750,
+      "edges": 46469627,
+      "density_simple": 3.961270037040557e-06,
+      "expected_reachable_vertices": 1718750.0,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.4044396917054153,
+          "azure_lower_seconds": 0.4247148764952227,
+          "azure_upper_seconds": 1.830580140364046
+        },
+        "dfs": {
+          "local_model_seconds": 0.5483594655772253,
+          "azure_lower_seconds": 0.5758495703415133,
+          "azure_upper_seconds": 2.481991674045353
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 50,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_W_3",
+      "representation": "csr",
+      "vertices": 100000,
+      "edges": 6099941,
+      "density_simple": 0.0012199857998579987,
+      "expected_reachable_vertices": 100000.0,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.024058582999999998,
+          "azure_lower_seconds": 0.025264676828350593,
+          "azure_upper_seconds": 0.10889426816490264
+        },
+        "dfs": {
+          "local_model_seconds": 0.049395166,
+          "azure_lower_seconds": 0.051871421765476836,
+          "azure_upper_seconds": 0.22357303638597012
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 100,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_W_4",
+      "representation": "csr",
+      "vertices": 1000000,
+      "edges": 30999978,
+      "density_simple": 6.199994999995e-05,
+      "expected_reachable_vertices": 1000000.0,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.303954041,
+          "azure_lower_seconds": 0.31919172532049067,
+          "azure_upper_seconds": 1.3757606942378866
+        },
+        "dfs": {
+          "local_model_seconds": 0.374350667,
+          "azure_lower_seconds": 0.39311744262879034,
+          "azure_upper_seconds": 1.6943908093011204
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 75,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_W_5",
+      "representation": "csr",
+      "vertices": 10000000,
+      "edges": 39999995,
+      "density_simple": 7.999998999999901e-07,
+      "expected_reachable_vertices": 10000000.0,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 1.2744432909999999,
+          "azure_lower_seconds": 1.3383330964743256,
+          "azure_upper_seconds": 5.768401634091046
+        },
+        "dfs": {
+          "local_model_seconds": 2.481129625,
+          "azure_lower_seconds": 2.605512475313766,
+          "azure_upper_seconds": 11.230120856936352
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 10,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_W_6",
+      "representation": "csr",
+      "vertices": 10000000,
+      "edges": 73403372,
+      "density_simple": 1.4680675868067586e-06,
+      "expected_reachable_vertices": 9999994.0000012,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 1.8178579463364402,
+          "azure_lower_seconds": 1.908989965620139,
+          "azure_upper_seconds": 8.228012044352717
+        },
+        "dfs": {
+          "local_model_seconds": 3.0260119796186475,
+          "azure_lower_seconds": 3.1777106217678135,
+          "azure_upper_seconds": 13.696374386587978
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 10,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "grafo_W_7",
+      "representation": "csr",
+      "vertices": 50000000,
+      "edges": 59999999,
+      "density_simple": 4.8000000160000004e-08,
+      "expected_reachable_vertices": 50000000.0,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 4.310735707999999,
+          "azure_lower_seconds": 4.5268395297865665,
+          "azure_upper_seconds": 19.511307468730532
+        },
+        "dfs": {
+          "local_model_seconds": 11.8926725,
+          "azure_lower_seconds": 12.488870493241947,
+          "azure_upper_seconds": 53.828767405477
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 10,
+      "pair_budget_seconds": 300
+    },
+    {
+      "graph": "rede_colaboracao",
+      "representation": "csr",
+      "vertices": 722385,
+      "edges": 2272543,
+      "density_simple": 8.709741536428201e-06,
+      "expected_reachable_vertices": 459772.1754258463,
+      "times": {
+        "bfs": {
+          "local_model_seconds": 0.03380764471271082,
+          "azure_lower_seconds": 0.035502474023276206,
+          "azure_upper_seconds": 0.15302059682275074
+        },
+        "dfs": {
+          "local_model_seconds": 0.061548132250728076,
+          "azure_lower_seconds": 0.06463363493615677,
+          "azure_upper_seconds": 0.27857994871766456
+        }
+      },
+      "methods": {
+        "bfs": "piloto CSR corrigido pelo trabalho esperado das componentes",
+        "dfs": "piloto CSR corrigido pelo trabalho esperado das componentes"
+      },
+      "repetitions_per_algorithm": 100,
+      "pair_budget_seconds": 300
+    }
+  ],
+  "config_sha256": "c0d84a91892347e1df11b484fb565c05a8ffc416eb2b83f60081d551bfa6d336",
+  "pilot_sha256": {
+    "grafo_1/timing_csr_bfs/timings.csv": "35c729aa75ab4efa07512f9e0b13101aed8ab1e7144a2b0a765b9820560baba3",
+    "grafo_1/timing_csr_dfs/timings.csv": "0299c14206424226c015ef991b86697d0dfbf9749537f3ef04df8a5d80d5701b",
+    "grafo_1/timing_matrix_bfs/timings.csv": "9fc6a7fff8cf6bd4a2248a12a27c5f81a680bed63c24621742e471815e93b480",
+    "grafo_1/timing_matrix_dfs/timings.csv": "f8cda7fd82f74fdf28521ff589ff95b034dc77ddb4003dd8090a82e62d237ac4",
+    "grafo_2/timing_csr_bfs/timings.csv": "29e523492bd15a21c64eede3e8d8b8b6b14452079d194a9f8ade970dd4ce7b31",
+    "grafo_2/timing_csr_dfs/timings.csv": "b7f3823d43d579a9a91d95e6203a904b5659248fad022db6e033132dd00e6bc6",
+    "grafo_2/timing_matrix_bfs/timings.csv": "7e0c456b259e049703723b945c99bbac3f993292e5f2982e7e247d4c3d2a4aaf",
+    "grafo_2/timing_matrix_dfs/timings.csv": "f211568164d47713dd6243046d1d36a4e3585d215a583edeea2243e86bf2217e",
+    "grafo_3/timing_csr_bfs/timings.csv": "66e456185357406c5e5746f110af850006e19bab309f3524ea8212f4d9fbd566",
+    "grafo_3/timing_csr_dfs/timings.csv": "81de0d7abc251e323e9e888a68ac8cbfae4570c6a1ae307a34ac668cfa5f519b",
+    "grafo_4/timing_csr_bfs/timings.csv": "4459c338882143a5a97d3ae6c50374c067340dd3c400b75b2f5761320ef7683c",
+    "grafo_4/timing_csr_dfs/timings.csv": "efdcfa274e42ba611769325774b4ce3cc4eb90a35ee1c99e70aa96092beb48c7",
+    "grafo_5/timing_csr_bfs/timings.csv": "2e2a031f90438d61e3e659939eedf47783604fee235772aa327abe29125829f1",
+    "grafo_5/timing_csr_dfs/timings.csv": "7a8fe384544ef14df44eae10a97f1b3e4d5b3883b2e3d6be0004d2d3e9f99156",
+    "grafo_6/timing_csr_bfs/timings.csv": "675c2060c50def81c6cb8348299a061bc89058ac0f28cbf7429e505c3184bbef",
+    "grafo_6/timing_csr_dfs/timings.csv": "a4398fbc6e629bd72004e96079eca021adf363c68bfb630a09ce872776208dce",
+    "grafo_W_3/timing_csr_bfs/timings.csv": "b6c2719f079929534e6d7c9faf2fd885ac6e316afa0f802434ba663dd0d194ba",
+    "grafo_W_3/timing_csr_dfs/timings.csv": "549d06e3793c640300e5e84ec5167dfc6702e0c2b61a80f12030092b66665419",
+    "grafo_W_4/timing_csr_bfs/timings.csv": "cc8b00bf0edfdaeabda89b1269ff147b764c9e539898f7da901ea4d05b5b5f98",
+    "grafo_W_4/timing_csr_dfs/timings.csv": "eb891fb1d4386e6f76520550eac9042f1a4b18449b5d10eeb8011f5d4b86f9b3",
+    "grafo_W_5/timing_csr_bfs/timings.csv": "e9d2bb70fc98eb8b692ee61dc95d3983d4b38250c2857b6401c38ea986205243",
+    "grafo_W_5/timing_csr_dfs/timings.csv": "aa8fa1c803bccc2186a5d9c7240255ef69c07aa8817c8f88ff46bc43d8e090b9",
+    "grafo_W_6/timing_csr_bfs/timings.csv": "005bc9c5c314361c63f2fa841eb0821b67b9a66edad1811b262ced69058500f3",
+    "grafo_W_6/timing_csr_dfs/timings.csv": "373e279a6ae990f242c70ac73ee5ae9790f35fe634a18e9e80a084a4d457fab3",
+    "grafo_W_7/timing_csr_bfs/timings.csv": "abfea0fbab348ce46ee6c80504fddd95498ee3125a2541f977f9578696bd39c8",
+    "grafo_W_7/timing_csr_dfs/timings.csv": "2f50a0b4312a715215d74b830506c2bc6f7df9d222ce3ca4bace0f11ffac85db",
+    "rede_colaboracao/timing_csr_bfs/timings.csv": "5ac58ea8dca6c92b3fe569ef012b6ab105e75e3274bbba6340a0cec6c6403e12",
+    "rede_colaboracao/timing_csr_dfs/timings.csv": "94fc43f764b3335780135778540e984b2be38ba24d66d02569f6941519af81cf"
+  },
+  "input_sha256": {
+    "grafo_1": "0c7f08ea9f989891f898e4902eeedb21988d990d5b92ea7cef83dc6a116a8d89",
+    "grafo_2": "30aaf447d5a47865544893f8b31b2a9755713a668f3b642db5da10001ae85569",
+    "grafo_3": "21748c127452c1f43fa50f8c242d5c03b3da570b60597cfaa0b330d3b9c970c2",
+    "grafo_4": "d8b8d106c4dbd60e6fe792e2c58c1ad0324d72320053787e7068b60b5bde8376",
+    "grafo_5": "fc8306fbea9974703ef6e6bee418d0ae82bccdb080202d2603afd910b4392c2d",
+    "grafo_6": "785d2e47bd6290284f20f58a0cbab3284e606530d31f4f349e0624373396ba60",
+    "grafo_W_3": "79a49f29ce90de5bc51118f23a1de045eaa1ad84da217efe969baf60abf359c5",
+    "grafo_W_4": "8f6b0543b7f30ba71d6b72ada0e6ef67060fcb19a8f224003017becb50d74836",
+    "grafo_W_5": "ceeda4d78fe4da6b8848d3c644fbe2528dbd25e8e991de376b803eb6a75ec142",
+    "grafo_W_6": "d130a586ad318d48c47a051c6e43337034541bbc67f11e4bd09ec51b96967b77",
+    "grafo_W_7": "8c636cb4ee5f8f129ade4e4745fff97ff87d4ea0dc2fecc774d464211fbfeac3",
+    "rede_colaboracao": "519952a470989c6b1ae865f8992851bbc57c436fda099d0e403f732217459d6a"
+  }
+}

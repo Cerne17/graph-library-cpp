@@ -180,3 +180,28 @@ are hops in its tree, not shortest-path distances, so its `distance` is empty.
 Part 2 includes the five required targets from 10, or the exact collaboration
 names. Targets beyond n are omitted for small fixtures. Unreachable weighted
 targets have `distance=inf` and an empty path; `not_implemented` has no distance.
+
+## Visualization gallery
+
+Run `make figures` to create SVG/PNG figures from these exports and the existing
+Azure timings, without rerunning graph algorithms. See [VISUALIZATIONS.md](VISUALIZATIONS.md)
+for the gallery, sampling limits and regeneration instructions.
+
+The default configuration now includes the six unweighted Part 1 graphs and the
+six weighted inputs. For the new search-only timing experiment:
+
+```bash
+python3 analysis/prepare_traversals.py
+python3 analysis/estimate_traversals.py
+python3 analysis/collect.py --config config_traversals.csv --phases timing \
+  --algorithms bfs,dfs --k 100 --seed 2025 --memory-limit-gb 28 \
+  --out data/collected_traversals
+```
+
+The estimate step restores the adaptive repetition counts after preparing the
+configuration; it requires the saved local pilot described in
+[TRAVERSAL_ESTIMATE.md](TRAVERSAL_ESTIMATE.md). The checked-in configuration
+already contains those counts. This uses distinct random sources shared by BFS/DFS and eligible CSR/bit-matrix
+representations, and does not repeat
+Dijkstra. See [AZURE_TRAVERSALS.md](AZURE_TRAVERSALS.md) for the separate remote
+run and [BASELINES.md](BASELINES.md) for the artificial correctness cases.

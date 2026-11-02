@@ -1,0 +1,17 @@
+graph,representation,metric,value_average,value_median,samples,status
+grafo_1,csr,bfs_micros,564.84243,563.5015000000001,100,ok
+grafo_1,matrix,bfs_micros,3881.69569,3858.56,100,ok
+grafo_1,csr,dfs_micros,1230.93404,1225.203,100,ok
+grafo_1,matrix,dfs_micros,5652.02013,5629.013999999999,100,ok
+grafo_2,csr,bfs_micros,2165.95542,3204.258,100,ok
+grafo_2,matrix,bfs_micros,28088.91505,40907.552,100,ok
+grafo_2,csr,dfs_micros,5954.34089,8818.322,100,ok
+grafo_2,matrix,dfs_micros,38982.32625,57323.936,100,ok
+grafo_3,csr,bfs_micros,10989.366,12548.48,10,ok
+grafo_3,matrix,bfs_micros,1309990.3292,1540609.887,10,ok
+grafo_3,csr,dfs_micros,17028.5403,19448.246,10,ok
+grafo_3,matrix,dfs_micros,1729631.5847,2034038.473,10,ok
+grafo_4,csr,bfs_micros,30331.6034,23379.9565,10,ok
+grafo_4,matrix,bfs_micros,966777.4181,799857.9395,10,ok
+grafo_4,csr,dfs_micros,46312.7414,34390.774999999994,10,ok
+grafo_4,matrix,dfs_micros,1313288.0261000001,1076323.1795,10,ok

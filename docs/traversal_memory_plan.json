@@ -1,0 +1,104 @@
+{
+  "matrix_limit_gib": 28,
+  "total_memory_budget_gib": 28,
+  "reserve_target_gib": "2–4 on the 32-GiB VM",
+  "jobs": [
+    {
+      "graph": "grafo_1",
+      "vertices": 10000,
+      "bitmatrix_bytes": 12561256,
+      "bitmatrix_gib": 0.011698581278324127,
+      "matrix_selected": true,
+      "reason": "below_limit"
+    },
+    {
+      "graph": "grafo_2",
+      "vertices": 49948,
+      "bitmatrix_bytes": 312081352,
+      "bitmatrix_gib": 0.2906484082341194,
+      "matrix_selected": true,
+      "reason": "below_limit"
+    },
+    {
+      "graph": "grafo_3",
+      "vertices": 375000,
+      "bitmatrix_bytes": 17580046880,
+      "bitmatrix_gib": 16.37269452214241,
+      "matrix_selected": true,
+      "reason": "below_limit"
+    },
+    {
+      "graph": "grafo_4",
+      "vertices": 375000,
+      "bitmatrix_bytes": 17580046880,
+      "bitmatrix_gib": 16.37269452214241,
+      "matrix_selected": true,
+      "reason": "below_limit"
+    },
+    {
+      "graph": "grafo_5",
+      "vertices": 4843750,
+      "bitmatrix_bytes": 2932755605472,
+      "bitmatrix_gib": 2731.3415012061596,
+      "matrix_selected": false,
+      "reason": "exceeds_limit"
+    },
+    {
+      "graph": "grafo_6",
+      "vertices": 4843750,
+      "bitmatrix_bytes": 2932755605472,
+      "bitmatrix_gib": 2731.3415012061596,
+      "matrix_selected": false,
+      "reason": "exceeds_limit"
+    },
+    {
+      "graph": "grafo_W_3",
+      "vertices": 100000,
+      "bitmatrix_bytes": null,
+      "bitmatrix_gib": null,
+      "matrix_selected": false,
+      "reason": "weighted_csr_only"
+    },
+    {
+      "graph": "grafo_W_4",
+      "vertices": 1000000,
+      "bitmatrix_bytes": null,
+      "bitmatrix_gib": null,
+      "matrix_selected": false,
+      "reason": "weighted_csr_only"
+    },
+    {
+      "graph": "grafo_W_5",
+      "vertices": 10000000,
+      "bitmatrix_bytes": null,
+      "bitmatrix_gib": null,
+      "matrix_selected": false,
+      "reason": "weighted_csr_only"
+    },
+    {
+      "graph": "grafo_W_6",
+      "vertices": 10000000,
+      "bitmatrix_bytes": null,
+      "bitmatrix_gib": null,
+      "matrix_selected": false,
+      "reason": "weighted_csr_only"
+    },
+    {
+      "graph": "grafo_W_7",
+      "vertices": 50000000,
+      "bitmatrix_bytes": null,
+      "bitmatrix_gib": null,
+      "matrix_selected": false,
+      "reason": "weighted_csr_only"
+    },
+    {
+      "graph": "rede_colaboracao",
+      "vertices": 722385,
+      "bitmatrix_bytes": null,
+      "bitmatrix_gib": null,
+      "matrix_selected": false,
+      "reason": "weighted_csr_only"
+    }
+  ],
+  "traversal_count_at_100": 3200
+}

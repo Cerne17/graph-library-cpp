@@ -28,3 +28,7 @@ data/rede_colaboracao*.txt
 # Unified collection exports and Python caches
 data/collected/
 __pycache__/
+
+# Large compressed course inputs (distributed separately)
+data/grafo_*.txt.gz
+data/azure_traversals/

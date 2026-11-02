@@ -606,5 +606,23 @@ dois.
 ## Coleta unificada e dados para visualização
 
 O novo coletor exporta estatísticas completas, amostras de rede e medições com
-checkpoint para grafos sem pesos e com pesos. Veja [docs/COLLECTION.md](docs/COLLECTION.md)
+checkpoint para grafos não ponderados e ponderados. Veja [docs/COLLECTION.md](docs/COLLECTION.md)
 para compilação, execução, limites de recursos e esquemas dos arquivos.
+
+## Visualizações — Partes 1 e 2
+
+A [galeria de figuras](docs/VISUALIZATIONS.md) reúne distribuições completas,
+amostras visuais dos grafos das duas partes e os resultados existentes do Azure.
+Execute `make figures` para regenerar os arquivos SVG/PNG; esse comando não
+repete os benchmarks nem executa Dijkstra.
+
+Os [casos artificiais de referência](docs/BASELINES.md) são regenerados com
+`make baselines`. A [nova rodada de BFS/DFS no Azure](docs/AZURE_TRAVERSALS.md)
+tem scripts próprios e mantém os resultados separados da rodada anterior.
+
+Antes de criar a VM, consulte a [estimativa de duração e repetições](docs/TRAVERSAL_ESTIMATE.md),
+baseada em um piloto local e nas diferenças históricas entre Mac e Azure.
+
+## Relatório da Parte 2 e arquitetura atual
+
+O [material em LaTeX](docs/RELATORIO_PARTE2.md) contém um relatório de cinco páginas e um complemento com figuras e análises. As medições ausentes da versão por vetor são indicadas explicitamente. A [arquitetura atual](docs/ARQUITETURA.md) inclui o diagrama Mermaid da biblioteca nova; a documentação histórica da Parte 1 foi preservada.

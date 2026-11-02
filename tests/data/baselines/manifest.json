@@ -1,0 +1,276 @@
+[
+  {
+    "id": "singleton",
+    "title": "Vértice isolado",
+    "vertices": 1,
+    "weighting": "unweighted",
+    "source": 1,
+    "bfs": [
+      0
+    ],
+    "dfs": [
+      0
+    ],
+    "dist": null,
+    "negative": false,
+    "note": "Origem igual ao destino; profundidade zero e nenhuma aresta."
+  },
+  {
+    "id": "path",
+    "title": "Caminho linear",
+    "vertices": 6,
+    "weighting": "unweighted",
+    "source": 1,
+    "bfs": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "dfs": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "dist": null,
+    "negative": false,
+    "note": "BFS e DFS coincidem; diâmetro de cinco arestas."
+  },
+  {
+    "id": "star",
+    "title": "Estrela",
+    "vertices": 6,
+    "weighting": "unweighted",
+    "source": 1,
+    "bfs": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "dfs": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "dist": null,
+    "negative": false,
+    "note": "Alto grau central; todas as folhas têm distância um."
+  },
+  {
+    "id": "clique",
+    "title": "Grafo completo",
+    "vertices": 5,
+    "weighting": "unweighted",
+    "source": 1,
+    "bfs": [
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    "dfs": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "dist": null,
+    "negative": false,
+    "note": "BFS mantém distância um; DFS produz uma árvore profunda, com vizinhos em ordem crescente."
+  },
+  {
+    "id": "diamond",
+    "title": "Empate de caminhos e componente isolada",
+    "vertices": 5,
+    "weighting": "unweighted",
+    "source": 1,
+    "bfs": [
+      0,
+      1,
+      1,
+      2,
+      -1
+    ],
+    "dfs": [
+      0,
+      1,
+      3,
+      2,
+      -1
+    ],
+    "dist": null,
+    "negative": false,
+    "note": "Duas rotas mínimas; o vértice 5 é inalcançável. Distância correta independe do desempate entre pais."
+  },
+  {
+    "id": "hops_vs_weight",
+    "title": "Menos arestas não significa menor peso",
+    "vertices": 4,
+    "weighting": "weighted",
+    "source": 1,
+    "bfs": [
+      0,
+      1,
+      1,
+      -1
+    ],
+    "dfs": [
+      0,
+      1,
+      2,
+      -1
+    ],
+    "dist": [
+      0,
+      2,
+      1,
+      null
+    ],
+    "negative": false,
+    "note": "BFS chega a 2 com uma aresta de peso 10; Dijkstra prefere duas arestas de peso total 2."
+  },
+  {
+    "id": "zero_cycle",
+    "title": "Ciclo de peso zero",
+    "vertices": 5,
+    "weighting": "weighted",
+    "source": 1,
+    "bfs": [
+      0,
+      1,
+      1,
+      2,
+      -1
+    ],
+    "dfs": [
+      0,
+      1,
+      2,
+      3,
+      -1
+    ],
+    "dist": [
+      0,
+      0,
+      0,
+      2,
+      null
+    ],
+    "negative": false,
+    "note": "O ciclo de peso zero deve terminar sem formar ciclos nos pais; o vértice 5 permanece inalcançável."
+  },
+  {
+    "id": "decrease_key",
+    "title": "Reduções sucessivas de chave",
+    "vertices": 5,
+    "weighting": "weighted",
+    "source": 1,
+    "bfs": [
+      0,
+      1,
+      1,
+      1,
+      -1
+    ],
+    "dfs": [
+      0,
+      1,
+      2,
+      3,
+      -1
+    ],
+    "dist": [
+      0,
+      3,
+      2,
+      1,
+      null
+    ],
+    "negative": false,
+    "note": "A estimativa para 2 diminui de 20 para 11 e depois 3; exercita update_key e entradas obsoletas da versão tardia."
+  },
+  {
+    "id": "equal_paths",
+    "title": "Caminhos ponderados empatados",
+    "vertices": 4,
+    "weighting": "weighted",
+    "source": 1,
+    "bfs": [
+      0,
+      1,
+      1,
+      2
+    ],
+    "dfs": [
+      0,
+      1,
+      3,
+      2
+    ],
+    "dist": [
+      0,
+      1,
+      1,
+      2
+    ],
+    "negative": false,
+    "note": "Empates de distância não exigem árvores de pais idênticas nas três versões."
+  },
+  {
+    "id": "parallel_loops",
+    "title": "Arestas paralelas e laço",
+    "vertices": 3,
+    "weighting": "weighted",
+    "source": 1,
+    "bfs": [
+      0,
+      1,
+      2
+    ],
+    "dfs": [
+      0,
+      1,
+      2
+    ],
+    "dist": [
+      0,
+      2,
+      3
+    ],
+    "negative": false,
+    "note": "O leitor descarta o laço; CSR preserva as paralelas e Dijkstra encontra a de menor peso."
+  },
+  {
+    "id": "negative",
+    "title": "Aresta negativa",
+    "vertices": 3,
+    "weighting": "weighted",
+    "source": 1,
+    "bfs": [
+      0,
+      1,
+      2
+    ],
+    "dfs": [
+      0,
+      1,
+      2
+    ],
+    "dist": null,
+    "negative": true,
+    "note": "BFS e DFS ignoram pesos; as três versões de Dijkstra devem rejeitar a entrada."
+  }
+]

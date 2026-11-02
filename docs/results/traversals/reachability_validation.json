@@ -1,0 +1,53 @@
+{
+  "samples_verified": 2150,
+  "graphs": {
+    "grafo_1": {
+      "distinct_sources": 100,
+      "samples_verified": 400
+    },
+    "grafo_2": {
+      "distinct_sources": 100,
+      "samples_verified": 400
+    },
+    "grafo_3": {
+      "distinct_sources": 100,
+      "samples_verified": 220
+    },
+    "grafo_4": {
+      "distinct_sources": 100,
+      "samples_verified": 220
+    },
+    "grafo_5": {
+      "distinct_sources": 100,
+      "samples_verified": 200
+    },
+    "grafo_6": {
+      "distinct_sources": 50,
+      "samples_verified": 100
+    },
+    "grafo_W_3": {
+      "distinct_sources": 100,
+      "samples_verified": 200
+    },
+    "grafo_W_4": {
+      "distinct_sources": 75,
+      "samples_verified": 150
+    },
+    "grafo_W_5": {
+      "distinct_sources": 10,
+      "samples_verified": 20
+    },
+    "grafo_W_6": {
+      "distinct_sources": 10,
+      "samples_verified": 20
+    },
+    "grafo_W_7": {
+      "distinct_sources": 10,
+      "samples_verified": 20
+    },
+    "rede_colaboracao": {
+      "distinct_sources": 100,
+      "samples_verified": 200
+    }
+  }
+}

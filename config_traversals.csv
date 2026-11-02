@@ -1,0 +1,13 @@
+graph,weighting,representations,labels,source,k_csr,k_matrix
+grafo_1,unweighted,csr|matrix,,1,100,100
+grafo_2,unweighted,csr|matrix,,1,100,100
+grafo_3,unweighted,csr|matrix,,1,100,10
+grafo_4,unweighted,csr|matrix,,1,100,10
+grafo_5,unweighted,csr,,1,100,
+grafo_6,unweighted,csr,,1,50,
+grafo_W_3,weighted,csr,,10,100,
+grafo_W_4,weighted,csr,,10,75,
+grafo_W_5,weighted,csr,,10,10,
+grafo_W_6,weighted,csr,,10,10,
+grafo_W_7,weighted,csr,,10,10,
+rede_colaboracao,weighted,csr,rede_colaboracao_vertices,Edsger W. Dijkstra,100,

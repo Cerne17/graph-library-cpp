@@ -1,0 +1,204 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{lmodern,microtype}
+\usepackage[margin=2.15cm]{geometry}
+\usepackage{amsmath,amssymb,booktabs,array,caption,float,graphicx,xcolor}
+\usepackage{siunitx,setspace,enumitem,tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
+\sisetup{output-decimal-marker={,},group-separator={\,},group-minimum-digits=4}
+\setstretch{1.07}
+\setlength{\parskip}{3pt}
+\setlength{\emergencystretch}{2em}
+\captionsetup{font=small,labelfont=bf,skip=4pt}
+\setlist{nosep,leftmargin=*}
+\newcommand{\cod}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\rota}[1]{{\fontsize{8.5}{10.2}\selectfont #1}}
+\graphicspath{{figures/}{docs/figures/}}
+\title{Trabalho 2 - Teoria dos Grafos}
+\author{João Costa e Miguel Cerne}
+\date{Outubro de 2026}
+\begin{document}
+\maketitle
+\vspace{-1.2em}
+\section{Introdução}
+Este relatório estende a biblioteca da Parte 1 para grafos não direcionados ponderados, com pesos reais, distâncias e árvores de caminhos mínimos. O conjunto experimental compreende os Grafos Ponderados 3 a 7 e a rede de colaboração. Preservam-se as análises de tamanho, memória e componentes do relatório anterior, agora com as representações e os protocolos atuais. Código-fonte e estudos de caso: \url{https://github.com/Cerne17/graph-library-cpp}.
+\section{Implementação}
+A versão da Parte 1, baseada em \cod{Graph} e métodos virtuais, permanece como legado. A biblioteca nova é \emph{header-only}, em C++23, com \emph{templates}, políticas e conceitos. Os algoritmos continuam como funções livres: não foram incorporados como métodos de \cod{Graph}. Os aliases \cod{csr_graph<D,W>} e \cod{matrix_graph<D,W>} selecionam armazenamento, direção e ponderação em compilação.
+
+CSR guarda deslocamentos de 64 bits, destinos de 32 bits e pesos \cod{double} em vetores paralelos; ordenar vizinhos preserva a associação destino--peso. Pesos não ocupam espaço nas instanciações não ponderadas. A matriz ponderada usa $(N+1)^2$ células de 8 bytes e $+\infty$ para ausência; a não ponderada usa palavras de 64 bits com bitmask. CSR preserva arestas paralelas; a matriz conserva o menor peso. O leitor aceita \cod{u v peso}, valida IDs, descarta laços e os contabiliza.
+
+O diagrama atualizado da arquitetura está em \path{docs/diagrama_classes_atual.mmd}; uma visão resumida consta no material complementar.
+
+As três versões produzem \cod{shortest_paths}, com \cod{source}, \cod{dist} e \cod{parent}. Distância infinita e pai zero indicam inalcançabilidade; a reconstrução segue os pais e inverte a sequência. Dijkstra rejeita pesos negativos no grafo armazenado, informando caso não implementado; aceita peso zero. O heap indexado mantém um mapa vértice--posição atualizado em cada troca e oferece \cod{update_key} em $O(\log N)$.
+\par\smallskip\noindent\begin{minipage}{\textwidth}\centering
+\begingroup\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lll}
+\toprule
+Versão & Seleção / atualização & Tempo no pior caso em CSR \\
+\midrule
+Vetor & Varredura de estimativas & $O(N^2+M)$ \\
+Heap indexado & Uma entrada por vértice & $O((N+M)\log N)$ \\
+Heap com entradas obsoletas & Insere; descarta versões antigas & $O(N+(N+M)\log(M+1))$ \\
+\bottomrule
+\end{tabular}
+\endgroup
+\end{minipage}\par\smallskip
+
+A terceira versão, baseada em \cod{std::priority_queue}, é apenas uma comparação adicional: não substitui o heap com atualização de chave exigido no enunciado. O arquivo Mermaid também distingue os executáveis e os fluxos de coleta do legado.
+\newpage
+\section{Análise dos resultados}
+\subsection{Estrutura, memória e protocolo}
+Sejam $N$ os vértices, $M$ as arestas válidas, contando paralelas, e $M_u$ os pares distintos de vértices. A densidade simples é $\delta=2M_u/[N(N-1)]$. Na Tabela~\ref{tab:estrutura}, o RSS de CSR é medido; a coluna de matriz é apenas o tamanho teórico das células, sem temporários nem vetores das buscas.
+\par\smallskip\noindent\begin{minipage}{\textwidth}\centering
+\begingroup\fontsize{8.5}{10.5}\selectfont
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+Grafo & $N$ & $M$ & $\delta$ (\%) & Comp. & CSR (MiB) & Matriz (GiB) \\
+\midrule
+Grafo Ponderado 3 & \num{100000} & \num{6099941} & \num{0.122} & \num{1} & \num{140.55} & \num{74.5} \\
+Grafo Ponderado 4 & \num{1000000} & \num{30999978} & \num{0.0062} & \num{1} & \num{717.39} & \num{7.45e+03} \\
+Grafo Ponderado 5 & \num{10000000} & \num{39999995} & \num{8e-05} & \num{1} & \num{992.05} & \num{7.45e+05} \\
+Grafo Ponderado 6 & \num{10000000} & \num{73403372} & \num{0.000147} & \num{4} & \num{1756.5} & \num{7.45e+05} \\
+Grafo Ponderado 7 & \num{50000000} & \num{59999999} & \num{4.8e-06} & \num{1} & \num{1755} & \num{1.86e+07} \\
+Rede de colaboração & \num{722385} & \num{2272543} & \num{0.000871} & \num{77486} & \num{57.73} & \num{3.89e+03} \\
+\bottomrule
+\end{tabular}
+\endgroup
+\captionof{table}{Estrutura e memória dos grafos ponderados.\label{tab:estrutura}}
+\end{minipage}\par\smallskip
+
+Todos são esparsos. Para CSR ponderado, a carga útil aproxima-se de $8(N+2)+24M$ bytes; para a matriz ponderada, de $8(N+1)^2$. Mesmo o menor caso requer cerca de 74,5 GiB apenas em células, inviabilizando todas as matrizes ponderadas na VM de 32 GiB. Esse limite não se aplica à matriz não ponderada com bitmask.
+
+A rodada de Dijkstra ocorreu em 30/10/2026, no Azure, em VM \cod{Standard_E4as_v4}, região \cod{belgiumcentral}, 4 vCPUs, 32 GiB, AMD EPYC 7763 e g++ 13.3. Usaram-se $k=100$ origens distintas, sorteadas com semente 2025, e a mesma sequência entre versões. Sua ordem de execução alterna a cada origem. O intervalo medido inclui a chamada e suas alocações, mas exclui leitura, descompactação, validação e exportação. Os campos históricos \cod{memory_mb_*} estão, de fato, em MiB ($2^{20}$ bytes). RSS da representação não é pico de memória de Dijkstra.
+\subsection{Tempos de Dijkstra}
+\par\smallskip\noindent\begin{minipage}{\textwidth}\centering
+\begingroup\fontsize{9}{11}\selectfont
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrr}
+\toprule
+Grafo & Vetor & Heap indexado & Entradas obsoletas \\
+\midrule
+Grafo Ponderado 3 & \num{26.5001} / \num{26.5003} & \num{0.118048} / \num{0.117863} & \num{0.153913} / \num{0.153597} \\
+Grafo Ponderado 4 & \textit{Não medido} & \num{2.14328} / \num{2.13201} & \num{2.04099} / \num{2.03725} \\
+Grafo Ponderado 5 & \textit{Não medido} & \num{23.6919} / \num{23.7072} & \num{12.827} / \num{12.8327} \\
+Grafo Ponderado 6 & \textit{Não medido} & \num{27.7484} / \num{27.7863} & \num{17.9488} / \num{17.9854} \\
+Grafo Ponderado 7 & \textit{Não medido} & \num{110.913} / \num{111.1} & \num{40.9326} / \num{40.9552} \\
+Rede de colaboração & \textit{Não medido} & \num{0.374306} / \num{0.474432} & \num{0.240864} / \num{0.30788} \\
+\bottomrule
+\end{tabular}
+\endgroup
+\captionof{table}{Média / mediana em segundos; 100 origens por versão medida.}
+\end{minipage}\par\smallskip
+
+\textbf{Lacuna perante o enunciado:} a versão por vetor só foi medida no Grafo Ponderado 3; nas demais entradas, sua configuração foi \cod{array=no}. Portanto, a comparação obrigatória vetor--heap está incompleta nos Grafos Ponderados 4 a 7; os tempos da rede são uma análise adicional. ``Não medido'' não significa zero, falha nem estimativa. A versão com entradas obsoletas não preenche essa lacuna.
+
+No Grafo Ponderado 3, o vetor levou cerca de 224 vezes o tempo médio do heap indexado. No Grafo Ponderado 7, a versão com entradas obsoletas foi cerca de 2,71 vezes mais rápida que o indexado. Logo, o limite assintótico não determina sozinho o desempenho: ocupação da fila, alocações e localidade são hipóteses para investigação, não causas isoladas já demonstradas.
+\newpage
+\subsection{Distâncias e caminhos mínimos: origem 10}
+As tabelas apresentam um caminho mínimo completo por destino, calculado com o heap indexado. Distância é soma dos pesos; a coluna ``Arestas'' é o comprimento desse caminho em número de arestas, não uma distância de BFS. Empates podem produzir outros caminhos igualmente válidos. Os resultados atuais foram conferidos com a rodada histórica do Azure.
+\par\smallskip\noindent\begin{minipage}{\textwidth}\centering
+\begingroup\fontsize{8.7}{10.4}\selectfont
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{r r r r >{\raggedright\arraybackslash}p{11.7cm}}
+\toprule
+Grafo & Destino & $d$ & Arestas & Caminho mínimo completo \\
+\midrule
+3 & 20 & \num{0.8} & 18 & \rota{10\,$\to$\,\allowbreak 2858\,$\to$\,\allowbreak 35293\,$\to$\,\allowbreak 3905\,$\to$\,\allowbreak 24445\,$\to$\,\allowbreak 39345\,$\to$\,\allowbreak 61279\,$\to$\,\allowbreak 41321\,$\to$\,\allowbreak 70540\,$\to$\,\allowbreak 26049\,$\to$\,\allowbreak 84450\,$\to$\,\allowbreak 68904\,$\to$\,\allowbreak 87862\,$\to$\,\allowbreak 86778\,$\to$\,\allowbreak 27694\,$\to$\,\allowbreak 16608\,$\to$\,\allowbreak 86355\,$\to$\,\allowbreak 15760\,$\to$\,\allowbreak 20} \\
+3 & 30 & \num{0.89} & 14 & \rota{10\,$\to$\,\allowbreak 2858\,$\to$\,\allowbreak 35293\,$\to$\,\allowbreak 96094\,$\to$\,\allowbreak 85187\,$\to$\,\allowbreak 53177\,$\to$\,\allowbreak 64898\,$\to$\,\allowbreak 87087\,$\to$\,\allowbreak 77935\,$\to$\,\allowbreak 42304\,$\to$\,\allowbreak 78071\,$\to$\,\allowbreak 93985\,$\to$\,\allowbreak 27642\,$\to$\,\allowbreak 26151\,$\to$\,\allowbreak 30} \\
+3 & 40 & \num{0.84} & 10 & \rota{10\,$\to$\,\allowbreak 2858\,$\to$\,\allowbreak 35293\,$\to$\,\allowbreak 3905\,$\to$\,\allowbreak 24445\,$\to$\,\allowbreak 86286\,$\to$\,\allowbreak 14327\,$\to$\,\allowbreak 19697\,$\to$\,\allowbreak 15930\,$\to$\,\allowbreak 46307\,$\to$\,\allowbreak 40} \\
+3 & 50 & \num{0.87} & 9 & \rota{10\,$\to$\,\allowbreak 56663\,$\to$\,\allowbreak 84437\,$\to$\,\allowbreak 19040\,$\to$\,\allowbreak 82510\,$\to$\,\allowbreak 17622\,$\to$\,\allowbreak 94992\,$\to$\,\allowbreak 70948\,$\to$\,\allowbreak 19878\,$\to$\,\allowbreak 50} \\
+3 & 60 & \num{0.97} & 16 & \rota{10\,$\to$\,\allowbreak 2858\,$\to$\,\allowbreak 35293\,$\to$\,\allowbreak 3905\,$\to$\,\allowbreak 24445\,$\to$\,\allowbreak 89584\,$\to$\,\allowbreak 2874\,$\to$\,\allowbreak 99253\,$\to$\,\allowbreak 66532\,$\to$\,\allowbreak 33719\,$\to$\,\allowbreak 96654\,$\to$\,\allowbreak 75728\,$\to$\,\allowbreak 79865\,$\to$\,\allowbreak 74717\,$\to$\,\allowbreak 59399\,$\to$\,\allowbreak 8718\,$\to$\,\allowbreak 60} \\
+4 & 20 & \num{2.66} & 13 & \rota{10\,$\to$\,\allowbreak 532245\,$\to$\,\allowbreak 877016\,$\to$\,\allowbreak 554617\,$\to$\,\allowbreak 430107\,$\to$\,\allowbreak 437166\,$\to$\,\allowbreak 805646\,$\to$\,\allowbreak 841402\,$\to$\,\allowbreak 663364\,$\to$\,\allowbreak 655748\,$\to$\,\allowbreak 634947\,$\to$\,\allowbreak 318070\,$\to$\,\allowbreak 807260\,$\to$\,\allowbreak 20} \\
+4 & 30 & \num{2.02} & 17 & \rota{10\,$\to$\,\allowbreak 873980\,$\to$\,\allowbreak 182382\,$\to$\,\allowbreak 261305\,$\to$\,\allowbreak 81769\,$\to$\,\allowbreak 694525\,$\to$\,\allowbreak 219466\,$\to$\,\allowbreak 207765\,$\to$\,\allowbreak 44636\,$\to$\,\allowbreak 183747\,$\to$\,\allowbreak 920911\,$\to$\,\allowbreak 35338\,$\to$\,\allowbreak 239369\,$\to$\,\allowbreak 417194\,$\to$\,\allowbreak 132461\,$\to$\,\allowbreak 740528\,$\to$\,\allowbreak 707581\,$\to$\,\allowbreak 30} \\
+4 & 40 & \num{2.52} & 15 & \rota{10\,$\to$\,\allowbreak 873980\,$\to$\,\allowbreak 182382\,$\to$\,\allowbreak 674971\,$\to$\,\allowbreak 557022\,$\to$\,\allowbreak 188455\,$\to$\,\allowbreak 418550\,$\to$\,\allowbreak 275098\,$\to$\,\allowbreak 277633\,$\to$\,\allowbreak 801708\,$\to$\,\allowbreak 730863\,$\to$\,\allowbreak 274827\,$\to$\,\allowbreak 386086\,$\to$\,\allowbreak 188007\,$\to$\,\allowbreak 477496\,$\to$\,\allowbreak 40} \\
+4 & 50 & \num{2.69} & 18 & \rota{10\,$\to$\,\allowbreak 873980\,$\to$\,\allowbreak 182382\,$\to$\,\allowbreak 261305\,$\to$\,\allowbreak 81769\,$\to$\,\allowbreak 694525\,$\to$\,\allowbreak 382144\,$\to$\,\allowbreak 748624\,$\to$\,\allowbreak 663332\,$\to$\,\allowbreak 149827\,$\to$\,\allowbreak 349584\,$\to$\,\allowbreak 735867\,$\to$\,\allowbreak 9905\,$\to$\,\allowbreak 716970\,$\to$\,\allowbreak 472621\,$\to$\,\allowbreak 407659\,$\to$\,\allowbreak 994210\,$\to$\,\allowbreak 630598\,$\to$\,\allowbreak 50} \\
+4 & 60 & \num{2.41} & 19 & \rota{10\,$\to$\,\allowbreak 873980\,$\to$\,\allowbreak 182382\,$\to$\,\allowbreak 674971\,$\to$\,\allowbreak 106317\,$\to$\,\allowbreak 27985\,$\to$\,\allowbreak 280367\,$\to$\,\allowbreak 227336\,$\to$\,\allowbreak 364950\,$\to$\,\allowbreak 883474\,$\to$\,\allowbreak 283156\,$\to$\,\allowbreak 161217\,$\to$\,\allowbreak 224210\,$\to$\,\allowbreak 188021\,$\to$\,\allowbreak 614364\,$\to$\,\allowbreak 358029\,$\to$\,\allowbreak 855615\,$\to$\,\allowbreak 822462\,$\to$\,\allowbreak 774634\,$\to$\,\allowbreak 60} \\
+5 & 20 & \num{17.34} & 13 & \rota{10\,$\to$\,\allowbreak 7622850\,$\to$\,\allowbreak 4615833\,$\to$\,\allowbreak 6528266\,$\to$\,\allowbreak 1295458\,$\to$\,\allowbreak 7103730\,$\to$\,\allowbreak 8790605\,$\to$\,\allowbreak 7788327\,$\to$\,\allowbreak 6766415\,$\to$\,\allowbreak 7155379\,$\to$\,\allowbreak 2031914\,$\to$\,\allowbreak 3908338\,$\to$\,\allowbreak 8885874\,$\to$\,\allowbreak 20} \\
+5 & 30 & \num{17.24} & 18 & \rota{10\,$\to$\,\allowbreak 2846336\,$\to$\,\allowbreak 5413988\,$\to$\,\allowbreak 202621\,$\to$\,\allowbreak 9270546\,$\to$\,\allowbreak 6836812\,$\to$\,\allowbreak 2983314\,$\to$\,\allowbreak 8775277\,$\to$\,\allowbreak 5549785\,$\to$\,\allowbreak 3485759\,$\to$\,\allowbreak 4341576\,$\to$\,\allowbreak 8868678\,$\to$\,\allowbreak 3166991\,$\to$\,\allowbreak 5117196\,$\to$\,\allowbreak 7291082\,$\to$\,\allowbreak 1816279\,$\to$\,\allowbreak 5664093\,$\to$\,\allowbreak 8947758\,$\to$\,\allowbreak 30} \\
+5 & 40 & \num{17.37} & 14 & \rota{10\,$\to$\,\allowbreak 1299954\,$\to$\,\allowbreak 1419794\,$\to$\,\allowbreak 9885733\,$\to$\,\allowbreak 5641294\,$\to$\,\allowbreak 409605\,$\to$\,\allowbreak 4105715\,$\to$\,\allowbreak 660832\,$\to$\,\allowbreak 5850281\,$\to$\,\allowbreak 3215052\,$\to$\,\allowbreak 7676193\,$\to$\,\allowbreak 9008138\,$\to$\,\allowbreak 4846487\,$\to$\,\allowbreak 9798152\,$\to$\,\allowbreak 40} \\
+5 & 50 & \num{15.43} & 12 & \rota{10\,$\to$\,\allowbreak 1299954\,$\to$\,\allowbreak 9927727\,$\to$\,\allowbreak 8451042\,$\to$\,\allowbreak 5368621\,$\to$\,\allowbreak 4276332\,$\to$\,\allowbreak 3716282\,$\to$\,\allowbreak 3724752\,$\to$\,\allowbreak 700154\,$\to$\,\allowbreak 9271362\,$\to$\,\allowbreak 6416250\,$\to$\,\allowbreak 396789\,$\to$\,\allowbreak 50} \\
+5 & 60 & \num{17.99} & 22 & \rota{10\,$\to$\,\allowbreak 1299954\,$\to$\,\allowbreak 1419794\,$\to$\,\allowbreak 1899178\,$\to$\,\allowbreak 7524819\,$\to$\,\allowbreak 757290\,$\to$\,\allowbreak 9445351\,$\to$\,\allowbreak 9611705\,$\to$\,\allowbreak 9104671\,$\to$\,\allowbreak 8941517\,$\to$\,\allowbreak 264365\,$\to$\,\allowbreak 3945175\,$\to$\,\allowbreak 3090234\,$\to$\,\allowbreak 2071841\,$\to$\,\allowbreak 8424191\,$\to$\,\allowbreak 2860740\,$\to$\,\allowbreak 1175531\,$\to$\,\allowbreak 1925405\,$\to$\,\allowbreak 7718765\,$\to$\,\allowbreak 3193827\,$\to$\,\allowbreak 7824884\,$\to$\,\allowbreak 1454010\,$\to$\,\allowbreak 60} \\
+6 & 20 & \num{11.26} & 20 & \rota{10\,$\to$\,\allowbreak 7194590\,$\to$\,\allowbreak 1623776\,$\to$\,\allowbreak 6004729\,$\to$\,\allowbreak 5713792\,$\to$\,\allowbreak 8358296\,$\to$\,\allowbreak 2533780\,$\to$\,\allowbreak 5227148\,$\to$\,\allowbreak 8652974\,$\to$\,\allowbreak 6001519\,$\to$\,\allowbreak 3007875\,$\to$\,\allowbreak 2659882\,$\to$\,\allowbreak 1975860\,$\to$\,\allowbreak 7178227\,$\to$\,\allowbreak 4239765\,$\to$\,\allowbreak 4333977\,$\to$\,\allowbreak 5135142\,$\to$\,\allowbreak 7805172\,$\to$\,\allowbreak 6937097\,$\to$\,\allowbreak 2042733\,$\to$\,\allowbreak 20} \\
+6 & 30 & \num{10.67} & 22 & \rota{10\,$\to$\,\allowbreak 6473892\,$\to$\,\allowbreak 2441538\,$\to$\,\allowbreak 1548272\,$\to$\,\allowbreak 787618\,$\to$\,\allowbreak 5728075\,$\to$\,\allowbreak 8108429\,$\to$\,\allowbreak 6007822\,$\to$\,\allowbreak 5550988\,$\to$\,\allowbreak 2523255\,$\to$\,\allowbreak 782814\,$\to$\,\allowbreak 7306955\,$\to$\,\allowbreak 153130\,$\to$\,\allowbreak 9107012\,$\to$\,\allowbreak 8930108\,$\to$\,\allowbreak 2199545\,$\to$\,\allowbreak 9604404\,$\to$\,\allowbreak 5436447\,$\to$\,\allowbreak 8094054\,$\to$\,\allowbreak 8301086\,$\to$\,\allowbreak 7882916\,$\to$\,\allowbreak 7776260\,$\to$\,\allowbreak 30} \\
+6 & 40 & \num{11.31} & 11 & \rota{10\,$\to$\,\allowbreak 7194590\,$\to$\,\allowbreak 1308444\,$\to$\,\allowbreak 2430454\,$\to$\,\allowbreak 9006783\,$\to$\,\allowbreak 9339181\,$\to$\,\allowbreak 6729573\,$\to$\,\allowbreak 6733497\,$\to$\,\allowbreak 5619464\,$\to$\,\allowbreak 9959710\,$\to$\,\allowbreak 9649921\,$\to$\,\allowbreak 40} \\
+6 & 50 & \num{9.6} & 12 & \rota{10\,$\to$\,\allowbreak 6473892\,$\to$\,\allowbreak 2441538\,$\to$\,\allowbreak 3496708\,$\to$\,\allowbreak 8719217\,$\to$\,\allowbreak 3608871\,$\to$\,\allowbreak 1734087\,$\to$\,\allowbreak 8196874\,$\to$\,\allowbreak 3353190\,$\to$\,\allowbreak 4171489\,$\to$\,\allowbreak 6448393\,$\to$\,\allowbreak 8854015\,$\to$\,\allowbreak 50} \\
+6 & 60 & \num{10.72} & 20 & \rota{10\,$\to$\,\allowbreak 6473892\,$\to$\,\allowbreak 2441538\,$\to$\,\allowbreak 1548272\,$\to$\,\allowbreak 787618\,$\to$\,\allowbreak 9566932\,$\to$\,\allowbreak 345742\,$\to$\,\allowbreak 218396\,$\to$\,\allowbreak 8462300\,$\to$\,\allowbreak 2279724\,$\to$\,\allowbreak 9337595\,$\to$\,\allowbreak 9606830\,$\to$\,\allowbreak 9928328\,$\to$\,\allowbreak 8701739\,$\to$\,\allowbreak 8354591\,$\to$\,\allowbreak 8135590\,$\to$\,\allowbreak 4215828\,$\to$\,\allowbreak 8346899\,$\to$\,\allowbreak 3411658\,$\to$\,\allowbreak 6447603\,$\to$\,\allowbreak 60} \\
+\bottomrule
+\end{tabular}
+\endgroup
+\captionof{table}{Grafos Ponderados 3 a 6. Origem: vértice 10.}
+\end{minipage}\par\smallskip
+\newpage
+\subsection{Maior grafo ponderado e rede de colaboração}
+O número de arestas de um caminho não determina seu peso: por exemplo, no Grafo Ponderado 7, o destino 40 exige 46 arestas no caminho exibido. A rede usa exatamente as grafias pedidas no enunciado; o identificador de Edsger W. Dijkstra é 2722. As distâncias da rede abaixo são arredondadas a nove algarismos significativos; os CSVs preservam os valores exportados.
+\par\smallskip\noindent\begin{minipage}{\textwidth}\centering
+\begingroup\fontsize{8.7}{10.4}\selectfont
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{r r r >{\raggedright\arraybackslash}p{12.5cm}}
+\toprule
+Destino & $d$ & Arestas & Caminho mínimo completo \\
+\midrule
+20 & \num{93.47} & 33 & \rota{10\,$\to$\,\allowbreak 44348966\,$\to$\,\allowbreak 895015\,$\to$\,\allowbreak 41433396\,$\to$\,\allowbreak 36342079\,$\to$\,\allowbreak 15296633\,$\to$\,\allowbreak 26159915\,$\to$\,\allowbreak 16943639\,$\to$\,\allowbreak 38743389\,$\to$\,\allowbreak 10078159\,$\to$\,\allowbreak 21570419\,$\to$\,\allowbreak 11797967\,$\to$\,\allowbreak 14033688\,$\to$\,\allowbreak 15395825\,$\to$\,\allowbreak 37638078\,$\to$\,\allowbreak 10256175\,$\to$\,\allowbreak 47812933\,$\to$\,\allowbreak 16114395\,$\to$\,\allowbreak 3709139\,$\to$\,\allowbreak 16167977\,$\to$\,\allowbreak 42063355\,$\to$\,\allowbreak 25051663\,$\to$\,\allowbreak 11357393\,$\to$\,\allowbreak 1237413\,$\to$\,\allowbreak 44073100\,$\to$\,\allowbreak 46623569\,$\to$\,\allowbreak 16564439\,$\to$\,\allowbreak 33972685\,$\to$\,\allowbreak 44128375\,$\to$\,\allowbreak 38865462\,$\to$\,\allowbreak 44580311\,$\to$\,\allowbreak 49167593\,$\to$\,\allowbreak 34107790\,$\to$\,\allowbreak 20} \\
+30 & \num{95.08} & 32 & \rota{10\,$\to$\,\allowbreak 44348966\,$\to$\,\allowbreak 895015\,$\to$\,\allowbreak 41433396\,$\to$\,\allowbreak 49215936\,$\to$\,\allowbreak 31738577\,$\to$\,\allowbreak 6483504\,$\to$\,\allowbreak 6934370\,$\to$\,\allowbreak 37879154\,$\to$\,\allowbreak 8001897\,$\to$\,\allowbreak 22183730\,$\to$\,\allowbreak 7265763\,$\to$\,\allowbreak 1661582\,$\to$\,\allowbreak 11612335\,$\to$\,\allowbreak 1574885\,$\to$\,\allowbreak 30723220\,$\to$\,\allowbreak 39141968\,$\to$\,\allowbreak 27645810\,$\to$\,\allowbreak 37795681\,$\to$\,\allowbreak 33920812\,$\to$\,\allowbreak 34023581\,$\to$\,\allowbreak 12510615\,$\to$\,\allowbreak 18298407\,$\to$\,\allowbreak 31754868\,$\to$\,\allowbreak 14520632\,$\to$\,\allowbreak 7334968\,$\to$\,\allowbreak 721843\,$\to$\,\allowbreak 7608283\,$\to$\,\allowbreak 44662249\,$\to$\,\allowbreak 46198809\,$\to$\,\allowbreak 161794\,$\to$\,\allowbreak 37094018\,$\to$\,\allowbreak 30} \\
+40 & \num{100.69} & 46 & \rota{10\,$\to$\,\allowbreak 44348966\,$\to$\,\allowbreak 895015\,$\to$\,\allowbreak 41433396\,$\to$\,\allowbreak 49215936\,$\to$\,\allowbreak 31738577\,$\to$\,\allowbreak 6483504\,$\to$\,\allowbreak 35576121\,$\to$\,\allowbreak 13084740\,$\to$\,\allowbreak 8200352\,$\to$\,\allowbreak 334647\,$\to$\,\allowbreak 21020208\,$\to$\,\allowbreak 33240812\,$\to$\,\allowbreak 43511183\,$\to$\,\allowbreak 39829015\,$\to$\,\allowbreak 31993368\,$\to$\,\allowbreak 35257514\,$\to$\,\allowbreak 1449696\,$\to$\,\allowbreak 2909571\,$\to$\,\allowbreak 35131499\,$\to$\,\allowbreak 46634817\,$\to$\,\allowbreak 8774626\,$\to$\,\allowbreak 26615224\,$\to$\,\allowbreak 12496865\,$\to$\,\allowbreak 25597904\,$\to$\,\allowbreak 17624904\,$\to$\,\allowbreak 28515031\,$\to$\,\allowbreak 9039078\,$\to$\,\allowbreak 42335617\,$\to$\,\allowbreak 44883250\,$\to$\,\allowbreak 25945871\,$\to$\,\allowbreak 4357404\,$\to$\,\allowbreak 43686238\,$\to$\,\allowbreak 2293704\,$\to$\,\allowbreak 18096524\,$\to$\,\allowbreak 17747192\,$\to$\,\allowbreak 14433007\,$\to$\,\allowbreak 4134285\,$\to$\,\allowbreak 11543624\,$\to$\,\allowbreak 49518359\,$\to$\,\allowbreak 34048991\,$\to$\,\allowbreak 36125121\,$\to$\,\allowbreak 20450161\,$\to$\,\allowbreak 31315434\,$\to$\,\allowbreak 44798389\,$\to$\,\allowbreak 37766241\,$\to$\,\allowbreak 40} \\
+50 & \num{95.77} & 34 & \rota{10\,$\to$\,\allowbreak 44348966\,$\to$\,\allowbreak 895015\,$\to$\,\allowbreak 41433396\,$\to$\,\allowbreak 30012782\,$\to$\,\allowbreak 5306752\,$\to$\,\allowbreak 45425007\,$\to$\,\allowbreak 45928549\,$\to$\,\allowbreak 3090492\,$\to$\,\allowbreak 35262022\,$\to$\,\allowbreak 25302788\,$\to$\,\allowbreak 39964857\,$\to$\,\allowbreak 25438408\,$\to$\,\allowbreak 42769429\,$\to$\,\allowbreak 18259600\,$\to$\,\allowbreak 14013095\,$\to$\,\allowbreak 21407931\,$\to$\,\allowbreak 29028767\,$\to$\,\allowbreak 13632589\,$\to$\,\allowbreak 26269428\,$\to$\,\allowbreak 19841425\,$\to$\,\allowbreak 16775149\,$\to$\,\allowbreak 408668\,$\to$\,\allowbreak 33679805\,$\to$\,\allowbreak 18032133\,$\to$\,\allowbreak 15314852\,$\to$\,\allowbreak 41061763\,$\to$\,\allowbreak 21731902\,$\to$\,\allowbreak 43132195\,$\to$\,\allowbreak 43482012\,$\to$\,\allowbreak 248139\,$\to$\,\allowbreak 24050455\,$\to$\,\allowbreak 39437117\,$\to$\,\allowbreak 4560936\,$\to$\,\allowbreak 50} \\
+60 & \num{82.25} & 36 & \rota{10\,$\to$\,\allowbreak 44348966\,$\to$\,\allowbreak 895015\,$\to$\,\allowbreak 41433396\,$\to$\,\allowbreak 36342079\,$\to$\,\allowbreak 15296633\,$\to$\,\allowbreak 26159915\,$\to$\,\allowbreak 27614435\,$\to$\,\allowbreak 30636628\,$\to$\,\allowbreak 46606379\,$\to$\,\allowbreak 39970228\,$\to$\,\allowbreak 44691860\,$\to$\,\allowbreak 28472827\,$\to$\,\allowbreak 14457897\,$\to$\,\allowbreak 49527742\,$\to$\,\allowbreak 23832529\,$\to$\,\allowbreak 33803765\,$\to$\,\allowbreak 40354942\,$\to$\,\allowbreak 41967334\,$\to$\,\allowbreak 30441838\,$\to$\,\allowbreak 2384620\,$\to$\,\allowbreak 9629521\,$\to$\,\allowbreak 15597152\,$\to$\,\allowbreak 8376037\,$\to$\,\allowbreak 19638652\,$\to$\,\allowbreak 35026345\,$\to$\,\allowbreak 21270637\,$\to$\,\allowbreak 16840822\,$\to$\,\allowbreak 36015359\,$\to$\,\allowbreak 4125149\,$\to$\,\allowbreak 20825658\,$\to$\,\allowbreak 31193177\,$\to$\,\allowbreak 35236066\,$\to$\,\allowbreak 37175171\,$\to$\,\allowbreak 16297527\,$\to$\,\allowbreak 34154631\,$\to$\,\allowbreak 60} \\
+\bottomrule
+\end{tabular}
+\endgroup
+\captionof{table}{Grafo Ponderado 7. Origem: vértice 10.}
+\end{minipage}\par\smallskip
+\par\smallskip\noindent\begin{minipage}{\textwidth}\centering
+\begingroup\fontsize{8.7}{10.4}\selectfont
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{2.6cm} r r >{\raggedright\arraybackslash}p{10.2cm}}
+\toprule
+Destino & $d$ & Arestas & Caminho mínimo completo \\
+\midrule
+Alan M. Turing & $+\infty$ & -- & Sem caminho \\
+J. B. Kruskal & \num{3.48036845} & 8 & \rota{Edsger W. Dijkstra\,$\to$\,\allowbreak John R. Rice\,$\to$\,\allowbreak Dan C. Marinescu\,$\to$\,\allowbreak Howard Jay Siegel\,$\to$\,\allowbreak Edwin K. P. Chong\,$\to$\,\allowbreak Ness B. Shroff\,$\to$\,\allowbreak R. Srikant\,$\to$\,\allowbreak Albert G. Greenberg\,$\to$\,\allowbreak J. B. Kruskal} \\
+Jon M. Kleinberg & \num{2.70699362} & 9 & \rota{Edsger W. Dijkstra\,$\to$\,\allowbreak A. J. M. van Gasteren\,$\to$\,\allowbreak Gerard Tel\,$\to$\,\allowbreak Hans L. Bodlaender\,$\to$\,\allowbreak Dimitrios M. Thilikos\,$\to$\,\allowbreak Prabhakar Ragde\,$\to$\,\allowbreak Avi Wigderson\,$\to$\,\allowbreak Eli Upfal\,$\to$\,\allowbreak Prabhakar Raghavan\,$\to$\,\allowbreak Jon M. Kleinberg} \\
+Éva Tardos & \num{2.75351418} & 11 & \rota{Edsger W. Dijkstra\,$\to$\,\allowbreak A. J. M. van Gasteren\,$\to$\,\allowbreak Gerard Tel\,$\to$\,\allowbreak Hans L. Bodlaender\,$\to$\,\allowbreak Jan van Leeuwen\,$\to$\,\allowbreak Mark H. Overmars\,$\to$\,\allowbreak Micha Sharir\,$\to$\,\allowbreak Haim Kaplan\,$\to$\,\allowbreak Robert Endre Tarjan\,$\to$\,\allowbreak Andrew V. Goldberg\,$\to$\,\allowbreak Serge A. Plotkin\,$\to$\,\allowbreak Éva Tardos} \\
+Daniel R. Figueiredo & \num{2.94283087} & 8 & \rota{Edsger W. Dijkstra\,$\to$\,\allowbreak John R. Rice\,$\to$\,\allowbreak Dan C. Marinescu\,$\to$\,\allowbreak Chuang Lin\,$\to$\,\allowbreak Bo Li\,$\to$\,\allowbreak Y. Thomas Hou\,$\to$\,\allowbreak Zhi-Li Zhang\,$\to$\,\allowbreak Donald F. Towsley\,$\to$\,\allowbreak Daniel R. Figueiredo} \\
+\bottomrule
+\end{tabular}
+\endgroup
+\captionof{table}{Rede de colaboração. Origem: Edsger W. Dijkstra.}
+\end{minipage}\par\smallskip
+
+Alan M. Turing (ID 11365) é um vértice existente, porém está em outra componente da origem: a distância é infinita e não há caminho. Isso difere de nome desconhecido. Os pesos da rede são inversamente relacionados à coautoria; minimizar sua soma não equivale a minimizar o número de intermediários, nem permite inferir sozinho uma relação social direta.
+\newpage
+\subsection{Continuidade com as análises da Parte 1}
+Uma segunda rodada, em 31/10/2026, mediu somente BFS/DFS na biblioteca nova: CSR nos 12 grafos e matriz não ponderada nos Grafos 1 a 4. Foram 2.150 travessias, em 17 min 27 s de carga e execução, com a mesma semente 2025 e origens distintas. As contagens foram ajustadas ao custo; não devem ser apresentadas como 100 em todos os casos. As matrizes dos Grafos 3 e 4, agora com bitmask, ocupam aproximadamente 16,37 GiB cada; as dos Grafos 5 e 6 exigiriam cerca de 2.731 GiB cada e foram excluídas.
+\par\smallskip\noindent\begin{minipage}{\textwidth}\centering
+\begingroup\fontsize{9}{11}\selectfont
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{rrrrrrr}
+\toprule
+Grafo & $k$ CSR & BFS CSR (s) & DFS CSR (s) & $k$ par & Matriz/CSR BFS & Matriz/CSR DFS \\
+\midrule
+1 & 100 & \num{0.000564842} & \num{0.00123093} & 100 & \num{6.872}$\times$ & \num{4.592}$\times$ \\
+2 & 100 & \num{0.00216596} & \num{0.00595434} & 100 & \num{12.97}$\times$ & \num{6.547}$\times$ \\
+3 & 100 & \num{0.0110273} & \num{0.0166351} & 10 & \num{119.2}$\times$ & \num{101.6}$\times$ \\
+4 & 100 & \num{0.042675} & \num{0.0670567} & 10 & \num{31.87}$\times$ & \num{28.36}$\times$ \\
+5 & 100 & \num{0.336292} & \num{0.531374} & -- & -- & -- \\
+6 & 50 & \num{0.649268} & \num{0.786941} & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\endgroup
+\captionof{table}{Médias CSR completas; razões restritas ao prefixo comum de origens.}
+\end{minipage}\par\smallskip
+
+Em CSR, a busca inicializa vetores de tamanho $N$ antes de percorrer a componente alcançada: o custo é $O(N+N_c+M_c)$, não apenas $O(N_c+M_c)$. Na matriz com bitmask, o termo de varredura é $O(N_c\lceil(N+1)/64\rceil+M_c)$, além da inicialização. A DFS iterativa pode empilhar um vértice várias vezes antes de marcá-lo; a BFS o marca ao enfileirar. Isso é compatível com BFS mais rápida nesta rodada, mas não prova uma ordenação universal entre os algoritmos.
+
+Os grafos desconexos explicam parte relevante da variação. Nas dez origens matriciais, o Grafo 4 alcançou em média 150.000 vértices, contra 212.500 no Grafo 3; ser mais rápido, apesar de mais denso, não é evidência isolada de erro. Comparamos CSR e matriz somente nas mesmas origens. As 2.150 contagens de alcançados conferem com os tamanhos exatos das componentes. Essa rodada não deve ser misturada diretamente com os tempos históricos de Dijkstra.
+\section{Validação e conclusão}
+Os 178 casos C++ passaram; a execução Linux utilizou sanitizadores. Os testes diferenciais comparam distâncias das versões de Dijkstra e, com pesos unitários, níveis de BFS. Onze grafos artificiais, com resultados calculados à mão, cobrem pesos zero e negativos, inalcançabilidade, empates, reduções de chave, paralelas e diferenças entre profundidade e distância. Total: 160 resultados por vértice/algoritmo conferidos.
+
+CSR permitiu analisar os maiores grafos; a bitmask ampliou os casos matriciais viáveis da Parte 1. As tabelas desta versão contêm todos os 30 pares solicitados para o conjunto analisado, inclusive os caminhos completos, e os tempos disponíveis. \textbf{Permanece pendente a medição por vetor nos Grafos Ponderados 4 a 7}, necessária para completar integralmente o estudo de tempos do enunciado. O material complementar reúne graus, componentes, pesos, figuras, dispersão dos tempos, casos artificiais e rastreabilidade, sem ocupar o limite deste relatório.
+\end{document}

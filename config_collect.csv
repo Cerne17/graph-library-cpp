@@ -1,4 +1,10 @@
 graph,weighting,representations,labels,source
+grafo_1,unweighted,csr|matrix,,1
+grafo_2,unweighted,csr|matrix,,1
+grafo_3,unweighted,csr|matrix,,1
+grafo_4,unweighted,csr|matrix,,1
+grafo_5,unweighted,csr|matrix,,1
+grafo_6,unweighted,csr|matrix,,1
 grafo_W_3,weighted,csr|matrix,,10
 grafo_W_4,weighted,csr|matrix,,10
 grafo_W_5,weighted,csr|matrix,,10
