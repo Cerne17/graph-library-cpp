@@ -142,6 +142,35 @@ TEST_CASE_TEMPLATE("dijkstra: unreachable vertices", V, DIJKSTRA_VERSIONS)
   }
 }
 
+TEST_CASE_TEMPLATE("dijkstra: direction changes the answer", V, DIJKSTRA_VERSIONS)
+{
+  // arcs 1->2 (2), 2->3 (2), 3->1 (1), 1->3 (10): a one-way ring plus a long
+  // shortcut. As an undirected graph, 1 to 3 would cost 1 (edge 3-1).
+  const std::vector<wedge> edges{ { 1, 2, 2.0 }, { 2, 3, 2.0 }, { 3, 1, 1.0 },
+                                  { 1, 3, 10.0 } };
+  const auto csr = directed_csr<>::from_edges(3, edges);
+  const auto matrix = directed_matrix::from_edges(3, edges);
+
+  const auto check = [&](const auto& g) {
+    const auto from_1 = V::run(g, 1);
+    CHECK(from_1.dist == std::vector<double>{ inf, 0.0, 2.0, 4.0 });
+    CHECK(from_1.parent == std::vector<gl::vertex_id>{ 0, 0, 1, 2 });
+
+    const auto from_2 = V::run(g, 2);
+    CHECK(from_2.dist == std::vector<double>{ inf, 3.0, 0.0, 2.0 });
+    CHECK(from_2.parent == std::vector<gl::vertex_id>{ 0, 3, 0, 2 });
+
+    const auto from_3 = V::run(g, 3);
+    CHECK(from_3.dist == std::vector<double>{ inf, 1.0, 3.0, 0.0 });
+    CHECK(from_3.parent == std::vector<gl::vertex_id>{ 0, 3, 1, 0 });
+  };
+  check(csr);
+  check(matrix);
+
+  const auto undirected = undirected_csr<>::from_edges(3, edges);
+  CHECK(V::run(undirected, 1).dist[3] == 1.0);
+}
+
 TEST_CASE_TEMPLATE("dijkstra: zero-weight edges", V, DIJKSTRA_VERSIONS)
 {
   // 1-2 (0), 2-3 (0), 1-3 (0), 3-4 (2)

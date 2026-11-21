@@ -77,6 +77,24 @@ TEST_CASE("load_graph: CSR and matrix load the same graph")
   }
 }
 
+TEST_CASE_TEMPLATE("load_graph: a directed file keeps the arc direction and "
+                   "negative weights",
+                   G,
+                   gl::csr_graph<gl::directed, gl::weighted<>>,
+                   gl::matrix_graph<gl::directed, gl::weighted<>>)
+{
+  // arcs 1->2 (-1.5), 2->3 (2), 4->1 (0.5); first id is the tail
+  const auto g = gl::io::load_graph<G>("tests/data/directed_negative.txt");
+  using arcs = std::vector<std::pair<gl::vertex_id, double>>;
+
+  REQUIRE(g.vertex_count() == 4);
+  CHECK(g.has_negative_weight());
+  CHECK(edges_of(g, 1) == arcs{ { 2, -1.5 } });
+  CHECK(edges_of(g, 2) == arcs{ { 3, 2.0 } });
+  CHECK(edges_of(g, 3).empty());
+  CHECK(edges_of(g, 4) == arcs{ { 1, 0.5 } });
+}
+
 TEST_CASE("load_graph: missing file throws")
 {
   using G = gl::csr_graph<gl::undirected, gl::unweighted>;

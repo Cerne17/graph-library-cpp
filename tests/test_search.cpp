@@ -129,6 +129,30 @@ TEST_CASE_TEMPLATE("dfs: follows edge direction",
   CHECK(tree.level == std::vector<std::int32_t>{ -1, 0, 1, 3, -1, 2 });
 }
 
+TEST_CASE_TEMPLATE("bfs and dfs: from the head of an arc the answer differs",
+                   G,
+                   directed_csr,
+                   directed_matrix)
+{
+  // arcs 1->2, 2->5, 5->3, 4->5, 1->5. From 1 vertex 3 is reached; from 3,
+  // which has no outgoing arc, nothing is. From 4 only 5 and 3 are reached.
+  const auto g = G::from_edges(5, example_edges);
+
+  const auto from_3_bfs = gl::algorithms::bfs(g, 3);
+  const auto from_3_dfs = gl::algorithms::dfs(g, 3);
+  CHECK(from_3_bfs.parent == std::vector<gl::vertex_id>{ 0, 0, 0, 0, 0, 0 });
+  CHECK(from_3_bfs.level == std::vector<std::int32_t>{ -1, -1, -1, 0, -1, -1 });
+  CHECK(from_3_dfs.parent == from_3_bfs.parent);
+  CHECK(from_3_dfs.level == from_3_bfs.level);
+
+  const auto from_4_bfs = gl::algorithms::bfs(g, 4);
+  const auto from_4_dfs = gl::algorithms::dfs(g, 4);
+  CHECK(from_4_bfs.parent == std::vector<gl::vertex_id>{ 0, 0, 0, 5, 0, 4 });
+  CHECK(from_4_bfs.level == std::vector<std::int32_t>{ -1, -1, -1, 2, 0, 1 });
+  CHECK(from_4_dfs.parent == from_4_bfs.parent);
+  CHECK(from_4_dfs.level == from_4_bfs.level);
+}
+
 TEST_CASE("bfs and dfs: work on weighted graphs too")
 {
   const std::vector<gl::weighted_edge<double>> weighted{
