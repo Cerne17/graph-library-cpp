@@ -21,6 +21,9 @@ struct edge_list
   vertex_id n = 0;
   std::vector<input_edge_t<W>> edges;
   std::size_t skipped_self_loops = 0; // "v v" lines, left out of edges
+  // Weighted files only: the "v v w" lines with w < 0 among the skipped ones.
+  // Each is a negative cycle that the graph built from edges no longer has.
+  std::size_t negative_self_loops = 0;
 };
 
 namespace detail {
@@ -54,7 +57,8 @@ inline bool has_leftovers(std::istringstream& ls)
 // "u v" for unweighted policies, "u v w" for weighted ones.
 // Blank lines and comments (marked with a starting '#') are skipped. Self-loops
 // ("v v") are validated like any edge, then dropped and counted in
-// skipped_self_loops: the storages do not accept them. Any malformed input
+// skipped_self_loops (and, when their weight is negative, in
+// negative_self_loops): the storages do not accept them. Any malformed input
 // throws std::runtime_error.
 template<weight_policy W>
 edge_list<W> read_edge_list(const std::filesystem::path& path)
@@ -136,6 +140,11 @@ edge_list<W> read_edge_list(const std::filesystem::path& path)
 
     if (e.u == e.v) {
       ++result.skipped_self_loops;
+      if constexpr (W::is_weighted) {
+        if (e.weight < 0) {
+          ++result.negative_self_loops;
+        }
+      }
       continue;
     }
     result.edges.push_back(e);
