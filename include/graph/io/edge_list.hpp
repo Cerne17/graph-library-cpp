@@ -11,6 +11,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <vector>
 
 namespace gl::io {
@@ -52,6 +54,36 @@ inline bool has_leftovers(std::istringstream& ls)
   return static_cast<bool>(ls >> extra);
 }
 
+// The weight parser of the one-argument read_edge_list: stream extraction of
+// the whole token, with the reader's historical messages.
+template<typename T>
+struct stream_weight
+{
+  T operator()(std::string_view token) const
+  {
+    std::istringstream ts{ std::string(token) };
+    T w{};
+    if (!(ts >> w)) {
+      throw std::invalid_argument("expected an edge weight");
+    }
+    if (has_leftovers(ts)) {
+      throw std::invalid_argument("unexpected text after the edge");
+    }
+    return w;
+  }
+};
+
+// Stands in for the parser of unweighted policies; never called.
+struct no_weight
+{};
+
+// The reader shared by both read_edge_list overloads. parse_weight turns the
+// weight token into a weight (weighted policies only) or throws
+// std::invalid_argument, rethrown as "path:line: <message>".
+template<weight_policy W, typename ParseWeight>
+edge_list<W> read_edge_list_impl(const std::filesystem::path& path,
+                                 ParseWeight& parse_weight);
+
 } // namespace detail
 
 // Reads "n" on the first non-blank line, then one edge per line:
@@ -63,6 +95,35 @@ inline bool has_leftovers(std::istringstream& ls)
 // throws std::runtime_error.
 template<weight_policy W>
 edge_list<W> read_edge_list(const std::filesystem::path& path)
+{
+  if constexpr (W::is_weighted) {
+    detail::stream_weight<typename W::weight_type> parse;
+    return detail::read_edge_list_impl<W>(path, parse);
+  } else {
+    detail::no_weight parse;
+    return detail::read_edge_list_impl<W>(path, parse);
+  }
+}
+
+// Like read_edge_list<W>(path), but the weight field is handed to
+// parse_weight as its text (the token between whitespace). parse_weight
+// returns the weight, or throws std::invalid_argument with a message; the
+// reader rethrows it as std::runtime_error "path:line: <message>".
+// W must be given explicitly: it appears only in the return type.
+template<weight_policy W, typename ParseWeight>
+  requires W::is_weighted &&
+           std::is_invocable_r_v<typename W::weight_type,
+                                 ParseWeight&,
+                                 std::string_view>
+edge_list<W> read_edge_list(const std::filesystem::path& path,
+                            ParseWeight parse_weight)
+{
+  return detail::read_edge_list_impl<W>(path, parse_weight);
+}
+
+template<weight_policy W, typename ParseWeight>
+edge_list<W> detail::read_edge_list_impl(const std::filesystem::path& path,
+                                         ParseWeight& parse_weight)
 {
   std::ifstream in(path);
   if (!in) {
@@ -130,9 +191,17 @@ edge_list<W> read_edge_list(const std::filesystem::path& path)
     e.v = static_cast<vertex_id>(raw_v);
 
     if constexpr (W::is_weighted) {
-      if (!(ls >> e.weight)) {
+      std::string token;
+      if (!(ls >> token)) {
         detail::parse_error(path, line_no, "expected an edge weight");
       }
+      try {
+        e.weight = parse_weight(std::string_view(token));
+      } catch (const std::invalid_argument& bad) {
+        detail::parse_error(path, line_no, bad.what());
+      }
+    } else {
+      (void)parse_weight;
     }
 
     if (detail::has_leftovers(ls)) {

@@ -8,6 +8,8 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <vector>
 
 static_assert(
   std::same_as<decltype(gl::io::edge_list<gl::unweighted>::edges)::value_type,
@@ -47,7 +49,35 @@ gl::io::edge_list<W> read_string(const std::string& content)
   const temp_file f(content);
   return gl::io::read_edge_list<W>(f.path);
 }
+
+// Like read_string, through the overload that takes a weight parser.
+template<gl::weight_policy W, typename ParseWeight>
+gl::io::edge_list<W> read_string_with(const std::string& content,
+                                      ParseWeight parse_weight)
+{
+  const temp_file f(content);
+  return gl::io::read_edge_list<W>(f.path, parse_weight);
+}
+
+// Parsers declared, never defined: only their types matter.
+struct double_parser
+{
+  double operator()(std::string_view) const;
+};
+struct string_parser
+{
+  std::string operator()(std::string_view) const;
+};
+
+template<typename W, typename P>
+concept can_read_with = requires(P p) {
+  gl::io::read_edge_list<W>(std::filesystem::path{}, p);
+};
 } // namespace
+
+static_assert(can_read_with<gl::weighted<>, double_parser>);
+static_assert(!can_read_with<gl::unweighted, double_parser>);
+static_assert(!can_read_with<gl::weighted<>, string_parser>);
 
 // ---- well-formed input ----------------------------------------------------
 
@@ -351,4 +381,54 @@ TEST_CASE("read_edge_list: errors name the file and the line")
   CHECK_THROWS_WITH_AS(gl::io::read_edge_list<gl::unweighted>(f.path),
                        expected.c_str(),
                        std::runtime_error);
+}
+
+// ---- weight parser hook ----------------------------------------------------
+
+TEST_CASE("read_edge_list: a custom parser gets each weight token")
+{
+  std::vector<std::string> tokens;
+  const auto g = read_string_with<gl::weighted<>>(
+    "3\n1 2 0.5\n2 3 -1.5\n", [&](std::string_view token) {
+      tokens.emplace_back(token);
+      return 7.0;
+    });
+
+  CHECK(tokens == std::vector<std::string>{ "0.5", "-1.5" });
+  REQUIRE(g.edges.size() == 2);
+  CHECK(g.edges[0].weight == 7.0);
+  CHECK(g.edges[1].weight == 7.0);
+}
+
+TEST_CASE("read_edge_list: a parser's error names the file and the line")
+{
+  const auto reject_x = [](std::string_view token) {
+    if (token == "x") {
+      throw std::invalid_argument("bad");
+    }
+    return 1.0;
+  };
+  CHECK_THROWS_WITH_AS(
+    read_string_with<gl::weighted<>>("3\n1 2 1\n2 3 x\n", reject_x),
+    doctest::Contains(":3: bad"),
+    std::runtime_error);
+  CHECK_THROWS_WITH_AS(
+    read_string_with<gl::weighted<>>("3\n1 2\n", reject_x),
+    doctest::Contains("expected an edge weight"),
+    std::runtime_error);
+}
+
+TEST_CASE("read_edge_list: the default parser keeps its messages")
+{
+  // "0.5x" is rejected on line 2 either way; the message is the standard
+  // library's, as before the hook: libstdc++ reads 0.5 and leaves "x"
+  // ("unexpected text after the edge"), libc++ fails the whole token
+  // ("expected an edge weight").
+  CHECK_THROWS_WITH_AS(read_string<gl::weighted<>>("3\n1 2 0.5x\n"),
+                       doctest::Contains(":2: "),
+                       std::runtime_error);
+  CHECK_THROWS_WITH_AS(read_string<gl::weighted<>>("3\n1 2 0.5 7\n"),
+                       doctest::Contains("unexpected text after the edge"),
+                       std::runtime_error);
+  CHECK(read_string<gl::weighted<>>("3\n1 2 -9.5\n").edges[0].weight == -9.5);
 }
