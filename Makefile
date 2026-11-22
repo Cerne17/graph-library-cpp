@@ -72,6 +72,10 @@ $(BUILD)/benchmark_part3_checked: app/benchmark_part3.cpp $(HEADERS)
 	@mkdir -p $(@D)
 	$(CXX) $(TESTFLAGS) $< -o $@
 
+.PHONY: test-part3
+test-part3: $(BUILD)/benchmark_part3_checked
+	PART3_BINARY=$(abspath $(BUILD)/benchmark_part3_checked) $(PYTHON) -m unittest discover -s tests -p 'test_harness_part3.py' -v
+
 $(BUILD)/tests/test_main.o: tests/test_main.cpp # prevents doctests recompiling
 	@mkdir -p $(@D)
 	$(CXX) $(TESTFLAGS) -c $< -o $@

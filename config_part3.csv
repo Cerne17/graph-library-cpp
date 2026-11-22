@@ -1,0 +1,6 @@
+graph,directed,bf_target,bf_sources,fw_set,runs,budget_seconds,k,seed,run_fw,run_allpairs,bf_optimizations
+grafo_W_1,yes,100,10|20|30,10|20|30|40|50,10,600,100,2025,yes,yes,textbook|stop_when_stable|frontier
+grafo_W_2,yes,100,10|20|30,10|20|30|40|50,10,600,100,2025,yes,yes,textbook|stop_when_stable|frontier
+grafo_W_3,yes,100,10|20|30,10|20|30|40|50,10,600,100,2025,no,yes,
+grafo_W_4,yes,100,10|20|30,10|20|30|40|50,10,600,100,2025,no,yes,
+grafo_W_5,yes,100,10|20|30,10|20|30|40|50,10,600,100,2025,no,yes,
