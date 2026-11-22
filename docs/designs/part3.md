@@ -21,8 +21,8 @@ The work extends the existing header-only library in `include/graph/` (C++23 tem
 
 * `main` (local) holds origin/main plus the 14 `feature/harness-part2` commits, replayed. Not pushed.
 * `feature/part3`, from `main`, has two commits:
-  * `5729b06 feat(io): count negative self-loops in read_edge_list` — new field `io::edge_list::negative_self_loops`.
-  * `879a495 test: directed graphs where direction changes bfs, dfs, dijkstra and load_graph results`.
+  * `d9c465a feat(io): count negative self-loops in read_edge_list` — new field `io::edge_list::negative_self_loops`.
+  * `9dadcea test: directed graphs where direction changes bfs, dfs, dijkstra and load_graph results`.
   `make test` passes (186 cases).
 * A Bellman-Ford prototype written before this review (`reversed.hpp`, `algorithms/bellman_ford.hpp`, `tests/test_reversed.cpp`) is parked in `git stash` as "part3: bellman-ford prototype (pre-review)". It is input for later, not a decision.
 
