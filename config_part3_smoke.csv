@@ -1,0 +1,4 @@
+graph,directed,bf_target,bf_sources,fw_set,runs,budget_seconds,k,seed,run_fw,run_allpairs,bf_optimizations
+smoke_potentials,yes,100,10|20|30,10|20|30|40|50,3,30,50,2025,yes,yes,textbook|stop_when_stable|frontier
+smoke_cycle,yes,100,10|20|30,10|20|30|40|50,3,30,50,2025,yes,yes,textbook|stop_when_stable|frontier
+smoke_undirected,no,100,10|20|30,10|20|30|40|50,3,30,50,2025,yes,yes,textbook|stop_when_stable|frontier
