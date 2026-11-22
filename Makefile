@@ -25,7 +25,7 @@ TEST_OBJS := $(patsubst %.cpp,$(BUILD)/%.o,$(TEST_SRCS))
 # algorithms against the old ones: src/graph.cpp -> build/tests/legacy/src/graph.o
 LEGACY_TEST_OBJS := $(patsubst %.cpp,$(BUILD)/tests/legacy/%.o,$(LIB_SRCS))
 
-.PHONY: all release benchmark benchmark-weighted clean test
+.PHONY: all release benchmark benchmark-weighted benchmark-part3 clean test
 
 all: $(BUILD)/graphs
 
@@ -58,6 +58,19 @@ benchmark-weighted: $(BUILD)/benchmark_weighted
 $(BUILD)/benchmark_weighted: app/benchmark_weighted.cpp $(HEADERS)
 	@mkdir -p $(@D)
 	$(CXX) $(RELFLAGS) -DNDEBUG $< -o $@
+
+# Part 3 benchmark (directed graphs, Bellman-Ford, Floyd-Warshall), driven by
+# analysis/harness_part3.py. The checked build runs under the test flags for
+# the program tests (make test-part3).
+benchmark-part3: $(BUILD)/benchmark_part3
+
+$(BUILD)/benchmark_part3: app/benchmark_part3.cpp $(HEADERS)
+	@mkdir -p $(@D)
+	$(CXX) $(RELFLAGS) -DNDEBUG $< -o $@
+
+$(BUILD)/benchmark_part3_checked: app/benchmark_part3.cpp $(HEADERS)
+	@mkdir -p $(@D)
+	$(CXX) $(TESTFLAGS) $< -o $@
 
 $(BUILD)/tests/test_main.o: tests/test_main.cpp # prevents doctests recompiling
 	@mkdir -p $(@D)
