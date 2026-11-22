@@ -292,8 +292,13 @@ def timing_rows(graph, mode, algorithm, times_us, runs) -> list[dict]:
 
 
 def merge_graph(cfg: dict, run_dir: Path, fw_decision: str,
-                fw_need: int | None) -> tuple[list[dict], list[dict]]:
-    """Result and path rows of one graph, from its complete launch files."""
+                fw_need: int | None,
+                measured_c: tuple[float, str] | None = None
+                ) -> tuple[list[dict], list[dict]]:
+    """Result and path rows of one graph, from its complete launch files.
+    measured_c = (seconds per n^3, the graphs it was measured on) from real
+    Floyd-Warshall runs, preferred over the random-graph calibration fit for
+    the Floyd-Warshall estimate of a graph that does not run it."""
     name = cfg["graph"]
     runs = int(cfg["runs"])
     results: list[dict] = [result(name, "-", "matrix", "representation", "",
@@ -378,6 +383,14 @@ def merge_graph(cfg: dict, run_dir: Path, fw_decision: str,
                                   info["memory_bytes"]))
         add_paths(rows)
         results.append(fw_vs_bf(name, rows, files))
+    elif measured_c is not None and n is not None:
+        c, source = measured_c
+        calib = (f"; the random-graph calibration gave c = {fit_c:.6g} s"
+                 if fit_c is not None else "")
+        results.append(result(name, "fw", "floyd_warshall", "estimate_s",
+                              c * n ** 3, 0, "extrapolated",
+                              f"c * n^3, c = {c:.6g} s measured on {source}"
+                              + calib))
     elif fit_c is not None and n is not None:
         results.append(result(name, "fw", "floyd_warshall", "estimate_s",
                               fit_c * n ** 3, 0, "extrapolated",
@@ -456,18 +469,41 @@ def write_csv(rows: list[dict], columns: list[str], path: Path) -> None:
     tmp.replace(path)
 
 
+def measured_fw_cost(config_rows: list[dict], runs_dir: Path
+                     ) -> tuple[float, str] | None:
+    """Mean seconds per n^3 of the real Floyd-Warshall runs (first run of each
+    complete fw file), and the graphs they come from; None if there is none."""
+    costs = []
+    names = []
+    for cfg in config_rows:
+        fw = runs_dir / cfg["graph"] / "fw.csv"
+        if not is_complete(fw):
+            continue
+        rows = read_rows(fw)
+        times = times_of(rows, "floyd_warshall")
+        n = infos(rows).get("vertices")
+        if times and n:
+            costs.append(times[0] / 1e6 / int(n) ** 3)
+            names.append(cfg["graph"])
+    if not costs:
+        return None
+    return statistics.fmean(costs), ", ".join(names)
+
+
 def merge_all(config_rows: list[dict], runs_dir: Path, out: Path) -> None:
     """results_part3.csv and paths_part3.csv from every graph of the config
     that has a run directory (also those run by another harness process)."""
     all_results: list[dict] = []
     all_paths: list[dict] = []
+    measured = measured_fw_cost(config_rows, runs_dir)
     for cfg in config_rows:
         run_dir = runs_dir / cfg["graph"]
         decision_file = run_dir / "fw_decision.txt"
         if not decision_file.is_file():
             continue
         decision, need = decision_file.read_text().split()
-        results, paths = merge_graph(cfg, run_dir, decision, int(need))
+        results, paths = merge_graph(cfg, run_dir, decision, int(need),
+                                     measured)
         all_results += results
         all_paths += paths
     out.mkdir(parents=True, exist_ok=True)

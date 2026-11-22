@@ -283,6 +283,27 @@ class HarnessTests(unittest.TestCase):
         self.assertNotIn(("negative_cycle_check", "mean_s"), by)
         self.assertEqual(by[("matrix", "representation")]["status"], "skipped")
 
+    def test_fw_estimate_prefers_measured_runs(self):
+        # graph a ran Floyd-Warshall: n = 10 in 2 s -> c = 2e-3 s per n^3;
+        # graph b did not (n = 20) and its calibration fit says c = 1
+        for name, n in (("a", 10), ("b", 20)):
+            (self.dir / name).mkdir()
+            (self.dir / name / "fw_decision.txt").write_text(
+                ("run" if name == "a" else "no_memory") + " 100\n")
+            (self.dir / name / "calibrate.csv").write_text(
+                f"info,vertices,{n}\nfit,floyd_warshall_n3,1,3\ndone,calibrate\n")
+        (self.dir / "a" / "fw.csv").write_text(
+            "info,vertices,10\ntime,floyd_warshall,1,2000000\ndone,fw\n")
+        rows = [{"graph": g, "runs": "10", "fw_set": "1"} for g in ("a", "b")]
+        harness.merge_all(rows, self.dir, self.dir / "out")
+        import csv as csv_module
+        with (self.dir / "out" / "results_part3.csv").open() as f:
+            estimate = [r for r in csv_module.DictReader(f)
+                        if r["graph"] == "b" and r["metric"] == "estimate_s"][0]
+        self.assertAlmostEqual(float(estimate["value"]), 2e-3 * 20 ** 3)
+        self.assertIn("measured on a", estimate["note"])
+        self.assertIn("calibration gave c = 1", estimate["note"])
+
     def test_merge_mismatch(self):
         by = {(r["algorithm"], r["metric"]): r
               for r in self.merge_fixture(edit_check=True)}
