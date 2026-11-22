@@ -152,11 +152,14 @@ files, or `concepts.hpp`, unless the task says so.** Changes to
 
 ## Git
 
-- Branch from `feature/generalization`; open PRs into it, never into `main`.
+- Part 2 work branched from `feature/generalization`, with PRs into it.
+- Part 3 branches from `main` (`feature/part3`), the owner's decision once
+  `feature/generalization` and `feature/harness-part2` were merged into
+  `main`. Ask the owner before pushing or opening any PR.
 - Commit messages: `type(scope): description`, e.g.
   `feat(storage): ...`, `test(io): ...`, `refactor(heap): ...`, `fix: ...`.
-- One task per branch/PR. Never commit `build/`, `.DS_Store`, or
-  `data/grafo_*.txt`.
+- One task per branch/PR. Never commit `build/`, `.DS_Store`,
+  `data/grafo_*.txt`, or the Part 3 case-study graphs in `data/part3/`.
 
 ## When unsure
 

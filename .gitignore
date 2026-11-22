@@ -32,3 +32,7 @@ __pycache__/
 # Large compressed course inputs (distributed separately)
 data/grafo_*.txt.gz
 data/azure_traversals/
+
+# Part 3 case-study inputs (distributed separately) and per-launch run files
+data/part3/
+data/part3_runs/
