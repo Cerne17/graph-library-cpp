@@ -384,6 +384,63 @@ Nenhum caso está pulado. Os testes cobrem:
 **Pronto quando:** nenhum caso pulado, `make test` passando no Linux (com
 AddressSanitizer) e no Mac.
 
+### Parte 3 — grafos direcionados, Bellman-Ford e Floyd-Warshall — feita
+
+O projeto completo, com as decisões e as revisões, está em
+`docs/designs/part3_design.md`. Convenções decididas:
+
+- direção escolhida pelo usuário (`--directed yes|no`, sem padrão); a
+  biblioteca continua em tempo de compilação;
+- pesos lidos como texto com no máximo 2 casas e escalados por 100 em inteiros
+  exatos (`io::fixed_point_weight`), para que um ciclo de peso 0 nunca apareça
+  como negativo por arredondamento;
+- Bellman-Ford devolve uma árvore **até** o alvo (`next[v]` é o vértice depois
+  de v), distância `-inf` onde um ciclo negativo está no caminho; ciclo
+  negativo é relatado no resultado, nunca lançado;
+- "o grafo possui um ciclo negativo" = em qualquer lugar do grafo
+  (`find_negative_cycle`, uma vez por grafo, com um ciclo de prova);
+- laços negativos (`v v w`, w < 0) são ciclos: o leitor os guarda e os
+  algoritmos os recebem como entrada.
+
+#### I. Leitura com parser de peso e ponto fixo — feita
+
+`io/edge_list.hpp` (`negative_self_loop_edges`, sobrecarga
+`read_edge_list<W>(path, parse_weight)`) e `io/fixed_point.hpp`. Testes em
+`tests/test_edge_list.cpp` e `tests/test_fixed_point.cpp`.
+
+#### J. Grafo invertido — feita
+
+`storage/reversed.hpp` (`reversed_graph`, `reversed`, `is_reversed_graph`),
+testado em `tests/test_reversed.cpp`. `parent_tree` aceita `std::span` e
+`reconstruct_path` não entra em laço infinito (`tests/test_path.cpp`).
+
+#### K. Bellman-Ford até um alvo — feita
+
+`algorithms/bellman_ford.hpp`: as duas otimizações como três variantes
+(`textbook`, `stop_when_stable`, `frontier`), rodadas síncronas, marcação
+exata de `-inf`. Testes em `tests/test_bellman_ford.cpp` e, contra Dijkstra,
+potenciais, ciclos plantados e força bruta, em
+`tests/test_bellman_ford_differential.cpp`.
+
+#### L. Verificação de ciclo negativo no grafo todo — feita
+
+`find_negative_cycle`, no mesmo cabeçalho, com fonte virtual implícita e
+atalhos O(1) e O(m).
+
+#### M. Floyd-Warshall — feita
+
+`algorithms/floyd_warshall.hpp`: uma matriz de distâncias e uma de
+predecessores atualizadas no lugar (a otimização de memória), `minus_infinity`
+por par, linhas como árvores sem cópia. Testes em
+`tests/test_floyd_warshall.cpp` e `tests/test_floyd_warshall_differential.cpp`.
+
+#### N. Benchmark e harness da Parte 3 — feita
+
+`app/benchmark_part3.cpp` (`make benchmark-part3`), `analysis/harness_part3.py`
+com `config_part3.csv`, `analysis/azure_part3.sh` e `analysis/report_part3.py`.
+Cada passo cronometrado repete até 10 vezes dentro de 600 s; o que não cabe é
+estimado e marcado. Testes do programa e do harness: `make test-part3`.
+
 ---
 
 ## 8. Usando agente de código

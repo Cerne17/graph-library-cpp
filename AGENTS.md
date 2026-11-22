@@ -1,8 +1,9 @@
 # Agent instructions
 
-C++ graph library for COS242 (Graph Theory, UFRJ). Part 1 (unweighted graphs)
-is delivered; Part 2 (weighted graphs, two Dijkstra implementations, case
-studies) is in progress on the branch `feature/generalization`.
+C++ graph library for COS242 (Graph Theory, UFRJ). Parts 1 (unweighted
+graphs) and 2 (weighted graphs, Dijkstra, case studies) are delivered. Part 3
+(directed graphs, Bellman-Ford, Floyd-Warshall, case studies) is on the branch
+`feature/part3`; its design is `docs/designs/part3_design.md`.
 
 Read `docs/CONVENTIONS.md` before writing code. It is binding. Human onboarding
 lives in `docs/ONBOARDING.md`.
@@ -18,7 +19,11 @@ lives in `docs/ONBOARDING.md`.
   work goes here. Its programs sit next to the legacy ones with a `_weighted`
   suffix: `app/benchmark_weighted.cpp` (on the new library only),
   `analysis/harness_weighted.py`, `config_weighted.csv`, writing
-  `data/results_weighted.csv` and `data/paths_weighted.csv`.
+  `data/results_weighted.csv` and `data/paths_weighted.csv`. Part 3's use a
+  `_part3` suffix: `app/benchmark_part3.cpp`, `analysis/harness_part3.py`,
+  `config_part3.csv`, `analysis/azure_part3.sh`, `analysis/report_part3.py`,
+  reading `data/part3/` and writing `data/part3_runs/` (one file per launch),
+  `data/results_part3.csv` and `data/paths_part3.csv`.
 
 ## Build and test
 
@@ -29,6 +34,8 @@ make test        # builds and runs all doctest tests; must end in "Status: SUCCE
 make             # legacy debug build (build/graphs)
 make benchmark   # legacy optimized benchmark
 make benchmark-weighted  # Part 2 benchmark (build/benchmark_weighted), driven by analysis/harness_weighted.py
+make benchmark-part3     # Part 3 benchmark (build/benchmark_part3), driven by analysis/harness_part3.py
+make test-part3          # Part 3 program and harness tests (Python; not part of make test)
 make clean       # removes build/
 ```
 
@@ -66,10 +73,21 @@ Namespaces: `gl` for everything below except `algorithms/*`
   `has_edge(u, v)`. Unweighted: a bitset; weighted: (n + 1)² cells, `+inf` for
   "no edge", parallel edges keep the minimum weight.
 - `graph.hpp`: user-facing aliases `csr_graph<D, W>` and `matrix_graph<D, W>`.
+- `storage/reversed.hpp`: `reversed_graph<G>` and `reversed(g)`, every arc of a
+  directed weighted graph turned around (a CSR built with `from_edges`), and
+  `is_reversed_graph<G>`. Reversing an undirected or an already reversed graph
+  does not compile.
 - `io/edge_list.hpp`: `io::read_edge_list<W>(path)` →
-  `io::edge_list<W>{n, edges, skipped_self_loops}` (self-loops are dropped
-  and counted; the storages reject them). Throws `std::runtime_error` with
+  `io::edge_list<W>{n, edges, skipped_self_loops, negative_self_loop_edges}`
+  (self-loops are dropped and counted, the negative ones kept apart because
+  each is a negative cycle; the storages reject self-loops). The overload
+  `read_edge_list<W>(path, parse_weight)` hands each weight token to a parser
+  (W must be given explicitly). Throws `std::runtime_error` with
   `file:line: message` on bad input.
+- `io/fixed_point.hpp`: `io::fixed_point_weight<W>{decimals}`, a weight parser
+  that turns "1.25" into the exact integer 125 (2 decimals) from the text, and
+  rejects more decimals; `scale()` is 10^decimals. Part 3 reads every graph
+  with it, so sums of weights are exact.
 - `io/load_graph.hpp`: `io::load_graph<G>(path)` = `read_edge_list` +
   `G::from_edges`.
 - `io/label_map.hpp`: `io::label_map` (`name_of(v)`, `id_of(name)` with a
@@ -98,7 +116,26 @@ Namespaces: `gl` for everything below except `algorithms/*`
     `std::priority_queue` with stale-entry skipping, O((n + m) log m)).
     `dijkstra.hpp` includes all three.
   - `algorithms/path.hpp`: `reconstruct_path(tree, target)` for any
-    `parent_tree` (`search_tree` or `shortest_paths`).
+    `parent_tree` (a `source` and a sized random-access range of `vertex_id`:
+    `search_tree`, `shortest_paths`, `all_pairs::row_tree`); it stops after n
+    steps instead of looping on a corrupt tree.
+- Part 3: tasks I–N in `docs/ONBOARDING.md` §7.
+  - `algorithms/bellman_ford.hpp`: `bellman_ford(g, target, negative_loops,
+    options, stats)` and `bellman_ford_on_reversed(rev, …)` give
+    `target_paths<W>{target, dist, next, cycle_reaches_target}` toward one
+    target (`dist = -inf` where a negative cycle lies on the way);
+    `bellman_ford_variant` `textbook | stop_when_stable | frontier`
+    (synchronous rounds; `bellman_ford_stats` counts rounds and relaxations);
+    `path_to_target(tree, v)` (v first); `find_negative_cycle(g,
+    negative_loops)` → `negative_cycle_report{found, cycle}`, the only witness.
+  - `algorithms/floyd_warshall.hpp`: `floyd_warshall(g, negative_loops,
+    on_pivot)` → `all_pairs<W>` (one in-place distance matrix and one
+    predecessor matrix, (n + 1)² cells each; `dist`, `minus_infinity`,
+    `negative_cycle`, lvalue-only `tree_from(i)` row views, `bytes`).
+  - Tests: `test_bellman_ford.cpp`, `test_bellman_ford_differential.cpp`,
+    `test_floyd_warshall.cpp`, `test_floyd_warshall_differential.cpp`,
+    `test_reversed.cpp`, `test_fixed_point.cpp`; `tests/test_harness_part3.py`
+    for the program and the harness.
 
 Ownership: `storage/matrix.hpp` and the migrated Part 1 algorithms in
 `include/graph/algorithms/` belong to the project owner. **Do not edit those
