@@ -698,7 +698,18 @@ void run_calibrate(const G& g, const loaded& in, const options& opt)
     }
     const auto graph = calibration_graph(n, degree, rng);
     const auto run_start = clock_type::now();
-    const auto r = gl::algorithms::floyd_warshall(graph);
+    auto last_print = run_start;
+    // a progress row at least every 60 s, so a long size is not mistaken for
+    // a hung launch
+    const auto on_pivot = [&](gl::vertex_id k, gl::vertex_id rows) {
+      const auto now = clock_type::now();
+      if (now - last_print >= std::chrono::seconds(60)) {
+        emit("progress,calibrate," + std::to_string(k) + "," +
+             format_number(micros_since(start)) + "," + std::to_string(rows));
+        last_print = now;
+      }
+    };
+    const auto r = gl::algorithms::floyd_warshall(graph, {}, on_pivot);
     last = micros_since(run_start);
     sink += r.dist(1, 1);
     emit("calib,floyd_warshall," + std::to_string(n) + "," +

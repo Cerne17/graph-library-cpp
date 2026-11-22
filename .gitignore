@@ -35,7 +35,8 @@ data/azure_traversals/
 
 # Part 3 case-study inputs (distributed separately) and per-launch run files
 data/part3/
-data/part3_runs/
+data/part3_runs*/
+data/*_smoke/
 
 # Packaged analysis material (hundreds of MB, shared outside git)
 output/*.zip

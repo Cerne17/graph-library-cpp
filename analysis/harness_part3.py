@@ -22,6 +22,11 @@ Usage (from the repository root, after `make benchmark-part3`):
     python3 analysis/harness_part3.py                    # every row
     python3 analysis/harness_part3.py --only grafo_W_1   # one graph
     python3 analysis/harness_part3.py --calibrate-only   # VM-time estimate
+    python3 analysis/harness_part3.py --merge-only       # rebuild the CSVs
+
+Several harness processes may run at once on different graphs (--only); each
+rewrites the two CSVs from every graph's run files when it ends, and a final
+--merge-only gives the complete pair.
 
 Config columns:
     graph             file name in the data directory, without ".txt"/".txt.gz"
@@ -443,6 +448,35 @@ def vm_estimate_hours(rows: list[dict], fits: dict[str, float],
 
 # ---- main ------------------------------------------------------------------
 
+def write_csv(rows: list[dict], columns: list[str], path: Path) -> None:
+    """Writes atomically, so parallel harness processes never leave a half
+    file behind."""
+    tmp = path.with_name(path.name + ".tmp")
+    pd.DataFrame(rows, columns=columns).to_csv(tmp, index=False)
+    tmp.replace(path)
+
+
+def merge_all(config_rows: list[dict], runs_dir: Path, out: Path) -> None:
+    """results_part3.csv and paths_part3.csv from every graph of the config
+    that has a run directory (also those run by another harness process)."""
+    all_results: list[dict] = []
+    all_paths: list[dict] = []
+    for cfg in config_rows:
+        run_dir = runs_dir / cfg["graph"]
+        decision_file = run_dir / "fw_decision.txt"
+        if not decision_file.is_file():
+            continue
+        decision, need = decision_file.read_text().split()
+        results, paths = merge_graph(cfg, run_dir, decision, int(need))
+        all_results += results
+        all_paths += paths
+    out.mkdir(parents=True, exist_ok=True)
+    write_csv(all_results, RESULT_COLUMNS, out / "results_part3.csv")
+    write_csv(all_paths, PATH_COLUMNS, out / "paths_part3.csv")
+    print(f"wrote {len(all_results)} result rows, {len(all_paths)} path rows",
+          flush=True)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--config", type=Path, default=ROOT / "config_part3.csv")
@@ -454,21 +488,27 @@ def main() -> None:
                         default=ROOT / "build" / "benchmark_part3")
     parser.add_argument("--only", action="append", metavar="GRAPH")
     parser.add_argument("--calibrate-only", action="store_true")
+    parser.add_argument("--merge-only", action="store_true",
+                        help="only rebuild the two CSVs from the run files")
     parser.add_argument("--tmp", type=Path, default=Path(tempfile.gettempdir()))
     args = parser.parse_args()
+
+    config_rows = read_config(args.config).to_dict("records")
+    if args.merge_only:
+        merge_all(config_rows, args.runs_dir, args.out)
+        return
 
     rows = select_rows(read_config(args.config), args.only)
     problems = check_setup(args.binary, args.data, rows)
     if problems:
         sys.exit("cannot start:\n" + "\n".join(f"  - {p}" for p in problems))
 
-    all_results: list[dict] = []
-    all_paths: list[dict] = []
     fits: dict[str, float] = {}
     sizes: dict[str, int] = {}
     for cfg in rows:
         name = cfg["graph"]
         run_dir = args.runs_dir / name
+        run_dir.mkdir(parents=True, exist_ok=True)
         silence = 2 * float(cfg["budget_seconds"])
         print(f"processing {name} ...", flush=True)
         with plain_text(find_input(args.data, name), args.tmp) as graph:
@@ -478,6 +518,7 @@ def main() -> None:
             decision = decide_fw(need, available_memory())
             if decision == "run" and cfg.get("run_fw", "no") != "yes":
                 decision = "skipped"
+            (run_dir / "fw_decision.txt").write_text(f"{decision} {need}\n")
             for key, cli in launches(cfg, graph, run_dir, decision):
                 if args.calibrate_only and key != "calibrate":
                     continue
@@ -492,24 +533,14 @@ def main() -> None:
             for r in read_rows(run_dir / "calibrate.csv"):
                 if r[0] == "fit":
                     fits[name] = float(r[2])
-        results, paths = merge_graph(cfg, run_dir, decision, need)
-        all_results += results
-        all_paths += paths
 
-    args.runs_dir.mkdir(parents=True, exist_ok=True)
     if args.calibrate_only:
         hours = vm_estimate_hours(rows, fits, sizes)
         (args.runs_dir / "vm_estimate.txt").write_text(f"{hours:.2f}\n")
         print(f"estimated VM time for the full run: {hours:.2f} h "
               f"(written to {args.runs_dir / 'vm_estimate.txt'})", flush=True)
         return
-    args.out.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(all_results, columns=RESULT_COLUMNS).to_csv(
-        args.out / "results_part3.csv", index=False)
-    pd.DataFrame(all_paths, columns=PATH_COLUMNS).to_csv(
-        args.out / "paths_part3.csv", index=False)
-    print(f"wrote {len(all_results)} result rows, {len(all_paths)} path rows",
-          flush=True)
+    merge_all(config_rows, args.runs_dir, args.out)
 
 
 if __name__ == "__main__":

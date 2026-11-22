@@ -10,8 +10,11 @@
 #   analysis/azure_part3.sh create      # VM (first size that works)
 #   analysis/azure_part3.sh setup       # compilers, clone, build, make test, make test-part3
 #   analysis/azure_part3.sh upload      # data/part3/ inputs (resumable)
+#   analysis/azure_part3.sh smoke       # smoke config on the VM, compared with the local run
 #   analysis/azure_part3.sh calibrate   # VM-time estimate of the full run (owner approves it)
 #   analysis/azure_part3.sh start [G]   # harness in tmux (all graphs, or only G)
+#   analysis/azure_part3.sh start-parallel "G1" "G2 G3" ...
+#                                       # one harness process per group, at once
 #   analysis/azure_part3.sh status      # last log lines (ETA of Floyd-Warshall), finished?
 #   analysis/azure_part3.sh fetch       # results into data/azure_part3/
 #   analysis/azure_part3.sh delete      # deletes everything; billing stops
@@ -19,8 +22,11 @@
 # Settings (environment variables):
 #   AZ_LOCATION  region your subscription allows (default: eastus)
 #   AZ_GROUP     resource group, deleted as a whole at the end (default: cos242-part3)
-#   AZ_SIZES     VM sizes to try, first that succeeds wins. Default: 16 GB,
-#                2 vCPUs (7.5 GB of Floyd-Warshall matrices plus the graph).
+#   AZ_SIZES     VM sizes to try, first that succeeds wins. Default: 32 GB,
+#                4 vCPUs: two Floyd-Warshall runs (7.5 GB each) at once, plus
+#                the large graphs in a third process.
+#   AZ_HOURS     hours to re-arm the auto-shutdown for in start-parallel
+#                (default 8; 3 h of margin are added)
 #   BRANCH       branch the VM builds (default: feature/part3)
 #
 # The auto-shutdown is a daily schedule: `start` re-arms it to now + the
@@ -36,7 +42,7 @@ VM="cos242-runner"
 USER_NAME="azureuser"
 BRANCH="${BRANCH:-feature/part3}"
 REPO_URL="https://github.com/Cerne17/graph-library-cpp.git"
-SIZES="${AZ_SIZES:-Standard_E2as_v5 Standard_E2s_v5}"
+SIZES="${AZ_SIZES:-Standard_E4as_v5 Standard_E4s_v5 Standard_E4as_v4}"
 REMOTE_DIR="library"
 INPUTS="data/part3/grafo_W_*.txt.gz"
 MAX_AHEAD_HOURS=22
@@ -123,10 +129,15 @@ cmd_calibrate() {
 }
 
 # Re-arms the daily auto-shutdown to now + estimate + 3 h (UTC), or refuses.
+# The estimate is $1 when given, else vm_estimate.txt from calibrate.
 rearm_shutdown() {
   local hours at
-  hours="$(remote "cat $REMOTE_DIR/data/part3_runs/vm_estimate.txt" 2>/dev/null)" ||
-    die "no vm_estimate.txt: run calibrate first"
+  if [ -n "${1:-}" ]; then
+    hours="$1"
+  else
+    hours="$(remote "cat $REMOTE_DIR/data/part3_runs/vm_estimate.txt" 2>/dev/null)" ||
+      die "no vm_estimate.txt: run calibrate first"
+  fi
   at="$(python3 - "$hours" "$MAX_AHEAD_HOURS" <<'PY'
 import datetime as d, sys
 ahead = float(sys.argv[1]) + 3
@@ -151,10 +162,41 @@ cmd_start() {
   echo "started; follow with: analysis/azure_part3.sh status"
 }
 
+cmd_start_parallel() {
+  [ "$#" -gt 0 ] || die "start-parallel needs at least one group of graphs"
+  rearm_shutdown "${AZ_HOURS:-8}"
+  local jobs="" i=0 group only
+  for group in "$@"; do
+    i=$((i + 1))
+    only=""
+    for g in $group; do only="$only --only $g"; done
+    jobs="$jobs python3 analysis/harness_part3.py$only > run_$i.log 2>&1 &"
+  done
+  remote "cd $REMOTE_DIR && rm -f run.done && tmux new -d -s part3 \
+    '$jobs wait; python3 analysis/harness_part3.py --merge-only >> run.log 2>&1; touch run.done'"
+  echo "started $i harness processes; follow with: analysis/azure_part3.sh status"
+}
+
+cmd_smoke() {
+  remote "cd $REMOTE_DIR && rm -rf data/part3_runs_smoke data/azure_smoke && \
+    python3 analysis/harness_part3.py --config config_part3_smoke.csv \
+      --data tests/data/part3_smoke --runs-dir data/part3_runs_smoke \
+      --out data/azure_smoke 2>&1 | tail -2"
+  mkdir -p data/azure_part3_smoke
+  rsync -a -e "ssh -o StrictHostKeyChecking=accept-new" \
+    "$USER_NAME@$(ip):$REMOTE_DIR/data/azure_smoke/" data/azure_part3_smoke/
+  [ -f data/local_part3_smoke/results_part3.csv ] ||
+    python3 analysis/harness_part3.py --config config_part3_smoke.csv \
+      --data tests/data/part3_smoke --runs-dir data/part3_runs_smoke \
+      --out data/local_part3_smoke
+  python3 analysis/compare_part3.py data/local_part3_smoke data/azure_part3_smoke
+}
+
 cmd_status() {
-  remote "cd $REMOTE_DIR && tail -n 15 run.log 2>/dev/null; \
-    echo '== last progress row:'; \
-    grep -h '^progress' data/part3_runs/*/fw.csv 2>/dev/null | tail -n 1; \
+  remote "cd $REMOTE_DIR && for f in run.log run_*.log; do [ -f \$f ] && \
+    { echo \"== \$f\"; tail -n 6 \$f; }; done; \
+    for f in data/part3_runs/*/fw.csv; do [ -f \$f ] && \
+      { echo \"== \$f\"; grep '^progress' \$f | tail -n 1; }; done; \
     if [ -e run.done ]; then echo '== finished'; else echo '== running'; fi; \
     free -g | sed -n 2p"
 }
@@ -164,7 +206,7 @@ cmd_fetch() {
   rsync -avP -e "ssh -o StrictHostKeyChecking=accept-new" \
     "$USER_NAME@$(ip):$REMOTE_DIR/data/results_part3.csv" \
     "$USER_NAME@$(ip):$REMOTE_DIR/data/paths_part3.csv" \
-    "$USER_NAME@$(ip):$REMOTE_DIR/run.log" \
+    "$USER_NAME@$(ip):$REMOTE_DIR/run*.log" \
     "$USER_NAME@$(ip):$REMOTE_DIR/environment.txt" \
     "$USER_NAME@$(ip):$REMOTE_DIR/data/part3_runs" data/azure_part3/
 }
@@ -175,7 +217,8 @@ cmd_delete() {
 }
 
 case "${1:-}" in
-  check | create | setup | upload | calibrate | status | fetch | delete) "cmd_$1" ;;
+  check | create | setup | upload | smoke | calibrate | status | fetch | delete) "cmd_$1" ;;
   start) cmd_start "${2:-}" ;;
-  *) sed -n '2,29p' "$0"; exit 1 ;;
+  start-parallel) shift; cmd_start_parallel "$@" ;;
+  *) sed -n '2,36p' "$0"; exit 1 ;;
 esac
