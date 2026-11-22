@@ -11,6 +11,7 @@
 
 #include "doctest/doctest.h"
 
+#include <algorithm>
 #include <concepts>
 #include <limits>
 #include <vector>
@@ -252,4 +253,117 @@ TEST_CASE("bellman_ford: float weights")
     bellman_ford(gl::csr_graph<gl::directed, gl::weighted<float>>::from_edges(3, edges), 3);
   static_assert(std::same_as<decltype(t.dist)::value_type, float>);
   CHECK(t.dist[1] == doctest::Approx(0.75));
+}
+
+// ---- whole-graph negative cycle check --------------------------------------
+
+namespace {
+// Same cycle up to rotation (both in arc order, first vertex not repeated).
+bool same_cycle(ids a, const ids& b)
+{
+  if (a.size() != b.size() || a.empty()) {
+    return a.size() == b.size();
+  }
+  for (std::size_t r = 0; r < a.size(); ++r) {
+    if (a == b) {
+      return true;
+    }
+    std::ranges::rotate(a, a.begin() + 1);
+  }
+  return false;
+}
+
+// Sum of the lightest arcs between consecutive witness vertices, closing the
+// cycle; +inf if an arc is missing.
+template<typename G>
+double cycle_weight(const G& g, const ids& cycle)
+{
+  double total = 0.0;
+  for (std::size_t i = 0; i < cycle.size(); ++i) {
+    const gl::vertex_id from = cycle[i];
+    const gl::vertex_id to = cycle[(i + 1) % cycle.size()];
+    double best = inf;
+    g.for_each_edge(from, [&](gl::vertex_id v, double w) {
+      if (v == to && w < best) {
+        best = w;
+      }
+    });
+    total += best;
+  }
+  return total;
+}
+
+using gl::algorithms::find_negative_cycle;
+} // namespace
+
+TEST_CASE("find_negative_cycle: a cycle that reaches a target, and one that does not")
+{
+  // 1->2 (1), 2->3 (-3), 3->2 (1), 3->4 (1), 5->4 (2): cycle 2->3->2 (-2)
+  const std::vector<wedge> reaching{ { 1, 2, 1.0 }, { 2, 3, -3.0 }, { 3, 2, 1.0 },
+                                     { 3, 4, 1.0 }, { 5, 4, 2.0 } };
+  const auto g1 = directed_csr::from_edges(5, reaching);
+  const auto r1 = find_negative_cycle(g1);
+  CHECK(r1.found);
+  CHECK(same_cycle(r1.cycle, ids{ 2, 3 }));
+  CHECK(cycle_weight(g1, r1.cycle) == -2.0);
+
+  // 1->2 (1), 2->1 (-3), 3->4 (2), 4->1 (1): cycle 1->2->1 (-2), reaches no 4
+  const std::vector<wedge> elsewhere{ { 1, 2, 1.0 }, { 2, 1, -3.0 }, { 3, 4, 2.0 },
+                                      { 4, 1, 1.0 } };
+  const auto g2 = directed_csr::from_edges(4, elsewhere);
+  const auto r2 = find_negative_cycle(g2);
+  CHECK(r2.found);
+  CHECK(same_cycle(r2.cycle, ids{ 1, 2 }));
+  CHECK(cycle_weight(g2, r2.cycle) == -2.0);
+}
+
+TEST_CASE("find_negative_cycle: the ring through all n vertices")
+{
+  const std::vector<wedge> edges{ { 1, 2, 1.0 }, { 2, 3, 1.0 }, { 3, 4, 1.0 },
+                                  { 4, 5, 1.0 }, { 5, 6, 1.0 }, { 6, 1, -6.0 } };
+  const auto g = directed_csr::from_edges(6, edges);
+  const auto r = find_negative_cycle(g);
+  CHECK(r.found);
+  CHECK(same_cycle(r.cycle, ids{ 1, 2, 3, 4, 5, 6 }));
+  CHECK(cycle_weight(g, r.cycle) == -1.0);
+}
+
+TEST_CASE("find_negative_cycle: shortcuts without rounds")
+{
+  bellman_ford_stats stats;
+
+  // a negative self-loop read from the file
+  const std::vector<wedge> loops{ { 4, 4, -1.0 } };
+  const auto with_loop =
+    find_negative_cycle(directed_csr::from_edges(4, {}), loops, &stats);
+  CHECK(with_loop.found);
+  CHECK(with_loop.cycle == ids{ 4 });
+  CHECK(stats.rounds == 0);
+
+  // an undirected negative edge is the cycle u-v-u
+  const std::vector<wedge> edge{ { 1, 2, -1.0 } };
+  const auto undirected =
+    find_negative_cycle(undirected_csr::from_edges(2, edge), {}, &stats);
+  CHECK(undirected.found);
+  CHECK(undirected.cycle == ids{ 1, 2 });
+  CHECK(stats.rounds == 0);
+
+  // no negative weight at all
+  const std::vector<wedge> positive{ { 1, 2, 1.0 }, { 2, 1, 1.0 } };
+  const auto none =
+    find_negative_cycle(directed_csr::from_edges(2, positive), {}, &stats);
+  CHECK_FALSE(none.found);
+  CHECK(none.cycle.empty());
+  CHECK(stats.rounds == 0);
+}
+
+TEST_CASE("find_negative_cycle: negative arcs without a negative cycle")
+{
+  // the first graph of this file: 3->2 (-1) is negative, no cycle at all
+  const std::vector<wedge> edges{ { 1, 2, 4.0 },  { 1, 3, 2.0 }, { 3, 2, -1.0 },
+                                  { 2, 4, 3.0 },  { 3, 4, 6.0 }, { 4, 5, 1.0 } };
+  bellman_ford_stats stats;
+  const auto r = find_negative_cycle(directed_csr::from_edges(5, edges), {}, &stats);
+  CHECK_FALSE(r.found);
+  CHECK(stats.rounds > 0);
 }

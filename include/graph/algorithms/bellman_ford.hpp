@@ -4,6 +4,7 @@
 #include "graph/storage/reversed.hpp"
 #include "graph/types.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
@@ -261,5 +262,99 @@ std::vector<vertex_id> path_to_target(const target_paths<W>& tree, vertex_id v)
     path.push_back(after);
   }
   return path;
+}
+
+// The whole-graph negative-cycle check.
+struct negative_cycle_report
+{
+  bool found = false;
+  std::vector<vertex_id> cycle; // the only witness in the library: arc order
+                                // v0 -> v1 -> ... -> v0, v0 not repeated;
+                                // empty when !found
+};
+
+namespace detail {
+// A cycle of the predecessor graph (pred[v] -> v is an arc), as the vertices in
+// arc order. Walking n steps back from start, a vertex changed in round n,
+// lands on a cycle. Empty if the walk ends at 0 instead.
+inline std::vector<vertex_id> pointer_cycle(const std::vector<vertex_id>& pred,
+                                            vertex_id start)
+{
+  const std::size_t n = pred.size() - 1;
+  vertex_id x = start;
+  for (std::size_t step = 0; step < n && x != 0; ++step) {
+    x = pred[x];
+  }
+  if (x == 0) {
+    return {};
+  }
+  std::vector<vertex_id> cycle{ x };
+  for (vertex_id v = pred[x]; v != x; v = pred[v]) {
+    cycle.push_back(v);
+  }
+  std::ranges::reverse(cycle); // the walk went against the arcs
+  return cycle;
+}
+} // namespace detail
+
+// Any negative cycle anywhere in g, including the negative self-loops passed
+// in. Run once per graph. O(1) when negative_loops has an entry (witness: the
+// loop vertex) or when g has no negative weight (none). O(m) for an undirected
+// g with a negative edge (witness: its two ends). Otherwise synchronous rounds
+// (frontier variant) on g itself, no reversal needed, from an implicit virtual
+// source: every distance starts at 0 and every vertex is in the first
+// frontier; a change in round n means a cycle, whose witness comes from the
+// predecessor pointers.
+template<weighted_graph G>
+negative_cycle_report find_negative_cycle(
+  const G& g,
+  std::span<const weighted_edge<typename G::weight_type>> negative_loops = {},
+  bellman_ford_stats* stats = nullptr)
+{
+  using W = typename G::weight_type;
+  const vertex_id n = g.vertex_count();
+
+  bellman_ford_stats local;
+  bellman_ford_stats& st = stats != nullptr ? *stats : local;
+  st = {};
+
+  for (const auto& loop : negative_loops) {
+    assert(loop.u == loop.v &&
+           "find_negative_cycle: negative_loops must be self-loops");
+    if (loop.weight < W{ 0 }) {
+      return { true, { loop.u } };
+    }
+  }
+  if (!g.has_negative_weight()) {
+    return {};
+  }
+  if constexpr (!G::direction_type::is_directed) {
+    // u-v-u is a cycle of weight 2w < 0
+    for (vertex_id u = 1; u <= n; ++u) {
+      vertex_id other = 0;
+      g.for_each_edge(u, [&](vertex_id v, W w) {
+        if (other == 0 && w < W{ 0 }) {
+          other = v;
+        }
+      });
+      if (other != 0) {
+        return { true, { u, other } };
+      }
+    }
+    return {};
+  } else {
+    std::vector<W> dist(n + 1, W{ 0 });
+    std::vector<vertex_id> pred(n + 1, 0);
+    std::vector<vertex_id> everyone(n);
+    for (vertex_id v = 1; v <= n; ++v) {
+      everyone[v - 1] = v;
+    }
+    const std::vector<vertex_id> changed = detail::relax_rounds(
+      g, dist, pred, std::move(everyone), bellman_ford_variant::frontier, st);
+    if (changed.empty()) {
+      return {};
+    }
+    return { true, detail::pointer_cycle(pred, changed.front()) };
+  }
 }
 } // namespace gl::algorithms
