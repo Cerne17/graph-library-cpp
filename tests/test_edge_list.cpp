@@ -282,18 +282,26 @@ TEST_CASE("read_edge_list: self-loops are skipped and counted")
   CHECK(clean.skipped_self_loops == 0);
 }
 
-TEST_CASE("read_edge_list: negative self-loops are counted apart")
+TEST_CASE("read_edge_list: negative self-loops are kept apart")
 {
   // two negative loops, one zero loop, one positive loop, one real edge
   const auto g = read_string<gl::weighted<>>(
     "3\n1 1 -2\n2 2 -0.5\n3 3 0\n1 1 4\n1 2 -1\n");
 
   CHECK(g.skipped_self_loops == 4);
-  CHECK(g.negative_self_loops == 2);
+  REQUIRE(g.negative_self_loop_edges.size() == 2); // file order, zero and
+                                                   // positive loops left out
+  CHECK(g.negative_self_loop_edges[0].u == 1);
+  CHECK(g.negative_self_loop_edges[0].v == 1);
+  CHECK(g.negative_self_loop_edges[0].weight == -2.0);
+  CHECK(g.negative_self_loop_edges[1].u == 2);
+  CHECK(g.negative_self_loop_edges[1].v == 2);
+  CHECK(g.negative_self_loop_edges[1].weight == -0.5);
   CHECK(g.edges.size() == 1); // a negative edge between distinct vertices stays
 
-  CHECK(read_string<gl::weighted<>>("3\n1 2 -1\n").negative_self_loops == 0);
-  CHECK(read_string<gl::unweighted>("3\n2 2\n").negative_self_loops == 0);
+  CHECK(read_string<gl::weighted<>>("3\n1 2 -1\n")
+          .negative_self_loop_edges.empty());
+  CHECK(read_string<gl::unweighted>("3\n2 2\n").negative_self_loop_edges.empty());
 }
 
 TEST_CASE("read_edge_list: a skipped self-loop is still validated")
