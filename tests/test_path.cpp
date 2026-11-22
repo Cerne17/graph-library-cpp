@@ -8,6 +8,8 @@
 #include "doctest/doctest.h"
 
 #include <limits>
+#include <list>
+#include <span>
 #include <vector>
 
 static_assert(gl::algorithms::parent_tree<gl::algorithms::search_tree>);
@@ -26,8 +28,31 @@ struct no_parent // has a source but no parent array
 };
 } // namespace
 
+namespace {
+struct span_tree // a view, like a Floyd-Warshall row
+{
+  gl::vertex_id source = 0;
+  std::span<const gl::vertex_id> parent;
+};
+
+struct list_tree // parent is not random access
+{
+  gl::vertex_id source = 0;
+  std::list<gl::vertex_id> parent;
+};
+
+struct int_tree // parent holds the wrong value type
+{
+  gl::vertex_id source = 0;
+  std::vector<int> parent;
+};
+} // namespace
+
 static_assert(!gl::algorithms::parent_tree<no_source>);
 static_assert(!gl::algorithms::parent_tree<no_parent>);
+static_assert(gl::algorithms::parent_tree<span_tree>);
+static_assert(!gl::algorithms::parent_tree<list_tree>);
+static_assert(!gl::algorithms::parent_tree<int_tree>);
 
 namespace {
 using vertex_path = std::vector<gl::vertex_id>;
@@ -83,4 +108,18 @@ TEST_CASE("reconstruct_path: works with search_tree and shortest_paths")
     CHECK(gl::algorithms::reconstruct_path(bfs_tree, v) ==
           gl::algorithms::reconstruct_path(sp_tree, v));
   }
+}
+
+TEST_CASE("reconstruct_path: a span-based tree works without a copy")
+{
+  const std::vector<gl::vertex_id> parents{ 0, 0, 1, 2 }; // 1 -> 2 -> 3
+  const span_tree tree{ 1, parents };
+  CHECK(gl::algorithms::reconstruct_path(tree, 3) == vertex_path{ 1, 2, 3 });
+}
+
+TEST_CASE("reconstruct_path: a corrupt tree with a cycle gives empty")
+{
+  // parent[2] = 3 and parent[3] = 2: the walk from 2 never reaches source 1
+  const gl::algorithms::search_tree corrupt{ 1, { 0, 0, 3, 2 }, { -1, 0, 1, 1 } };
+  CHECK(gl::algorithms::reconstruct_path(corrupt, 2).empty());
 }
