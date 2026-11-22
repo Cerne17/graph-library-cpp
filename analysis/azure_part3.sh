@@ -17,10 +17,12 @@
 #                                       # one harness process per group, at once
 #   analysis/azure_part3.sh status      # last log lines (ETA of Floyd-Warshall), finished?
 #   analysis/azure_part3.sh fetch       # results into data/azure_part3/
+#   analysis/azure_part3.sh guard [H]   # the VM deallocates itself in H hours (default 20)
 #   analysis/azure_part3.sh delete      # deletes everything; billing stops
 #
 # Settings (environment variables):
-#   AZ_LOCATION  region your subscription allows (default: eastus)
+#   AZ_LOCATION  region your subscription allows (default: belgiumcentral; the
+#                student subscription allows only a few regions)
 #   AZ_GROUP     resource group, deleted as a whole at the end (default: cos242-part3)
 #   AZ_SIZES     VM sizes to try, first that succeeds wins. Default: 32 GB,
 #                4 vCPUs: two Floyd-Warshall runs (7.5 GB each) at once, plus
@@ -36,22 +38,40 @@
 
 set -euo pipefail
 
-LOCATION="${AZ_LOCATION:-eastus}"
+LOCATION="${AZ_LOCATION:-belgiumcentral}"
 GROUP="${AZ_GROUP:-cos242-part3}"
 VM="cos242-runner"
 USER_NAME="azureuser"
 BRANCH="${BRANCH:-feature/part3}"
 REPO_URL="https://github.com/Cerne17/graph-library-cpp.git"
-SIZES="${AZ_SIZES:-Standard_E4as_v5 Standard_E4s_v5 Standard_E4as_v4}"
+SIZES="${AZ_SIZES:-Standard_E4as_v4 Standard_E4_v4}"
 REMOTE_DIR="library"
 INPUTS="data/part3/grafo_W_*.txt.gz"
 MAX_AHEAD_HOURS=22
 
 die() { echo "error: $*" >&2; exit 1; }
 
+# az vm show, retried: right after a resource group is recreated, Azure can
+# answer ResourceNotFound for a while on some requests.
+vm_show() {
+  local tries out
+  for tries in 1 2 3 4 5 6; do
+    if out="$(az vm show -g "$GROUP" -n "$VM" "$@" 2>/dev/null)"; then
+      echo "$out"
+      return 0
+    fi
+    sleep 5
+  done
+  return 1
+}
+
+IP_CACHE=""
 ip() {
-  az vm show -d -g "$GROUP" -n "$VM" --query publicIps -o tsv 2>/dev/null ||
-    die "no VM $VM in $GROUP: run create first"
+  if [ -z "$IP_CACHE" ]; then
+    IP_CACHE="$(vm_show -d --query publicIps -o tsv)" ||
+      die "no VM $VM in $GROUP: run create first"
+  fi
+  echo "$IP_CACHE"
 }
 
 remote() {
@@ -86,11 +106,67 @@ cmd_create() {
     fi
   done
   [ -n "$created" ] || die "no size worked; try another AZ_LOCATION (see check)"
-  # safety net until start re-arms it: daily, ~23 h away
-  local at
-  at="$(python3 -c 'import datetime as d; print((d.datetime.now(d.timezone.utc) - d.timedelta(hours=1)).strftime("%H%M"))')"
-  az vm auto-shutdown -g "$GROUP" -n "$VM" --time "$at" -o none
-  echo "created $created at $(ip); auto-shutdown daily at ${at} UTC"
+  echo "created $created at $(ip)"
+  # safety net until start re-arms it
+  cmd_guard 20
+}
+
+# The cost guard, as in Part 2 (azure_self_deallocate.py): the VM gets a
+# managed identity allowed to deallocate only itself (Virtual Machine
+# Contributor on the VM's own resource ID), and a systemd timer on the VM
+# deallocates it at the deadline. Azure's own auto-shutdown schedule is not
+# offered in every region (not in belgiumcentral). Re-running it moves the
+# deadline to now + $1 hours.
+cmd_guard() {
+  local hours="${1:-20}" vm_id principal deadline
+  vm_id="$(vm_show --query id -o tsv)" || die "no VM $VM in $GROUP"
+  principal="$(az vm identity assign -g "$GROUP" -n "$VM" --query systemAssignedIdentity -o tsv)"
+  az role assignment create --assignee-object-id "$principal" \
+    --assignee-principal-type ServicePrincipal \
+    --role 40c5ff49-9181-41f8-ae61-143b0e78555e --scope "$vm_id" -o none 2>/dev/null ||
+    true # already assigned on a re-run
+  deadline="$(python3 -c "import datetime as d, sys; print((d.datetime.now(d.timezone.utc) + d.timedelta(hours=float(sys.argv[1]))).strftime('%Y-%m-%d %H:%M:%S UTC'))" "$hours")"
+  scp -q -o StrictHostKeyChecking=accept-new analysis/azure_self_deallocate.py \
+    "$USER_NAME@$(ip):/tmp/cos242-self-deallocate.py"
+  # quoted: ssh joins its arguments into one remote command line
+  remote "VM_ID='$vm_id' DEADLINE='$deadline' bash -s" <<'GUARD'
+set -eu
+sudo install -m 700 /tmp/cos242-self-deallocate.py /usr/local/sbin/cos242-self-deallocate.py
+printf '{"vm_id": "%s"}\n' "$VM_ID" | sudo tee /etc/cos242-cost-guard.json >/dev/null
+sudo chmod 600 /etc/cos242-cost-guard.json
+sudo tee /etc/systemd/system/cos242-cost-guard.service >/dev/null <<'UNIT'
+[Unit]
+Description=Deallocate the temporary COS242 VM
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/sbin/cos242-self-deallocate.py
+Restart=on-failure
+RestartSec=60
+UNIT
+sudo tee /etc/systemd/system/cos242-cost-guard.timer >/dev/null <<UNIT
+[Unit]
+Description=Cost deadline for the temporary COS242 VM
+[Timer]
+OnCalendar=$DEADLINE
+Persistent=true
+Unit=cos242-cost-guard.service
+[Install]
+WantedBy=timers.target
+UNIT
+sudo systemctl daemon-reload
+sudo systemctl enable cos242-cost-guard.timer >/dev/null 2>&1
+sudo systemctl restart cos242-cost-guard.timer
+GUARD
+  # the role takes a moment to propagate; the check retries for ~2 minutes
+  local tries=0
+  until remote "sudo python3 /usr/local/sbin/cos242-self-deallocate.py --check" 2>/dev/null; do
+    tries=$((tries + 1))
+    [ "$tries" -lt 12 ] || die "cost guard: deallocation permission not effective yet; rerun guard"
+    sleep 10
+  done
+  echo "cost guard: the VM deallocates itself at $deadline"
 }
 
 cmd_setup() {
@@ -147,8 +223,8 @@ if ahead > float(sys.argv[2]):
 print((d.datetime.now(d.timezone.utc) + d.timedelta(hours=ahead)).strftime("%H%M"))
 PY
 )" || exit 1
-  az vm auto-shutdown -g "$GROUP" -n "$VM" --time "$at" -o none
-  echo "auto-shutdown re-armed to ${at} UTC (estimate ${hours} h + 3 h)"
+  cmd_guard "$(python3 -c "import sys; print(float(sys.argv[1]) + 3)" "$hours")"
+  echo "(estimate ${hours} h + 3 h)"
 }
 
 cmd_start() {
@@ -218,7 +294,8 @@ cmd_delete() {
 
 case "${1:-}" in
   check | create | setup | upload | smoke | calibrate | status | fetch | delete) "cmd_$1" ;;
+  guard) cmd_guard "${2:-20}" ;;
   start) cmd_start "${2:-}" ;;
   start-parallel) shift; cmd_start_parallel "$@" ;;
-  *) sed -n '2,36p' "$0"; exit 1 ;;
+  *) sed -n '2,37p' "$0"; exit 1 ;;
 esac
