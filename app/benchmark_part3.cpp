@@ -420,7 +420,7 @@ void run_cycle(const G& g, const loaded& in, const options& opt)
        (arcs_exist ? format_distance(total) : std::string("")) + "," +
        join_ids(cycle) + "," + status);
   emit("check,witness," + status + "," +
-       (valid ? std::string("arcs exist, weight < 0")
+       (valid ? std::string("arcs exist; weight < 0")
               : std::string("witness is not a negative cycle")));
 }
 
