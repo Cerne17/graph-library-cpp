@@ -40,3 +40,9 @@ data/*_smoke/
 
 # Packaged analysis material (hundreds of MB, shared outside git)
 output/*.zip
+
+# agentic development files: kept locally, not in the repository
+AGENTS.md
+CLAUDE.md
+.claude/
+docs/designs/part3_review/
