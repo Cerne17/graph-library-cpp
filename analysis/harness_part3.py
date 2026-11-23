@@ -41,6 +41,10 @@ Config columns:
     run_fw            yes/no
     run_allpairs      yes/no
     bf_optimizations  variants to compare, "|"-separated, or empty
+    calibrate         yes/no (optional, default yes)
+    set_by_bf         yes/no (optional, default no): where Floyd-Warshall does
+                      not run, compute the distances among fw_set with one
+                      Bellman-Ford launch per vertex (algorithm bellman_ford_set)
 """
 
 import argparse
@@ -228,20 +232,24 @@ def launches(cfg: dict, graph: Path, run_dir: Path, fw_decision: str
     base = [str(graph), "--directed", cfg["directed"],
             "--runs", cfg["runs"], "--budget-seconds", cfg["budget_seconds"]]
     out = []
-    calibrate = base + ["calibrate", "--seed", cfg["seed"],
-                        "--target", cfg["bf_target"]]
-    if is_complete(run_dir / "bf.csv"):
-        calibrate.append("--no-bf-pass")
-    out.append(("calibrate", calibrate))
+    if cfg.get("calibrate", "yes") != "no":
+        calibrate = base + ["calibrate", "--seed", cfg["seed"],
+                            "--target", cfg["bf_target"]]
+        if is_complete(run_dir / "bf.csv"):
+            calibrate.append("--no-bf-pass")
+        out.append(("calibrate", calibrate))
     out.append(("cycle", base + ["cycle"]))
     bf = base + ["bf", "--target", cfg["bf_target"],
                  "--sources", split_list(cfg["bf_sources"])]
     if cfg.get("bf_optimizations", ""):
         bf += ["--optimizations", split_list(cfg["bf_optimizations"])]
     out.append(("bf", bf))
+    fw_set = split_list(cfg["fw_set"])
     if fw_decision == "run":
-        out.append(("fw", base + ["fw", "--set", split_list(cfg["fw_set"])]))
-        fw_set = split_list(cfg["fw_set"])
+        out.append(("fw", base + ["fw", "--set", fw_set]))
+    if fw_decision == "run" or cfg.get("set_by_bf", "no") == "yes":
+        # the cross-check of Floyd-Warshall, or, where it cannot run, the
+        # distances among the set computed by Bellman-Ford instead
         for t in fw_set.split(","):
             check = [str(graph), "--directed", cfg["directed"], "--runs", "1",
                      "--budget-seconds", cfg["budget_seconds"], "bf",
@@ -373,6 +381,15 @@ def merge_graph(cfg: dict, run_dir: Path, fw_decision: str,
     elif fw_decision == "skipped":
         results.append(result(name, "fw", "floyd_warshall", "memory_bytes",
                               fw_need, 0, "skipped", "run_fw=no"))
+    if "fw" not in files:
+        # distances among the set by Bellman-Ford, where Floyd-Warshall does
+        # not run (config column set_by_bf)
+        for key, rows in files.items():
+            if key.startswith("bf_check_"):
+                for r in rows:
+                    if r[0] == "path" and r[2] != r[3]:
+                        paths.append(dict(zip(PATH_COLUMNS,
+                                              [name, "bellman_ford_set"] + r[2:])))
     if "fw" in files:
         rows = files["fw"]
         results += timing_rows(name, "fw", "floyd_warshall",

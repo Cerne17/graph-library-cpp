@@ -304,6 +304,21 @@ class HarnessTests(unittest.TestCase):
         self.assertIn("measured on a", estimate["note"])
         self.assertIn("calibration gave c = 1", estimate["note"])
 
+    def test_set_by_bf_without_floyd_warshall(self):
+        cfg = {"graph": "g", "runs": "10", "fw_set": "1|2", "directed": "yes",
+               "budget_seconds": "5", "bf_target": "1", "bf_sources": "2",
+               "seed": "1", "k": "1", "set_by_bf": "yes", "calibrate": "no"}
+        keys = [k for k, _ in harness.launches(cfg, Path("g.txt"), self.dir, "no_memory")]
+        self.assertEqual(keys, ["cycle", "bf", "bf_check_1", "bf_check_2"])
+        run_dir = self.dir / "g"
+        run_dir.mkdir()
+        (run_dir / "bf_check_2.csv").write_text(
+            "info,vertices,2\npath,bellman_ford,1,2,1.00,1,1 2,ok\n"
+            "path,bellman_ford,2,2,0.00,0,2,ok\ndone,bf\n")
+        _, paths = harness.merge_graph(cfg, run_dir, "no_memory", 10)
+        self.assertEqual([(p["algorithm"], p["source"], p["target"], p["distance"])
+                          for p in paths], [("bellman_ford_set", "1", "2", "1.00")])
+
     def test_merge_mismatch(self):
         by = {(r["algorithm"], r["metric"]): r
               for r in self.merge_fixture(edit_check=True)}

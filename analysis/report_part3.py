@@ -91,18 +91,27 @@ def build(results: pd.DataFrame, paths: pd.DataFrame) -> str:
 
     out += ["", "## 2. Floyd-Warshall: distances among {10, 20, 30, 40, 50}", ""]
     for g in graphs:
-        if paths[(paths.graph == g) & (paths.algorithm == "floyd_warshall")].empty:
+        algorithm = "floyd_warshall"
+        heading = f"### {g}"
+        if paths[(paths.graph == g) & (paths.algorithm == algorithm)].empty:
             memory = metric(results, g, "floyd_warshall", "memory_bytes")
             why = memory.status if memory is not None else "not run"
-            out.append(f"- {g}: {why}")
-            continue
-        out += [f"### {g}", "", "| from \\ to | " + " | ".join(FW_SET) + " |",
+            if paths[(paths.graph == g)
+                     & (paths.algorithm == "bellman_ford_set")].empty:
+                out.append(f"- {g}: {why}")
+                continue
+            algorithm = "bellman_ford_set"
+            need = (f"{int(memory.value) / 1e9:,.0f} GB" if memory is not None
+                    and memory.value else "too much memory")
+            heading = (f"### {g} (via Bellman-Ford toward each vertex: "
+                       f"Floyd-Warshall needs {need}, {why})")
+        out += [heading, "", "| from \\ to | " + " | ".join(FW_SET) + " |",
                 "|---" * (len(FW_SET) + 1) + "|"]
         for i in FW_SET:
             # the diagonal is not a case-study pair (and is not 0 on a vertex
             # that lies on a negative cycle)
             cells = ["—" if i == j else
-                     path_cell(paths, g, "floyd_warshall", i, j) for j in FW_SET]
+                     path_cell(paths, g, algorithm, i, j) for j in FW_SET]
             out.append(f"| {i} | " + " | ".join(cells) + " |")
         out.append("")
 

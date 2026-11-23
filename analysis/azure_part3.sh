@@ -27,6 +27,10 @@
 #   AZ_SIZES     VM sizes to try, first that succeeds wins. Default: 32 GB,
 #                4 vCPUs: two Floyd-Warshall runs (7.5 GB each) at once, plus
 #                the large graphs in a third process.
+#   AZ_CONFIG, AZ_RUNS, AZ_OUT, AZ_FETCH
+#                config, run directory and output on the VM, and fetch's local
+#                directory (defaults: config_part3.csv, data/part3_runs, data,
+#                data/azure_part3)
 #   AZ_HOURS     hours to re-arm the auto-shutdown for in start-parallel
 #                (default 8; 3 h of margin are added)
 #   BRANCH       branch the VM builds (default: feature/part3)
@@ -48,6 +52,13 @@ SIZES="${AZ_SIZES:-Standard_E4as_v4 Standard_E4_v4}"
 REMOTE_DIR="library"
 INPUTS="data/part3/grafo_W_*.txt.gz"
 MAX_AHEAD_HOURS=22
+# Another config, run directory and output (on the VM), and where fetch puts
+# them locally: for a follow-up run next to the first one.
+CONFIG="${AZ_CONFIG:-config_part3.csv}"
+RUNS="${AZ_RUNS:-data/part3_runs}"
+OUT="${AZ_OUT:-data}"
+FETCH="${AZ_FETCH:-data/azure_part3}"
+HARNESS="python3 analysis/harness_part3.py --config $CONFIG --runs-dir $RUNS --out $OUT"
 
 die() { echo "error: $*" >&2; exit 1; }
 
@@ -246,10 +257,10 @@ cmd_start_parallel() {
     i=$((i + 1))
     only=""
     for g in $group; do only="$only --only $g"; done
-    jobs="$jobs python3 analysis/harness_part3.py$only > run_$i.log 2>&1 &"
+    jobs="$jobs $HARNESS$only > run_$i.log 2>&1 &"
   done
   remote "cd $REMOTE_DIR && rm -f run.done && tmux new -d -s part3 \
-    '$jobs wait; python3 analysis/harness_part3.py --merge-only >> run.log 2>&1; touch run.done'"
+    '$jobs wait; $HARNESS --merge-only >> run.log 2>&1; touch run.done'"
   echo "started $i harness processes; follow with: analysis/azure_part3.sh status"
 }
 
@@ -278,13 +289,13 @@ cmd_status() {
 }
 
 cmd_fetch() {
-  mkdir -p data/azure_part3
+  mkdir -p "$FETCH"
   rsync -avP -e "ssh -o StrictHostKeyChecking=accept-new" \
-    "$USER_NAME@$(ip):$REMOTE_DIR/data/results_part3.csv" \
-    "$USER_NAME@$(ip):$REMOTE_DIR/data/paths_part3.csv" \
+    "$USER_NAME@$(ip):$REMOTE_DIR/$OUT/results_part3.csv" \
+    "$USER_NAME@$(ip):$REMOTE_DIR/$OUT/paths_part3.csv" \
     "$USER_NAME@$(ip):$REMOTE_DIR/run*.log" \
     "$USER_NAME@$(ip):$REMOTE_DIR/environment.txt" \
-    "$USER_NAME@$(ip):$REMOTE_DIR/data/part3_runs" data/azure_part3/
+    "$USER_NAME@$(ip):$REMOTE_DIR/$RUNS" "$FETCH/"
 }
 
 cmd_delete() {
@@ -297,5 +308,5 @@ case "${1:-}" in
   guard) cmd_guard "${2:-20}" ;;
   start) cmd_start "${2:-}" ;;
   start-parallel) shift; cmd_start_parallel "$@" ;;
-  *) sed -n '2,37p' "$0"; exit 1 ;;
+  *) sed -n '2,41p' "$0"; exit 1 ;;
 esac
