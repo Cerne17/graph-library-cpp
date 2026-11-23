@@ -1,0 +1,17 @@
+info,vertices,25000
+info,edges,549953
+info,directed,yes
+info,skipped_self_loops,0
+info,negative_self_loops,0
+info,scale,100
+info,budget_seconds,300
+info,max_abs_weight,10.00
+info,seed,2025
+info,k,100
+time,reverse,1,22669.96
+time,allpairs_pass,1,92670473.327,23073
+time,allpairs_pass,2,92804028.224,18049
+time,allpairs_pass,3,92857800.039,10211
+info,targets_measured,3
+info,allpairs_full,no
+done,allpairs

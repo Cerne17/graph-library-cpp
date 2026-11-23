@@ -1,0 +1,35 @@
+info,vertices,1000000
+info,edges,30999978
+info,directed,yes
+info,skipped_self_loops,0
+info,negative_self_loops,0
+info,scale,100
+info,budget_seconds,3000
+info,max_abs_weight,10.00
+time,reverse,1,1429875.705
+time,bellman_ford_pass,1,3208696.769
+time,reverse,2,1432123.403
+time,bellman_ford_pass,2,3378346.853
+time,reverse,3,1439909.331
+time,bellman_ford_pass,3,3289766.672
+time,reverse,4,1474130.911
+time,bellman_ford_pass,4,3399827.854
+time,reverse,5,1440091.51
+time,bellman_ford_pass,5,3334836.555
+time,reverse,6,1440501.378
+time,bellman_ford_pass,6,3588925.522
+time,reverse,7,1460980.584
+time,bellman_ford_pass,7,3235776.705
+time,reverse,8,1474761.1
+time,bellman_ford_pass,8,3458928.483
+time,reverse,9,1416661.98
+time,bellman_ford_pass,9,3171350.294
+time,reverse,10,1442933.605
+time,bellman_ford_pass,10,3487910.933
+info,rounds,38
+info,relaxations,189146831
+info,cycle_reaches_target,no
+path,bellman_ford,10,100,9.04,13,10 91829 417272 775161 842600 906821 930962 994427 321645 620573 21519 43375 351045 100,ok
+path,bellman_ford,20,100,8.83,11,20 775000 859374 148050 161821 274264 315038 749181 51701 83053 351045 100,ok
+path,bellman_ford,30,100,9.23,14,30 124400 225008 352692 424754 485462 502763 926624 80691 571210 620573 21519 43375 351045 100,ok
+done,bf

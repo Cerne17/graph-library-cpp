@@ -1,6 +1,6 @@
 """Part 3 report tables, from the harness outputs.
 
-Reads results_part3.csv and paths_part3.csv (default: data/azure_part3/) and
+Reads results_part3.csv and paths_part3.csv (default: data/azure_part3_final/) and
 writes the four case-study tables as Markdown (default:
 docs/results/part3_tables.md): distances with 2 decimals, times in seconds
 with 3 significant digits and the number of runs; estimated cells are marked
@@ -150,7 +150,7 @@ def build(results: pd.DataFrame, paths: pd.DataFrame) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--results", type=Path, default=ROOT / "data" / "azure_part3")
+    parser.add_argument("--results", type=Path, default=ROOT / "data" / "azure_part3_final")
     parser.add_argument("--out", type=Path,
                         default=ROOT / "docs" / "results" / "part3_tables.md")
     args = parser.parse_args()

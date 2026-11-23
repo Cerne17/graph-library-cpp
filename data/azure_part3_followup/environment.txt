@@ -1,0 +1,8 @@
+commit: 5295b62
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+4
+               total        used        free      shared  buff/cache   available
+Mem:              31           0          28           0           1          30
+Model name:                              AMD EPYC 7763 64-Core Processor
+L3 cache:                                32 MiB (1 instance)
+Standard_E4as_v4

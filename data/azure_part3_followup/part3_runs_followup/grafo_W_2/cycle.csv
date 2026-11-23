@@ -1,0 +1,21 @@
+info,vertices,25000
+info,edges,824964
+info,directed,yes
+info,skipped_self_loops,0
+info,negative_self_loops,0
+info,scale,100
+info,budget_seconds,3000
+info,max_abs_weight,10.00
+time,negative_cycle_check,1,0.4
+time,negative_cycle_check,2,0.1
+time,negative_cycle_check,3,0
+time,negative_cycle_check,4,0.1
+time,negative_cycle_check,5,0
+time,negative_cycle_check,6,0
+time,negative_cycle_check,7,0.1
+time,negative_cycle_check,8,0.1
+time,negative_cycle_check,9,0
+time,negative_cycle_check,10,0
+cycle,no,0,,,ok
+check,witness,ok,no cycle
+done,cycle

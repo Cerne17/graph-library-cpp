@@ -1,0 +1,19 @@
+info,vertices,100000
+info,edges,6099941
+info,directed,yes
+info,skipped_self_loops,0
+info,negative_self_loops,0
+info,scale,100
+info,budget_seconds,3000
+info,max_abs_weight,10.00
+time,reverse,1,254938.058
+time,bellman_ford_pass,1,241546.771
+info,rounds,24
+info,relaxations,29414366
+info,cycle_reaches_target,no
+path,bellman_ford,10,20,4.99,6,10 4655 5201 20964 46997 82319 20,ok
+path,bellman_ford,20,20,0.00,0,20,ok
+path,bellman_ford,30,20,5.80,8,30 4259 5985 6436 16789 60659 60732 82319 20,ok
+path,bellman_ford,40,20,5.59,8,40 6194 21960 51991 68906 27088 62462 82319 20,ok
+path,bellman_ford,50,20,5.41,11,50 19878 4843 8227 64849 67161 18664 59133 60659 60732 82319 20,ok
+done,bf

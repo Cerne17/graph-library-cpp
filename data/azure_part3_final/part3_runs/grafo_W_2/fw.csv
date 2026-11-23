@@ -1,0 +1,212 @@
+info,vertices,25000
+info,edges,824964
+info,directed,yes
+info,skipped_self_loops,0
+info,negative_self_loops,0
+info,scale,100
+info,budget_seconds,300
+info,max_abs_weight,10.00
+progress,floyd_warshall,250,4348585.365,1
+progress,floyd_warshall,500,4451385.125,2
+progress,floyd_warshall,750,4612470.943,23
+progress,floyd_warshall,1000,4928706.81,19
+progress,floyd_warshall,1250,5511641.886,63
+progress,floyd_warshall,1500,7065730.616,228
+progress,floyd_warshall,1750,11404795.663,943
+progress,floyd_warshall,2000,20611671.829,1297
+progress,floyd_warshall,2250,40412846.711,2025
+progress,floyd_warshall,2500,68242296.992,2561
+progress,floyd_warshall,2750,103415356.789,3178
+progress,floyd_warshall,3000,146016917.128,3974
+progress,floyd_warshall,3250,183064066.789,4532
+progress,floyd_warshall,3500,213169162.77,4974
+progress,floyd_warshall,3750,245855425.094,5377
+progress,floyd_warshall,4000,281490013.705,5913
+progress,floyd_warshall,4250,320667033.88,6363
+progress,floyd_warshall,4467,380752137.735,6702
+progress,floyd_warshall,4704,440888852.453,7247
+progress,floyd_warshall,4873,500916167.082,7491
+progress,floyd_warshall,5123,549303110.421,7908
+progress,floyd_warshall,5373,600548609.415,8387
+progress,floyd_warshall,5623,654990396.064,8887
+progress,floyd_warshall,5873,711823714.855,9206
+progress,floyd_warshall,6123,771157969.11,9647
+progress,floyd_warshall,6364,831191274.697,10148
+progress,floyd_warshall,6597,891233152.274,10502
+progress,floyd_warshall,6821,951297604.888,10864
+progress,floyd_warshall,7038,1011429755.134,11261
+progress,floyd_warshall,7249,1071597492.586,11534
+progress,floyd_warshall,7456,1131862005.714,11760
+progress,floyd_warshall,7657,1192066347.784,12135
+progress,floyd_warshall,7850,1252072239.389,12527
+progress,floyd_warshall,8040,1312314750.362,12756
+progress,floyd_warshall,8226,1372364632.719,13028
+progress,floyd_warshall,8408,1432376797.052,13331
+progress,floyd_warshall,8587,1492705944.349,13574
+progress,floyd_warshall,8762,1552861246.31,13894
+progress,floyd_warshall,8935,1613173830.628,14085
+progress,floyd_warshall,9105,1673340488.655,14324
+progress,floyd_warshall,9272,1733669073.892,14569
+progress,floyd_warshall,9436,1793693951.315,14765
+progress,floyd_warshall,9599,1854027757.863,14946
+progress,floyd_warshall,9760,1914287916.033,15089
+progress,floyd_warshall,9918,1974355655.478,15338
+progress,floyd_warshall,10074,2034491804.332,15562
+progress,floyd_warshall,10229,2094889404.177,15704
+progress,floyd_warshall,10381,2154976358.341,15960
+progress,floyd_warshall,10531,2215169534.296,16162
+progress,floyd_warshall,10680,2275360865.525,16313
+progress,floyd_warshall,10826,2335397766.864,16501
+progress,floyd_warshall,10972,2395775895.039,16698
+progress,floyd_warshall,11116,2455927594.413,16880
+progress,floyd_warshall,11258,2516263482.717,17057
+progress,floyd_warshall,11399,2576646035.824,17197
+progress,floyd_warshall,11539,2636929113.392,17355
+progress,floyd_warshall,11678,2697347037.547,17543
+progress,floyd_warshall,11816,2757704166.694,17695
+progress,floyd_warshall,11952,2817924438.665,17851
+progress,floyd_warshall,12087,2877980653.065,17962
+progress,floyd_warshall,12222,2938317663.127,18080
+progress,floyd_warshall,12356,2998645629.198,18207
+progress,floyd_warshall,12489,3058835456.655,18326
+progress,floyd_warshall,12621,3119131226.429,18449
+progress,floyd_warshall,12752,3179217951.577,18573
+progress,floyd_warshall,12883,3239640712.291,18713
+progress,floyd_warshall,13012,3299663671.844,18867
+progress,floyd_warshall,13140,3359745195.772,18980
+progress,floyd_warshall,13268,3420000724.282,19117
+progress,floyd_warshall,13395,3480378947.041,19261
+progress,floyd_warshall,13521,3540801255.743,19404
+progress,floyd_warshall,13646,3601080297.795,19523
+progress,floyd_warshall,13770,3661113158.75,19646
+progress,floyd_warshall,13893,3721145279.553,19771
+progress,floyd_warshall,14016,3781585088.463,19887
+progress,floyd_warshall,14138,3841769271.386,20006
+progress,floyd_warshall,14259,3902022770.764,20111
+progress,floyd_warshall,14379,3962091510.342,20222
+progress,floyd_warshall,14499,4022206927.184,20303
+progress,floyd_warshall,14619,4082586506.272,20408
+progress,floyd_warshall,14737,4142908866.887,20505
+progress,floyd_warshall,14855,4202966104.041,20617
+progress,floyd_warshall,14973,4263188141.48,20720
+progress,floyd_warshall,15091,4323692110.064,20807
+progress,floyd_warshall,15208,4383959874.975,20906
+progress,floyd_warshall,15324,4444021381.882,21021
+progress,floyd_warshall,15440,4504501894.891,21117
+progress,floyd_warshall,15555,4564573536.057,21208
+progress,floyd_warshall,15670,4624994079.275,21302
+progress,floyd_warshall,15784,4685129233.83,21402
+progress,floyd_warshall,15898,4745393329.359,21462
+progress,floyd_warshall,16012,4805849679.458,21531
+progress,floyd_warshall,16125,4865914357.57,21596
+progress,floyd_warshall,16238,4926202529.113,21679
+progress,floyd_warshall,16351,4986665381.079,21763
+progress,floyd_warshall,16463,5047147340.801,21855
+progress,floyd_warshall,16575,5107579110.762,21918
+progress,floyd_warshall,16686,5167819538.54,21995
+progress,floyd_warshall,16797,5228074898.085,22078
+progress,floyd_warshall,16908,5288512574.193,22153
+progress,floyd_warshall,17018,5348595782.661,22239
+progress,floyd_warshall,17128,5408948524.566,22311
+progress,floyd_warshall,17237,5469059747.31,22393
+progress,floyd_warshall,17346,5529302662.029,22463
+progress,floyd_warshall,17455,5589797248.049,22511
+progress,floyd_warshall,17564,5650344500.588,22589
+progress,floyd_warshall,17672,5710487139.855,22644
+progress,floyd_warshall,17780,5770918145.184,22692
+progress,floyd_warshall,17888,5831401488.263,22759
+progress,floyd_warshall,17995,5891676950.586,22841
+progress,floyd_warshall,18102,5952005176.535,22891
+progress,floyd_warshall,18209,6012524312.04,22958
+progress,floyd_warshall,18316,6072986404.61,23027
+progress,floyd_warshall,18422,6133087977.288,23083
+progress,floyd_warshall,18528,6193334474.456,23141
+progress,floyd_warshall,18634,6253635816.316,23201
+progress,floyd_warshall,18739,6313865787.397,23267
+progress,floyd_warshall,18844,6374246482.456,23333
+progress,floyd_warshall,18949,6434502845.214,23389
+progress,floyd_warshall,19053,6494541843.578,23457
+progress,floyd_warshall,19157,6554592606.148,23499
+progress,floyd_warshall,19261,6614927260.282,23546
+progress,floyd_warshall,19365,6675303965.628,23602
+progress,floyd_warshall,19469,6735690526.634,23657
+progress,floyd_warshall,19572,6795697561.788,23708
+progress,floyd_warshall,19675,6855710383.487,23746
+progress,floyd_warshall,19778,6915779928.498,23799
+progress,floyd_warshall,19881,6976021128.388,23837
+progress,floyd_warshall,19984,7036509777.351,23876
+progress,floyd_warshall,20087,7096836666.725,23910
+progress,floyd_warshall,20189,7157192811.131,23951
+progress,floyd_warshall,20291,7217279706.446,23994
+progress,floyd_warshall,20393,7277633736.811,24051
+progress,floyd_warshall,20495,7337979439.355,24080
+progress,floyd_warshall,20597,7398529841.221,24121
+progress,floyd_warshall,20699,7459091795.049,24154
+progress,floyd_warshall,20800,7519102502.213,24187
+progress,floyd_warshall,20901,7579356143.478,24226
+progress,floyd_warshall,21002,7639497114.464,24274
+progress,floyd_warshall,21103,7699819435.338,24312
+progress,floyd_warshall,21204,7760265203.616,24342
+progress,floyd_warshall,21305,7820706794.494,24381
+progress,floyd_warshall,21406,7881313435.213,24418
+progress,floyd_warshall,21506,7941326608.405,24442
+progress,floyd_warshall,21606,8001374818.39,24479
+progress,floyd_warshall,21706,8061645142.528,24506
+progress,floyd_warshall,21806,8121943489.88,24529
+progress,floyd_warshall,21906,8182314803.232,24545
+progress,floyd_warshall,22006,8242726196.541,24574
+progress,floyd_warshall,22106,8302989978.684,24591
+progress,floyd_warshall,22206,8363457759.205,24616
+progress,floyd_warshall,22306,8423968445.597,24642
+progress,floyd_warshall,22406,8484289578.439,24656
+progress,floyd_warshall,22506,8544892116.861,24680
+progress,floyd_warshall,22605,8604967865.387,24701
+progress,floyd_warshall,22704,8665135544.069,24717
+progress,floyd_warshall,22804,8725678660.659,24737
+progress,floyd_warshall,22903,8785765085.568,24763
+progress,floyd_warshall,23002,8846059003.632,24780
+progress,floyd_warshall,23101,8906237854.825,24800
+progress,floyd_warshall,23200,8966616811.312,24822
+progress,floyd_warshall,23299,9026843331.299,24843
+progress,floyd_warshall,23398,9087401126.164,24859
+progress,floyd_warshall,23497,9147913688.584,24881
+progress,floyd_warshall,23596,9208319290.845,24896
+progress,floyd_warshall,23695,9268722712.024,24915
+progress,floyd_warshall,23794,9329208331.278,24924
+progress,floyd_warshall,23893,9389787161.675,24931
+progress,floyd_warshall,23992,9450194804.684,24942
+progress,floyd_warshall,24090,9510235950.821,24955
+progress,floyd_warshall,24188,9570516674.448,24961
+progress,floyd_warshall,24286,9630567342.302,24965
+progress,floyd_warshall,24384,9690616771.591,24976
+progress,floyd_warshall,24482,9750629426.85,24981
+progress,floyd_warshall,24580,9810736209.162,24987
+progress,floyd_warshall,24679,9871195119.771,24994
+progress,floyd_warshall,24777,9931320965.893,24996
+progress,floyd_warshall,24876,9991887279.356,24998
+progress,floyd_warshall,24975,10052457914.888,24999
+progress,floyd_warshall,25000,10067776350.885,24999
+time,floyd_warshall,1,10067777480.498
+info,memory_bytes,7500600012
+info,negative_cycle,no
+path,floyd_warshall,10,20,11.73,6,10 3392 3823 15252 20948 179 20,ok
+path,floyd_warshall,10,30,8.14,11,10 24970 729 8935 12470 14794 2005 8433 12526 8808 2829 30,ok
+path,floyd_warshall,10,40,9.49,11,10 3392 5850 9453 23170 23367 24736 2709 5061 10480 15224 40,ok
+path,floyd_warshall,10,50,7.08,10,10 11155 15347 15531 17593 23791 47 2990 5302 17815 50,ok
+path,floyd_warshall,20,10,3.84,5,20 878 1937 15264 18704 10,ok
+path,floyd_warshall,20,30,7.03,7,20 878 5707 10874 392 2374 2829 30,ok
+path,floyd_warshall,20,40,8.30,10,20 878 5707 10874 14707 24736 2709 5061 10480 15224 40,ok
+path,floyd_warshall,20,50,4.70,8,20 878 1153 6725 12817 12758 16298 17815 50,ok
+path,floyd_warshall,30,10,5.79,7,30 19530 1711 3729 9009 15264 18704 10,ok
+path,floyd_warshall,30,20,12.55,11,30 8688 22569 20270 24682 9908 13169 15022 15252 20948 179 20,ok
+path,floyd_warshall,30,40,8.30,16,30 8688 16170 18143 21692 2188 9597 10038 13599 17633 23929 24736 2709 5061 10480 15224 40,ok
+path,floyd_warshall,30,50,6.33,9,30 18855 19213 7137 10661 12975 15292 16298 17815 50,ok
+path,floyd_warshall,40,10,5.05,8,40 11469 17516 17821 6009 9183 12736 18704 10,ok
+path,floyd_warshall,40,20,12.32,10,40 6425 9170 18433 22997 2765 13196 15252 20948 179 20,ok
+path,floyd_warshall,40,30,5.36,8,40 9052 9741 11540 2605 2991 8808 2829 30,ok
+path,floyd_warshall,40,50,5.71,7,40 6425 6591 9227 5754 8100 17815 50,ok
+path,floyd_warshall,50,10,4.48,5,50 18943 20336 15264 18704 10,ok
+path,floyd_warshall,50,20,12.23,9,50 3363 7267 15568 3228 6145 7694 20948 179 20,ok
+path,floyd_warshall,50,30,7.79,15,50 3363 13659 41 3676 18861 5308 8054 8126 11062 12312 15136 20002 1277 2829 30,ok
+path,floyd_warshall,50,40,8.26,9,50 3363 13659 41 266 969 5061 10480 15224 40,ok
+done,fw
